@@ -1,0 +1,13 @@
+{
+  "name": "Attic",
+  "short_name": "Attic",
+  "description": "Capture from any device, save straight to your PC, archive to your private vault — nothing leaves your house.",
+  "start_url": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#040a14",
+  "theme_color": "#040a14",
+  "icons": [
+    { "src": "/icon.png", "sizes": "860x860", "type": "image/png", "purpose": "any maskable" }
+  ]
+}

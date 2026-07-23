@@ -1,0 +1,42 @@
+# Dependencies — reinstall with `npm install` in each app
+node_modules/
+
+# Runtime data — your stuff never belongs in the repo
+*.db
+*.sqlite
+*.sqlite3
+*.db-journal
+*.db-wal
+*.db-shm
+data/
+uploads/
+.vault/
+vault/
+library/
+media/
+
+# Secrets / config
+.env
+.env.*
+*.pem
+config.local.*
+vapid.json
+push-keys.json
+
+# Logs & OS cruft
+*.log
+logs/
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Editor / debug junk
+.cdp-profile/
+.vscode/
+.idea/
+*.swp
+
+# Runtime secrets/config regenerated on boot — never publish
+.session-token
+config.json
+scan-progress.json

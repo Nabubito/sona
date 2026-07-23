@@ -1,0 +1,14 @@
+{
+  "_comment": "Reel config. Copy this file to config.json and edit it. 'roots' are the folders Reel scans for music; 'videoShows' are optional video folders. Set your own PINs — never leave them at the shipped defaults.",
+  "roots": [
+    "C:\\path\\to\\your\\Music",
+    "/home/you/Music"
+  ],
+  "videoShows": [
+    { "id": "movies", "name": "Movies", "path": "/path/to/your/Movies" }
+  ],
+  "adminPin": "change-me",
+  "members": [
+    { "profile": "guest", "name": "Guest", "code": "0000", "kind": "member" }
+  ]
+}

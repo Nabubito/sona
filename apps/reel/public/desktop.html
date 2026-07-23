@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>Reel — Desktop</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+<style>
+  :root { --c1: 0,229,255; --c2: 255,0,170; --c3: 150,90,255; }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; }
+  body {
+    font-family: 'Share Tech Mono', monospace;
+    background:
+      radial-gradient(1200px 700px at 20% -10%, rgba(var(--c3),0.18), transparent 60%),
+      radial-gradient(1000px 600px at 110% 10%, rgba(var(--c2),0.12), transparent 55%),
+      #06080f;
+    color: #cfeaff;
+    display: flex; align-items: center; justify-content: center;
+    min-height: 100%;
+  }
+  .card {
+    width: min(92vw, 380px);
+    background: linear-gradient(160deg, rgba(10,16,30,0.92), rgba(6,9,18,0.96));
+    border: 1px solid rgba(var(--c1),0.28);
+    border-radius: 18px;
+    padding: 34px 28px 30px;
+    box-shadow: 0 0 0 1px rgba(var(--c1),0.05), 0 24px 70px rgba(0,0,0,0.65), inset 0 1px 0 rgba(var(--c1),0.12);
+    text-align: center;
+  }
+  .badge {
+    font-size: 30px; margin-bottom: 6px;
+    filter: drop-shadow(0 0 12px rgba(var(--c1),0.55));
+  }
+  h1 {
+    font-family: 'Orbitron', sans-serif; font-weight: 700;
+    font-size: 17px; letter-spacing: 2px; margin: 0 0 4px;
+    color: #eafcff; text-transform: uppercase;
+  }
+  .sub { font-size: 12px; color: #6f87a8; margin: 0 0 22px; letter-spacing: .5px; }
+  .pin {
+    width: 100%; text-align: center; letter-spacing: 10px; font-size: 24px;
+    font-family: 'Share Tech Mono', monospace;
+    padding: 14px 12px; border-radius: 12px;
+    background: rgba(0,0,0,0.45);
+    border: 1px solid rgba(var(--c1),0.3);
+    color: #eafcff; outline: none;
+    transition: border-color .2s, box-shadow .2s;
+  }
+  .pin:focus { border-color: rgba(var(--c1),0.7); box-shadow: 0 0 0 3px rgba(var(--c1),0.14); }
+  .pin.err { border-color: rgba(var(--c2),0.8); box-shadow: 0 0 0 3px rgba(var(--c2),0.18); animation: shake .35s; }
+  @keyframes shake { 0%,100%{transform:translateX(0)} 25%{transform:translateX(-7px)} 75%{transform:translateX(7px)} }
+  button {
+    margin-top: 16px; width: 100%; cursor: pointer;
+    font-family: 'Orbitron', sans-serif; font-weight: 700; letter-spacing: 2px; font-size: 14px;
+    padding: 14px; border-radius: 12px; border: none; color: #04121a;
+    background: linear-gradient(95deg, rgb(var(--c1)), rgb(var(--c3)));
+    box-shadow: 0 8px 26px rgba(var(--c1),0.28);
+    transition: transform .12s, box-shadow .2s, filter .2s;
+  }
+  button:hover { filter: brightness(1.08); box-shadow: 0 10px 32px rgba(var(--c1),0.4); }
+  button:active { transform: scale(0.97); }
+  button:disabled { filter: grayscale(.6) brightness(.7); cursor: not-allowed; }
+  .msg { min-height: 18px; margin-top: 14px; font-size: 12px; color: #ff6fc0; letter-spacing: .5px; }
+  .back { display: inline-block; margin-top: 20px; color: #5f7ba0; font-size: 12px; text-decoration: none; letter-spacing: 1px; }
+  .back:hover { color: #9fd0ff; }
+  .note { margin-top: 18px; font-size: 10.5px; color: #52688a; line-height: 1.5; }
+</style>
+</head>
+<body>
+  <div class="card">
+    <div class="badge">🖥️</div>
+    <h1>Remote Desktop</h1>
+    <p class="sub">Full control of your PC — verify to continue</p>
+    <button id="pkBtn" type="button" style="display:none">🔑 Unlock with passkey</button>
+    <form id="f" autocomplete="off">
+      <input id="pin" class="pin" type="password" inputmode="text" autocomplete="off"
+             placeholder="passcode" maxlength="64" aria-label="Desktop passcode" />
+      <button id="go" type="submit">Unlock Desktop</button>
+    </form>
+    <div class="msg" id="msg"></div>
+    <a class="back" href="/">← Back to Library</a>
+  </div>
+
+<script>
+const pin = document.getElementById('pin');
+const msg = document.getElementById('msg');
+const go  = document.getElementById('go');
+const pkBtn = document.getElementById('pkBtn');
+const VNC = '/desktop-client.html';
+function enter() { location.replace(VNC); }
+function shake(t) { pin.classList.add('err'); setTimeout(() => pin.classList.remove('err'), 400); msg.textContent = t; }
+
+// base64url <-> ArrayBuffer (no library — keeps the client buildless)
+const b2b = s => { s = s.replace(/-/g,'+').replace(/_/g,'/'); s += '='.repeat((4 - s.length % 4) % 4); const bin = atob(s), u = new Uint8Array(bin.length); for (let i=0;i<bin.length;i++) u[i]=bin.charCodeAt(i); return u.buffer; };
+const b2u = b => { const u = new Uint8Array(b); let s=''; for (const x of u) s += String.fromCharCode(x); return btoa(s).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,''); };
+
+async function passkeyLogin() {
+  if (!window.PublicKeyCredential) { msg.textContent = 'This browser has no passkey support'; return; }
+  pkBtn.disabled = true; msg.textContent = 'Waiting for passkey…';
+  try {
+    const r1 = await fetch('/api/webauthn/auth-begin', { method: 'POST' });
+    if (!r1.ok) { const d = await r1.json().catch(() => ({})); throw new Error(d.wait ? `locked — wait ${d.wait}s` : 'no passkey'); }
+    const opts = await r1.json();
+    opts.challenge = b2b(opts.challenge);
+    (opts.allowCredentials || []).forEach(c => c.id = b2b(c.id));
+    const cred = await navigator.credentials.get({ publicKey: opts });
+    const asr = {
+      id: cred.id, rawId: b2u(cred.rawId), type: cred.type,
+      clientExtensionResults: cred.getClientExtensionResults ? cred.getClientExtensionResults() : {},
+      response: {
+        clientDataJSON: b2u(cred.response.clientDataJSON),
+        authenticatorData: b2u(cred.response.authenticatorData),
+        signature: b2u(cred.response.signature),
+        userHandle: cred.response.userHandle ? b2u(cred.response.userHandle) : undefined,
+      },
+    };
+    const r2 = await fetch('/api/webauthn/auth-finish', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ asr }) });
+    if (r2.ok) return enter();
+    msg.textContent = 'Passkey rejected';
+  } catch (e) {
+    msg.textContent = (e && e.name === 'NotAllowedError') ? 'Passkey cancelled' : ('Passkey failed — ' + (e.message || ''));
+  } finally { pkBtn.disabled = false; }
+}
+pkBtn.addEventListener('click', passkeyLogin);
+
+// already admin → straight in; else show the unlock card, plus the passkey button if any are enrolled
+fetch('/api/desktop-status').then(r => r.json()).then(async d => {
+  if (d && d.authed) return enter();
+  try {
+    const s = await (await fetch('/api/webauthn/status')).json();
+    if (s.enrolled > 0 && window.PublicKeyCredential) pkBtn.style.display = 'block';
+  } catch {}
+  pin.focus();
+}).catch(() => {});
+
+document.getElementById('f').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const v = pin.value.trim();
+  if (!v) return;
+  go.disabled = true; msg.textContent = '';
+  try {
+    const r = await fetch('/api/admin-auth', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ pin: v })
+    });
+    if (r.ok) { enter(); return; }
+    const d = await r.json().catch(() => ({}));
+    pin.value = ''; pin.focus();
+    shake(d.wait ? `Too many tries — wait ${d.wait}s` : 'Wrong passcode');
+  } catch {
+    msg.textContent = 'Connection error';
+  } finally {
+    go.disabled = false;
+  }
+});
+</script>
+</body>
+</html>

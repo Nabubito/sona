@@ -1,0 +1,12 @@
+{
+  "name": "attic",
+  "version": "1.0.0",
+  "description": "Attic — capture from any device, save straight to your PC, archive to your private vault. Nothing leaves your house.",
+  "main": "server/server.js",
+  "scripts": {
+    "start": "node server/server.js"
+  },
+  "dependencies": {
+    "express": "^4.19.2"
+  }
+}

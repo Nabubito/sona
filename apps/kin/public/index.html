@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="amour">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1" />
+  <meta name="theme-color" content="#a8536a" />
+  <title>Kin</title>
+  <link rel="manifest" href="/manifest.json" />
+  <link rel="icon" href="/icon-192.png" type="image/png" />
+  <link rel="apple-touch-icon" href="/icon-192.png" />
+  <link rel="stylesheet" href="/style.css?v=2" />
+</head>
+<body>
+  <!-- ══ PASSCODE GATE ══ -->
+  <section id="gate" class="gate">
+    <div class="gate-card">
+      <img class="brandmark" src="/icon-192.png" alt="Kin" width="74" height="74" />
+      <h1 class="wordmark">Kin</h1>
+      <p class="tagline">Private line</p>
+      <div class="pin-dots" id="pinDots" aria-label="passcode">
+        <i></i><i></i><i></i><i></i>
+      </div>
+      <div class="pin-error" id="pinError"></div>
+      <div class="keypad" id="keypad">
+        <button data-k="1">1</button><button data-k="2">2</button><button data-k="3">3</button>
+        <button data-k="4">4</button><button data-k="5">5</button><button data-k="6">6</button>
+        <button data-k="7">7</button><button data-k="8">8</button><button data-k="9">9</button>
+        <button class="ghost" data-k="clear">✕</button><button data-k="0">0</button><button class="ghost" data-k="back">⌫</button>
+      </div>
+    </div>
+    <div class="gate-foot">Sona · secured line · <a href="/get.html" style="color:inherit;text-decoration:underline">get the app</a></div>
+  </section>
+
+  <!-- ══ CHAT APP ══ -->
+  <main id="app" class="app hidden">
+    <header class="chat-header">
+      <div class="peer">
+        <div class="peer-avatar" id="peerAvatar">·</div>
+        <div class="peer-meta">
+          <div class="peer-cap">Chatting with</div>
+          <div class="peer-name" id="peerName">…</div>
+          <div class="peer-status" id="peerStatus">offline</div>
+        </div>
+      </div>
+      <div class="header-actions">
+        <button class="icon-btn" id="btnCall" title="Voice call" aria-label="Voice call">
+          <svg viewBox="0 0 24 24"><path d="M6.6 10.8a15.9 15.9 0 0 0 6.6 6.6l2.2-2.2a1 1 0 0 1 1-.25 11.4 11.4 0 0 0 3.6.57 1 1 0 0 1 1 1V20a1 1 0 0 1-1 1A17 17 0 0 1 3 4a1 1 0 0 1 1-1h3.5a1 1 0 0 1 1 1 11.4 11.4 0 0 0 .57 3.6 1 1 0 0 1-.25 1z"/></svg>
+        </button>
+        <button class="icon-btn" id="btnVideo" title="Video call" aria-label="Video call">
+          <svg viewBox="0 0 24 24"><path d="M17 10.5V7a1 1 0 0 0-1-1H4a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-3.5l4 4v-11z"/></svg>
+        </button>
+        <button class="icon-btn" id="btnTheme" title="Theme" aria-label="Theme">
+          <svg viewBox="0 0 24 24"><path d="M12 3a9 9 0 1 0 0 18c1 0 1.6-.8 1.6-1.7 0-.5-.2-.9-.5-1.2-.3-.3-.5-.7-.5-1.1 0-.9.8-1.7 1.7-1.7H16a5 5 0 0 0 5-5c0-3.9-4-7.3-9-7.3z"/><circle cx="7.5" cy="12" r="1.2"/><circle cx="10" cy="8" r="1.2"/><circle cx="15" cy="8" r="1.2"/></svg>
+        </button>
+        <button class="icon-btn" id="btnLock" title="Lock" aria-label="Lock">
+          <svg viewBox="0 0 24 24"><path d="M12 2a5 5 0 0 0-5 5v3H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8a2 2 0 0 0-2-2h-1V7a5 5 0 0 0-5-5zm-3 8V7a3 3 0 0 1 6 0v3z"/></svg>
+        </button>
+      </div>
+      <div class="theme-pop hidden" id="themePop">
+        <div class="tp-label" id="tpWhoami"></div>
+        <div class="tp-swatches">
+          <button class="sw" data-t="amour" title="Amour"></button>
+          <button class="sw" data-t="chambers" title="Chambers"></button>
+          <button class="sw" data-t="obsidian" title="Obsidian"></button>
+          <button class="sw" data-t="turquoise" title="Turquoise"></button>
+          <button class="sw" data-t="violet" title="Violet"></button>
+        </div>
+        <div class="tp-actions" id="tpActions"></div>
+      </div>
+    </header>
+
+    <div class="messages" id="messages">
+      <div class="load-more hidden" id="loadMore">Load earlier</div>
+    </div>
+
+    <div class="typing-row" id="typingRow"></div>
+
+    <!-- reply preview -->
+    <div class="reply-bar hidden" id="replyBar">
+      <div class="reply-info"><span id="replyTo"></span></div>
+      <button class="icon-btn sm" id="replyCancel">✕</button>
+    </div>
+
+    <!-- unified expression panel: emoji / stickers / gif -->
+    <div class="expr-panel hidden" id="exprPanel">
+      <div class="expr-tabs">
+        <button class="expr-tab active" data-tab="emoji">😊 Emoji</button>
+        <button class="expr-tab" data-tab="stickers">✨ Stickers</button>
+        <button class="expr-tab" data-tab="gif">🔍 GIF</button>
+      </div>
+      <div class="gif-search hidden" id="gifSearch">
+        <input type="text" id="gifQuery" placeholder="Search GIFs…" autocomplete="off" />
+      </div>
+      <div class="expr-body" id="exprBody"></div>
+    </div>
+
+    <!-- attach menu -->
+    <div class="attach-menu hidden" id="attachMenu">
+      <button data-act="photo">🖼️ Photo</button>
+      <button data-act="video">🎬 Video</button>
+      <button data-act="file">📎 File</button>
+      <button data-act="location">📍 Location</button>
+      <button data-act="live">🛰️ Live location · 15 min</button>
+      <button data-act="schedule">🕒 Schedule message</button>
+    </div>
+
+    <!-- voice note recorder -->
+    <div class="rec-bar hidden" id="recBar">
+      <button class="rec-cancel" id="recCancel" title="Cancel">🗑️</button>
+      <div class="rec-dot"></div>
+      <div class="rec-time" id="recTime">0:00</div>
+      <div class="rec-wave" id="recWave"></div>
+      <button class="rec-send" id="recSend" title="Send voice note">
+        <svg viewBox="0 0 24 24"><path d="M4 12l16-8-6 8 6 8z"/></svg>
+      </button>
+    </div>
+
+    <footer class="compose" id="composeBar">
+      <button class="icon-btn" id="btnAttach" title="Attach" aria-label="Attach">
+        <svg viewBox="0 0 24 24"><path d="M16.5 6.5 8.7 14.3a2 2 0 0 0 2.8 2.8l7.8-7.8a4 4 0 1 0-5.6-5.6L5.6 11.6a6 6 0 0 0 8.5 8.5l6.4-6.4"/></svg>
+      </button>
+      <button class="icon-btn" id="btnEmoji" title="Emoji · Stickers · GIF" aria-label="Emoji">
+        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><circle cx="9" cy="10" r="1.2"/><circle cx="15" cy="10" r="1.2"/><path d="M8.5 14.5a4.5 4.5 0 0 0 7 0"/></svg>
+      </button>
+      <div class="input-wrap">
+        <textarea id="composer" rows="1" placeholder="Message…" maxlength="8000"></textarea>
+      </div>
+      <button class="icon-btn send hidden" id="btnSend" title="Send" aria-label="Send">
+        <svg viewBox="0 0 24 24"><path d="M4 12l16-8-6 8 6 8z"/></svg>
+      </button>
+      <button class="icon-btn mic" id="btnMic" title="Voice note" aria-label="Voice note">
+        <svg viewBox="0 0 24 24"><path d="M12 15a3 3 0 0 0 3-3V6a3 3 0 0 0-6 0v6a3 3 0 0 0 3 3z"/><path d="M6 11a6 6 0 0 0 12 0M12 18v3"/></svg>
+      </button>
+    </footer>
+    <input type="file" id="fileInput" hidden />
+
+    <!-- schedule dialog -->
+    <div class="modal hidden" id="schedModal">
+      <div class="modal-card">
+        <h3>🕒 Schedule message</h3>
+        <p class="modal-sub" id="schedPreview"></p>
+        <input type="datetime-local" id="schedWhen" />
+        <div class="modal-row">
+          <button class="mbtn ghost" id="schedCancel">Cancel</button>
+          <button class="mbtn" id="schedConfirm">Schedule</button>
+        </div>
+        <div class="sched-list" id="schedList"></div>
+      </div>
+    </div>
+  </main>
+
+  <!-- ══ CALL OVERLAY ══ -->
+  <div id="callOverlay" class="call-overlay hidden">
+    <div class="call-inner">
+      <video id="remoteVideo" class="remote-video" autoplay playsinline></video>
+      <video id="localVideo" class="local-video" autoplay playsinline muted></video>
+      <div class="call-info">
+        <div class="call-avatar" id="callAvatar">·</div>
+        <div class="call-name" id="callName">…</div>
+        <div class="call-state" id="callState">Calling…</div>
+        <div class="call-timer" id="callTimer"></div>
+      </div>
+      <div class="call-controls">
+        <button class="call-btn mute" id="btnMute" title="Mute"><span>🎙️</span></button>
+        <button class="call-btn accept hidden" id="btnAccept" title="Accept"><span>✅</span></button>
+        <button class="call-btn cam" id="btnCam" title="Camera"><span>📷</span></button>
+        <button class="call-btn hangup" id="btnHangup" title="Hang up"><span>📵</span></button>
+      </div>
+    </div>
+  </div>
+
+  <div id="toast" class="toast hidden"></div>
+
+  <script src="/emoji.js?v=2"></script>
+  <script src="/app.js?v=2"></script>
+</body>
+</html>

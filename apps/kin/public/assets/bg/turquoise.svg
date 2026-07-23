@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 900" preserveAspectRatio="xMidYMid slice">
+  <defs>
+    <linearGradient id="tq" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#093036"/><stop offset="55%" stop-color="#052227"/><stop offset="100%" stop-color="#021317"/>
+    </linearGradient>
+    <linearGradient id="aur" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#3ee0d0" stop-opacity="0"/><stop offset="50%" stop-color="#3ee0d0" stop-opacity="0.5"/><stop offset="100%" stop-color="#2bb5c8" stop-opacity="0"/>
+    </linearGradient>
+    <radialGradient id="tglow" cx="50%" cy="50%" r="50%">
+      <stop offset="0" stop-color="#3ee0d0" stop-opacity="0.45"/><stop offset="100%" stop-color="#3ee0d0" stop-opacity="0"/>
+    </radialGradient>
+    <filter id="s3"><feGaussianBlur stdDeviation="30"/></filter>
+  </defs>
+  <rect width="1440" height="900" fill="url(#tq)"/>
+  <circle cx="1120" cy="120" r="360" fill="url(#tglow)" filter="url(#s3)"/>
+  <circle cx="180" cy="820" r="360" fill="url(#tglow)" filter="url(#s3)" opacity="0.7"/>
+  <g filter="url(#s3)" opacity="0.8">
+    <path d="M-100 300 C 300 180 640 380 1000 250 S 1540 320 1560 200 L1560 260 C 1300 360 900 300 600 380 S 100 360 -100 420 Z" fill="url(#aur)"/>
+    <path d="M-100 560 C 340 460 700 640 1060 520 S 1560 590 1580 480 L1580 540 C 1320 620 940 560 620 640 S 120 620 -100 680 Z" fill="url(#aur)" opacity="0.7"/>
+  </g>
+  <g fill="#8ff2e8" fill-opacity="0.3">
+    <circle cx="300" cy="220" r="1.8"/><circle cx="760" cy="160" r="1.5"/><circle cx="1200" cy="300" r="1.8"/>
+    <circle cx="480" cy="680" r="1.6"/><circle cx="1020" cy="720" r="1.6"/>
+  </g>
+</svg>

@@ -1,0 +1,166 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#040a14">
+<link rel="manifest" href="/manifest.webmanifest">
+<link rel="apple-touch-icon" href="/icon.png">
+<title>Attic</title>
+<!-- Sona: fleet gate removed; unauthed loads redirect to the native /gate.html -->
+<link rel="stylesheet" href="/styles.css?v=8">
+</head>
+<body>
+
+<!-- boot -->
+<div id="boot">
+  <div class="boot-ring"><i></i></div>
+  <div class="boot-log" id="bootlog"></div>
+</div>
+
+<!-- header removed — minimal floating controls only. pStats/pClock kept hidden so app.js keeps feeding them. -->
+<div id="hiddenmeta" hidden><span id="pStats"></span><span id="pClock"></span></div>
+<div id="floatctl">
+  <button class="float-btn" id="btnReveal" title="Open Camera Roll folder on the PC">📂</button>
+  <button class="float-btn" id="btnLogout" title="Sign out">⏻</button>
+</div>
+
+<main id="app">
+
+  <!-- ====== CAMERA ====== -->
+  <section class="card stage-card">
+
+    <!-- camera top plate: brushed metal + Canon-style mode wheel -->
+    <div class="cam-top">
+      <div class="cam-plate">
+        <span class="cam-mark">ATTIC</span>
+        <span class="cam-series">EOS · N1</span>
+      </div>
+      <button class="mode-wheel" id="modeWheel" title="Mode dial — tap to turn">
+        <span class="wheel-knurl"></span>
+        <span class="wheel-face"><span class="wheel-mode" id="wheelMode">AUTO</span></span>
+        <span class="wheel-index"></span>
+      </button>
+    </div>
+
+    <div class="viewport" id="viewport">
+      <video id="video" autoplay playsinline muted></video>
+      <canvas id="canvas" hidden></canvas>
+
+      <!-- overlays -->
+      <div class="grid-overlay" id="gridOverlay"></div>
+      <div class="flash" id="flash"></div>
+      <div class="vp-badge" id="vpBadge">CAM OFFLINE</div>
+      <div class="rec-badge" id="recBadge" hidden><span class="rec-dot"></span><span id="recTime">0:00</span></div>
+      <div class="countdown" id="countdown" hidden></div>
+
+      <!-- effect overlays -->
+      <div class="vignette" id="vignette"></div>
+      <div class="zoom-pill" id="zoomPill" hidden>1.0×</div>
+
+      <!-- Pixel-style horizon level (tap ▦ grid area to toggle via btnLevel) -->
+      <div class="level" id="level" hidden>
+        <span class="level-line ref"></span>
+        <span class="level-line live" id="levelLive"></span>
+        <span class="level-deg" id="levelDeg">0°</span>
+      </div>
+
+      <!-- Pixel-style lens chips (populated from device zoom caps) -->
+      <div class="lens-chips" id="lensChips"></div>
+
+      <!-- top toolstrip -->
+      <div class="vp-tools">
+        <button class="vt" id="btnGrid"   title="Rule-of-thirds grid">▦</button>
+        <button class="vt" id="btnLevel"  title="Horizon level">⊿</button>
+        <button class="vt" id="btnMirror" title="Mirror preview">⇄</button>
+        <button class="vt" id="btnTimer"  title="Self-timer"><span id="timerLbl">0s</span></button>
+        <button class="vt" id="btnTorch"  title="Torch" hidden>🔦</button>
+        <button class="vt" id="btnGeo"    title="Tag location" data-on="0">📍</button>
+        <button class="vt" id="btnFx"     title="Filters">✦</button>
+        <button class="vt" id="btnPro"    title="Pro controls">⚙</button>
+      </div>
+
+      <!-- Instagram-style filter strip -->
+      <div class="fx-strip" id="fxStrip" hidden></div>
+
+      <!-- no-camera fallback -->
+      <div class="vp-fallback" id="vpFallback" hidden>
+        <div class="big">📷</div>
+        <p id="fallbackMsg">Grant camera access to start shooting.</p>
+        <button class="btn-primary" id="btnGrant">Enable camera</button>
+      </div>
+    </div>
+
+    <!-- PRO controls -->
+    <div class="pro-panel" id="proPanel" hidden>
+      <div class="pro-grid">
+        <div class="pro-row"><label>Zoom</label><input type="range" id="pZoom" min="1" max="5" step="0.1" value="1"><span class="pv" id="vZoom">1.0×</span></div>
+        <div class="pro-row"><label>Exposure</label><input type="range" id="pBright" min="0.5" max="1.6" step="0.01" value="1"><span class="pv" id="vBright">0</span></div>
+        <div class="pro-row"><label>Contrast</label><input type="range" id="pContrast" min="0.6" max="1.6" step="0.01" value="1"><span class="pv" id="vContrast">0</span></div>
+        <div class="pro-row"><label>Saturation</label><input type="range" id="pSat" min="0" max="2" step="0.01" value="1"><span class="pv" id="vSat">0</span></div>
+        <div class="pro-row"><label>White Bal.</label><input type="range" id="pWarmth" min="-1" max="1" step="0.02" value="0"><span class="pv" id="vWarmth">0</span></div>
+        <div class="pro-row"><label>Vignette</label><input type="range" id="pVig" min="0" max="1" step="0.02" value="0"><span class="pv" id="vVig">0</span></div>
+      </div>
+      <button class="pro-reset" id="pReset">Reset all</button>
+    </div>
+
+    <!-- capture mode -->
+    <div class="mode-switch" id="modeSwitch">
+      <button class="mode active" data-mode="photo">◉ Photo</button>
+      <button class="mode" data-mode="video">▷ Video</button>
+    </div>
+
+    <!-- shutter row -->
+    <div class="shutter-row">
+      <button class="round-btn" id="btnUpload" title="Import a photo or video from this device">⤓</button>
+      <button class="shutter" id="btnShutter" aria-label="Take photo"><span></span></button>
+      <button class="round-btn" id="btnSwitch" title="Switch camera">⟲</button>
+      <input type="file" id="filePick" accept="image/*" hidden>
+    </div>
+
+    <!-- pipeline tracker -->
+    <div class="pipeline" id="pipeline">
+      <div class="step" data-step="capture"><span class="dotn">1</span><label>Capture</label></div>
+      <div class="bar"></div>
+      <div class="step" data-step="upload"><span class="dotn">2</span><label>Upload</label></div>
+      <div class="bar"></div>
+      <div class="step" data-step="save"><span class="dotn">3</span><label>PC&nbsp;Save</label></div>
+      <div class="bar"></div>
+      <div class="step" data-step="archive"><span class="dotn">4</span><label>Cloud&nbsp;Archive</label></div>
+    </div>
+  </section>
+
+  <!-- ====== GALLERY ====== -->
+  <section class="card gallery-card">
+    <div class="gallery-head">
+      <div class="tabs">
+        <button class="tab active" data-tab="all">All</button>
+        <button class="tab" data-tab="fav">★ Favorites</button>
+      </div>
+      <div class="gstats" id="gStats"></div>
+    </div>
+    <div id="gallery" class="gallery"></div>
+    <div class="empty" id="galleryEmpty" hidden>No shots yet — hit the shutter.</div>
+  </section>
+
+</main>
+
+<!-- ====== LIGHTBOX ====== -->
+<div class="lightbox" id="lightbox" hidden>
+  <button class="lb-close" id="lbClose">✕</button>
+  <button class="lb-nav lb-prev" id="lbPrev">‹</button>
+  <button class="lb-nav lb-next" id="lbNext">›</button>
+  <div class="lb-stage"><img id="lbImg" alt=""><video id="lbVid" controls playsinline hidden></video></div>
+  <div class="lb-meta" id="lbMeta"></div>
+  <div class="lb-actions">
+    <button class="lb-act" id="lbFav">★ Favorite</button>
+    <a class="lb-act" id="lbDownload" download>⤓ Download</a>
+    <button class="lb-act danger" id="lbDelete">🗑 Delete</button>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="/app.js?v=9-sso"></script>
+</body>
+</html>

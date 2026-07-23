@@ -1,0 +1,18 @@
+{
+  "_comment": "Kin config (Sona). Set a private passcode for each person. Change names/avatars freely. TURN is optional — only needed if a call fails to connect when you are NOT both on the mesh/same-wifi. The installer wizard writes this file; the values below are placeholders.",
+  "owner": "me",
+  "users": {
+    "1234": { "id": "me", "name": "You", "avatar": "Y" },
+    "5678": { "id": "kin", "name": "Loved one", "avatar": "♥" }
+  },
+  "iceServers": [
+    { "urls": "stun:stun.l.google.com:19302" },
+    { "urls": "stun:stun1.l.google.com:19302" }
+  ],
+  "turn": {
+    "_note": "Fill url/username/credential only if a call fails to connect over the open internet. Not needed on tailnet or same wifi.",
+    "urls": "",
+    "username": "",
+    "credential": ""
+  }
+}

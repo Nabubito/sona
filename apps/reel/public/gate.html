@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Reel — Locked</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --c-cyan: #00e5ff;
+  --c-magenta: #ff3df0;
+  --c-violet: #9d4dff;
+  --c-rose: #ff2a6d;
+  --bg-deep: #04060f;
+}
+html, body {
+  background: var(--bg-deep);
+  min-height: 100vh;
+  font-family: 'Share Tech Mono', monospace;
+  color: #cfd8e3;
+  overflow: hidden;
+}
+body {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px 16px;
+  position: relative;
+}
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background:
+    radial-gradient(ellipse 60% 40% at 20% 15%, rgba(0,229,255,0.16) 0%, transparent 60%),
+    radial-gradient(ellipse 50% 35% at 85% 20%, rgba(255,61,240,0.12) 0%, transparent 60%),
+    radial-gradient(ellipse 55% 35% at 80% 90%, rgba(157,77,255,0.14) 0%, transparent 60%);
+  z-index: -1;
+  pointer-events: none;
+}
+.gate {
+  width: 100%;
+  max-width: 400px;
+  background: linear-gradient(180deg, rgba(20,28,55,0.85) 0%, rgba(12,18,38,0.92) 100%);
+  border: 1px solid rgba(0,229,255,0.25);
+  border-radius: 24px;
+  padding: 36px 28px 32px;
+  box-shadow:
+    0 0 0 1px rgba(0,229,255,0.08) inset,
+    0 24px 60px rgba(0,229,255,0.15),
+    0 8px 30px rgba(0,0,0,0.6);
+  text-align: center;
+}
+.brand {
+  font-family: 'Orbitron', sans-serif;
+  font-weight: 900;
+  font-size: 22px;
+  letter-spacing: 4px;
+  background: linear-gradient(90deg, var(--c-cyan), var(--c-magenta), var(--c-violet));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  margin-bottom: 6px;
+}
+.sub {
+  font-size: 11px;
+  letter-spacing: 3px;
+  color: #6e8095;
+  text-transform: uppercase;
+  margin-bottom: 28px;
+}
+.dots {
+  display: flex;
+  justify-content: center;
+  gap: 14px;
+  margin: 4px 0 24px;
+}
+.dot {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  border: 2px solid rgba(0,229,255,0.35);
+  background: rgba(0,229,255,0.06);
+  transition: transform 0.15s ease, border-color 0.15s ease, background 0.15s ease, box-shadow 0.15s ease;
+}
+.dot.filled {
+  background: var(--c-cyan);
+  border-color: var(--c-cyan);
+  box-shadow: 0 0 14px rgba(0,229,255,0.7);
+  transform: scale(1.1);
+}
+.gate.shake { animation: shake 0.4s; }
+.gate.shake .dot { border-color: var(--c-rose); background: rgba(255,42,109,0.18); box-shadow: 0 0 14px rgba(255,42,109,0.5); }
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  20% { transform: translateX(-8px); }
+  40% { transform: translateX(8px); }
+  60% { transform: translateX(-6px); }
+  80% { transform: translateX(6px); }
+}
+.gate.ok .dot { border-color: #5bffb0; background: #5bffb0; box-shadow: 0 0 16px rgba(91,255,176,0.8); }
+
+.pad {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  margin-top: 8px;
+}
+.key {
+  font-family: 'Orbitron', sans-serif;
+  font-weight: 700;
+  font-size: 22px;
+  padding: 18px 0;
+  border-radius: 16px;
+  background: linear-gradient(180deg, rgba(0,229,255,0.10) 0%, rgba(0,229,255,0.04) 100%);
+  border: 1px solid rgba(0,229,255,0.25);
+  color: #e6f7ff;
+  cursor: pointer;
+  user-select: none;
+  transition: transform 0.08s ease, background 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+}
+.key:hover { background: rgba(0,229,255,0.18); border-color: rgba(0,229,255,0.5); }
+.key:active { transform: scale(0.96); background: rgba(0,229,255,0.28); box-shadow: 0 0 18px rgba(0,229,255,0.35); }
+.key.fn {
+  font-size: 14px;
+  letter-spacing: 2px;
+  background: rgba(255,61,240,0.08);
+  border-color: rgba(255,61,240,0.25);
+  color: #ffb6f5;
+}
+.key.fn:hover { background: rgba(255,61,240,0.18); border-color: rgba(255,61,240,0.5); }
+.msg {
+  margin-top: 18px;
+  min-height: 18px;
+  font-size: 12px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: #6e8095;
+}
+.msg.err { color: var(--c-rose); }
+.msg.ok { color: #5bffb0; }
+</style>
+</head>
+<body>
+<div class="gate" id="gate">
+  <div class="brand">REEL</div>
+  <div class="sub">Enter PIN</div>
+  <div class="dots" id="dots">
+    <div class="dot"></div>
+    <div class="dot"></div>
+    <div class="dot"></div>
+    <div class="dot"></div>
+  </div>
+  <div class="pad" id="pad">
+    <div class="key" data-k="1">1</div>
+    <div class="key" data-k="2">2</div>
+    <div class="key" data-k="3">3</div>
+    <div class="key" data-k="4">4</div>
+    <div class="key" data-k="5">5</div>
+    <div class="key" data-k="6">6</div>
+    <div class="key" data-k="7">7</div>
+    <div class="key" data-k="8">8</div>
+    <div class="key" data-k="9">9</div>
+    <div class="key fn" data-k="clear">CLR</div>
+    <div class="key" data-k="0">0</div>
+    <div class="key fn" data-k="back">DEL</div>
+  </div>
+  <div class="msg" id="msg">&nbsp;</div>
+</div>
+<script>
+(() => {
+  const gate = document.getElementById('gate');
+  const dots = [...document.querySelectorAll('.dot')];
+  const msg = document.getElementById('msg');
+  let pin = '';
+  let busy = false;
+
+  function render() {
+    dots.forEach((d, i) => d.classList.toggle('filled', i < pin.length));
+  }
+  function setMsg(text, kind) {
+    msg.className = 'msg' + (kind ? ' ' + kind : '');
+    msg.textContent = text || ' ';
+  }
+  function shake() {
+    gate.classList.add('shake');
+    setTimeout(() => gate.classList.remove('shake'), 420);
+  }
+  async function submit() {
+    if (busy) return;
+    busy = true;
+    setMsg('Verifying…');
+    try {
+      const r = await fetch('/api/auth', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ pin })
+      });
+      if (r.ok) {
+        gate.classList.add('ok');
+        setMsg('Access granted', 'ok');
+        setTimeout(() => { window.location.href = '/'; }, 350);
+        return;
+      }
+      if (r.status === 429) {
+        const j = await r.json().catch(() => ({}));
+        setMsg('Locked ' + (j.wait || 60) + 's', 'err');
+        shake();
+      } else {
+        setMsg('Wrong PIN', 'err');
+        shake();
+      }
+      pin = '';
+      render();
+    } catch (e) {
+      setMsg('Network error', 'err');
+    } finally {
+      busy = false;
+    }
+  }
+  function press(k) {
+    if (busy) return;
+    if (k === 'clear') { pin = ''; setMsg(''); render(); return; }
+    if (k === 'back') { pin = pin.slice(0, -1); setMsg(''); render(); return; }
+    if (pin.length >= 4) return;
+    pin += k;
+    setMsg('');
+    render();
+    if (pin.length === 4) setTimeout(submit, 120);
+  }
+  document.getElementById('pad').addEventListener('click', e => {
+    const k = e.target.closest('.key');
+    if (k) press(k.dataset.k);
+  });
+  document.addEventListener('keydown', e => {
+    if (e.key >= '0' && e.key <= '9') press(e.key);
+    else if (e.key === 'Backspace') press('back');
+    else if (e.key === 'Escape') press('clear');
+    else if (e.key === 'Enter' && pin.length === 4) submit();
+  });
+})();
+</script>
+</body>
+</html>

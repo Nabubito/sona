@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>Reel</title>
+<style>
+  :root { --c1: 0,229,255; --c3: 150,90,255; }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { margin: 0; height: 100%; overflow: hidden; background: #000; font-family: system-ui, sans-serif; }
+  #screen { position: fixed; inset: 0; overflow: hidden; background: #000; touch-action: none; }
+  #screen canvas { transform-origin: 0 0; }
+  #kbinput { position: fixed; left: -9999px; top: 0; opacity: 0; width: 1px; height: 1px; }
+
+  #status {
+    position: fixed; top: 10px; left: 50%; transform: translateX(-50%);
+    background: rgba(8,12,22,0.85); color: #9fe9ff; border: 1px solid rgba(var(--c1),0.4);
+    padding: 7px 16px; border-radius: 20px; font-size: 12.5px; letter-spacing: .5px;
+    z-index: 30; pointer-events: none; transition: opacity .4s; backdrop-filter: blur(6px);
+  }
+  #status.hide { opacity: 0; }
+
+  #bar {
+    position: fixed; bottom: 0; left: 0; right: 0; z-index: 40;
+    display: flex; gap: 7px; padding: 9px 10px calc(9px + env(safe-area-inset-bottom));
+    justify-content: center; flex-wrap: wrap;
+    background: linear-gradient(0deg, rgba(5,8,16,0.92), rgba(5,8,16,0.0));
+    transition: transform .3s ease, opacity .3s ease;
+  }
+  #bar.tucked { transform: translateY(78%); opacity: .25; }
+  .btn {
+    appearance: none; cursor: pointer; border-radius: 11px;
+    font-size: 13px; font-weight: 600; letter-spacing: .4px; padding: 11px 14px;
+    color: #d6f3ff; background: rgba(14,22,38,0.92);
+    border: 1px solid rgba(var(--c1),0.28);
+    transition: background .15s, transform .1s, border-color .15s, color .15s;
+    user-select: none; white-space: nowrap;
+  }
+  .btn:active { transform: scale(0.94); }
+  .btn.mon.active {
+    background: linear-gradient(95deg, rgba(var(--c1),0.95), rgba(var(--c3),0.95));
+    color: #04121a; border-color: transparent;
+  }
+  .btn.warn { border-color: rgba(255,90,150,0.4); color: #ffb8d6; }
+  .btn.lockon { background: linear-gradient(95deg, rgba(255,184,64,0.95), rgba(255,96,150,0.92)); color: #1a0d00; border-color: transparent; }
+  .sep { width: 1px; align-self: stretch; background: rgba(var(--c1),0.18); margin: 4px 3px; }
+  #handle {
+    position: fixed; bottom: 0; left: 50%; transform: translateX(-50%);
+    width: 60px; height: 5px; border-radius: 3px; background: rgba(var(--c1),0.45);
+    margin-bottom: 4px; z-index: 41; cursor: pointer; display: none;
+  }
+</style>
+</head>
+<body>
+  <div id="screen"></div>
+  <textarea id="kbinput" autocapitalize="off" autocomplete="off" autocorrect="off" spellcheck="false"></textarea>
+  <div id="status">Connecting…</div>
+  <div id="handle"></div>
+  <div id="bar">
+    <div id="monBtns" style="display:flex;gap:7px;flex-wrap:wrap"></div>
+    <div class="sep"></div>
+    <button class="btn lockon" id="lockBtn">🔒 Locked</button>
+    <button class="btn" id="resetBtn">⟲ Reset</button>
+    <button class="btn" id="kbBtn">⌨ Keys</button>
+    <button class="btn" id="copyBtn">📋 Copy</button>
+    <button class="btn" id="pasteBtn">📥 Paste</button>
+    <button class="btn" id="cadBtn">Ctrl+Alt+Del</button>
+    <button class="btn" id="fsBtn">⛶ Full</button>
+    <button class="btn warn" id="exitBtn">✕ Exit</button>
+  </div>
+
+<script type="module">
+import RFB from '/novnc/core/rfb.js';
+import Keyboard from '/novnc/core/input/keyboard.js';
+
+const screen  = document.getElementById('screen');
+const statusEl = document.getElementById('status');
+const bar     = document.getElementById('bar');
+const handle  = document.getElementById('handle');
+const monBtns = document.getElementById('monBtns');
+const kbinput = document.getElementById('kbinput');
+
+let rfb, canvas;
+let monitors = [], fbW = 0, fbH = 0;
+let curRect = null;          // {x,y,w,h} currently displayed (LOGICAL coords)
+let curKey = 'both';
+let zoom = 1, panX = 0, panY = 0;   // user zoom/pan applied on top of the fit
+
+function setStatus(t, fade) {
+  statusEl.textContent = t;
+  statusEl.classList.remove('hide');
+  if (fade) setTimeout(() => statusEl.classList.add('hide'), 1400);
+}
+
+// ---- connect ----
+const wsUrl = (location.protocol === 'https:' ? 'wss' : 'ws') + '://' + location.host + '/desktop/ws';
+rfb = new RFB(screen, wsUrl, {});
+rfb.scaleViewport = false;     // we crop/scale ourselves, per monitor
+rfb.clipViewport  = false;
+rfb.resizeSession = false;
+rfb.showDotCursor = true;
+rfb.viewOnly      = true;       // start locked — no accidental clicks while looking around
+
+rfb.addEventListener('connect', async () => {
+  setStatus('Connected', true);
+  canvas = screen.querySelector('canvas');
+  await loadMonitors();
+  // default to a single screen (primary if known, else the first) — never both
+  const primaryIdx = monitors.findIndex(m => m.primary);
+  if (monitors.length) selectMonitor(primaryIdx >= 0 ? primaryIdx : 0);
+  else selectBoth();
+  applyLock();
+});
+rfb.addEventListener('disconnect', e => {
+  setStatus(e.detail && e.detail.clean ? 'Disconnected' : 'Connection lost — reload to reconnect');
+});
+rfb.addEventListener('securityfailure', () => setStatus('Auth failed'));
+
+// ---- soft keyboard ----
+// noVNC's sendKey/sendCtrlAltDel are NO-OPS while viewOnly is on (rfb.js), and we
+// boot Locked (viewOnly=true) so panning never mis-clicks. So typing/CAD silently
+// vanish unless we unlock first. The Keys + Ctrl+Alt+Del buttons now auto-unlock.
+const XK_BackSpace = 0xff08, XK_Return = 0xff0d, XK_Tab = 0xff09, XK_Escape = 0xff1b;
+const XK_Control_L = 0xffe3, XK_v = 0x0076;
+const isTouch = window.matchMedia('(pointer: coarse)').matches;
+
+const kb = new Keyboard(kbinput);
+kb.onkeyevent = (keysym, code, down) => rfb && rfb.sendKey(keysym, code, down);
+
+if (!isTouch) {
+  // Hardware keyboard: noVNC's engine translates real keydown events fine.
+  kb.grab();
+} else {
+  // Soft keyboards (Fold/Android) fire keyCode 229 + composition events that the
+  // noVNC engine can't translate, so chars never type. Map input events to keysyms
+  // ourselves. Don't grab noVNC's keyboard here — it would double-send specials.
+  function sendChar(ch) {
+    if (!rfb) return;
+    const cp = ch.codePointAt(0);
+    const keysym = cp < 0x100 ? cp : 0x01000000 + cp;   // Latin-1 direct, else Unicode keysym
+    rfb.sendKey(keysym, null, true);
+    rfb.sendKey(keysym, null, false);
+  }
+  kbinput.addEventListener('beforeinput', e => {
+    if (!rfb) return;
+    switch (e.inputType) {
+      case 'insertText':
+      case 'insertCompositionText':
+        if (e.data) { for (const ch of e.data) sendChar(ch); }
+        e.preventDefault(); break;
+      case 'deleteContentBackward': rfb.sendKey(XK_BackSpace, 'Backspace'); e.preventDefault(); break;
+      case 'insertLineBreak':
+      case 'insertParagraph':       rfb.sendKey(XK_Return, 'Enter'); e.preventDefault(); break;
+    }
+  });
+  // Some soft keyboards emit real keydowns for Enter/Backspace/Tab/Esc — handle those too.
+  kbinput.addEventListener('keydown', e => {
+    if (!rfb) return;
+    const map = { Enter: XK_Return, Backspace: XK_BackSpace, Tab: XK_Tab, Escape: XK_Escape };
+    if (map[e.key]) { rfb.sendKey(map[e.key], e.key); e.preventDefault(); }
+  });
+  // Keep the textarea empty so backspace always produces a deleteContentBackward.
+  kbinput.addEventListener('input', () => { kbinput.value = ''; });
+}
+
+document.getElementById('kbBtn').onclick = () => {
+  if (locked) { locked = false; applyLock(); }   // typing is swallowed while Locked
+  kbinput.value = '';
+  kbinput.focus();             // triggers the on-screen keyboard on touch devices
+};
+
+// ---- monitor geometry + cropping ----
+async function loadMonitors() {
+  try {
+    const r = await fetch('/api/desktop-monitors');
+    const d = await r.json();
+    monitors = d.monitors || [];
+    fbW = d.fbW || 0; fbH = d.fbH || 0;
+  } catch { monitors = []; }
+  buildMonButtons();
+}
+
+function buildMonButtons() {
+  monBtns.innerHTML = '';
+  monitors.forEach((m, i) => {
+    const b = document.createElement('button');
+    b.className = 'btn mon';
+    b.dataset.key = 'm' + i;
+    b.textContent = (m.primary ? '🖥️ ' : '🎮 ') + m.label;
+    b.onclick = () => selectMonitor(i);
+    monBtns.appendChild(b);
+  });
+  if (monitors.length > 1) {
+    const both = document.createElement('button');
+    both.className = 'btn mon';
+    both.dataset.key = 'both';
+    both.textContent = '⊞ Both';
+    both.onclick = selectBoth;
+    monBtns.appendChild(both);
+  }
+}
+
+function applyRect(rx, ry, rw, rh) {
+  if (!canvas || !rw || !rh) return;
+  curRect = { x: rx, y: ry, w: rw, h: rh };   // keep LOGICAL coords (render reapplies these)
+  render();
+}
+function render() {
+  if (!canvas || !curRect) return;
+  // Server reports monitor geometry in DPI-scaled (logical) pixels, but the VNC
+  // framebuffer is in physical pixels. Rescale the rect to the real canvas so the
+  // crop lands on the right screen regardless of display scaling.
+  let px = curRect.x, py = curRect.y, pw = curRect.w, ph = curRect.h;
+  if (fbW && fbH && canvas.width && canvas.height) {
+    const sx = canvas.width / fbW, sy = canvas.height / fbH;
+    px *= sx; pw *= sx; py *= sy; ph *= sy;
+  }
+  const VW = window.innerWidth, VH = window.innerHeight;
+  const s = Math.min(VW / pw, VH / ph) * zoom;   // fit, then user zoom
+  const ox = (VW - pw * s) / 2 + panX;
+  const oy = (VH - ph * s) / 2 + panY;
+  canvas.style.transform = `translate(${ox - px * s}px, ${oy - py * s}px) scale(${s})`;
+  // Keep noVNC's pointer mapping in sync with our manual crop+scale. It maps
+  // touches via absX/absY = pos / display._scale; since scaleViewport is off it
+  // pins that to 1.0 and ignores our transform, sending clicks to the wrong
+  // screen. Feed it our real scale so taps land on the monitor you're viewing.
+  if (rfb && rfb._display) rfb._display._scale = s;
+}
+function markActive(key) {
+  curKey = key;
+  document.querySelectorAll('.btn.mon').forEach(b => b.classList.toggle('active', b.dataset.key === key));
+}
+function resetView() { zoom = 1; panX = 0; panY = 0; }
+function selectMonitor(i) {
+  const m = monitors[i]; if (!m) return;
+  resetView();
+  applyRect(m.x, m.y, m.w, m.h);
+  markActive('m' + i);
+  setStatus('Viewing ' + m.label, true);
+}
+function selectBoth() {
+  resetView();
+  applyRect(0, 0, fbW || (canvas ? canvas.width : 0), fbH || (canvas ? canvas.height : 0));
+  markActive('both');
+  setStatus('Viewing both screens', true);
+}
+
+// reapply current crop on resize / rotate
+let rz;
+window.addEventListener('resize', () => {
+  clearTimeout(rz);
+  rz = setTimeout(() => {
+    if (curKey === 'both') selectBoth();
+    else if (curRect) applyRect(curRect.x, curRect.y, curRect.w, curRect.h);
+  }, 120);
+});
+
+// ---- toolbar actions ----
+document.getElementById('cadBtn').onclick = () => {
+  if (!rfb) return;
+  if (locked) { locked = false; applyLock(); }   // CAD is a no-op while Locked (viewOnly)
+  rfb.sendCtrlAltDel();
+  setStatus('Ctrl+Alt+Del sent', true);
+};
+
+// ---- clipboard sync (both directions also no-op while viewOnly, so we unlock) ----
+// PC clipboard is pushed to us on change (only while not viewOnly); cache the latest.
+let remoteClip = '';
+rfb.addEventListener('clipboard', e => {
+  if (e.detail && typeof e.detail.text === 'string') remoteClip = e.detail.text;
+});
+document.getElementById('copyBtn').onclick = async () => {
+  if (!remoteClip) { setStatus('No PC clipboard yet — copy on the PC (in Control) first', true); return; }
+  try { await navigator.clipboard.writeText(remoteClip); setStatus('PC clipboard → phone ✓', true); }
+  catch { setStatus('Phone blocked clipboard write', true); }
+};
+document.getElementById('pasteBtn').onclick = async () => {
+  if (!rfb) return;
+  let text = '';
+  try { text = await navigator.clipboard.readText(); }
+  catch { setStatus('Allow clipboard access in the browser, then retry', true); return; }
+  if (!text) { setStatus('Phone clipboard is empty', true); return; }
+  if (locked) { locked = false; applyLock(); }   // clipboardPasteFrom + Ctrl+V need control
+  rfb.clipboardPasteFrom(text);                    // load it into the PC clipboard
+  setTimeout(() => {                               // then paste into the focused field
+    rfb.sendKey(XK_Control_L, 'ControlLeft', true);
+    rfb.sendKey(XK_v, 'KeyV', true);
+    rfb.sendKey(XK_v, 'KeyV', false);
+    rfb.sendKey(XK_Control_L, 'ControlLeft', false);
+  }, 80);
+  setStatus('Phone clipboard → PC (pasted) ✓', true);
+};
+document.getElementById('fsBtn').onclick  = () => {
+  if (!document.fullscreenElement) (document.documentElement.requestFullscreen || (()=>{})).call(document.documentElement);
+  else document.exitFullscreen();
+};
+document.getElementById('exitBtn').onclick = () => { try { rfb.disconnect(); } catch {} location.href = '/'; };
+
+// ---- input lock: start locked so panning / looking never mis-clicks ----
+let locked = true;
+const lockBtn = document.getElementById('lockBtn');
+function applyLock() {
+  if (rfb) rfb.viewOnly = locked;
+  lockBtn.textContent = locked ? '🔒 Locked' : '🖱️ Control';
+  lockBtn.classList.toggle('lockon', locked);
+  setStatus(locked ? 'Locked — drag to pan, pinch to zoom; tap 🖱️ Control to click' : 'Control — taps now reach the desktop', true);
+}
+lockBtn.onclick = () => { locked = !locked; applyLock(); };
+document.getElementById('resetBtn').onclick = () => { resetView(); render(); setStatus('View reset', true); };
+
+// bar stays pinned open (per user pref) — no auto-hide
+handle.style.display = 'none';
+
+// ---- pan + pinch-zoom while LOCKED (inspect without ever clicking) ----
+// Capture-phase + stopPropagation so noVNC never sees these touches while locked;
+// when unlocked we bail immediately, leaving Control-mode clicking fully intact.
+const pts = new Map();
+let pinchBase = 0, zoomBase = 1;
+function clampPan() { const lim = 6000 * zoom; panX = Math.max(-lim, Math.min(lim, panX)); panY = Math.max(-lim, Math.min(lim, panY)); }
+screen.addEventListener('pointerdown', e => {
+  if (!locked) return;
+  pts.set(e.pointerId, { x: e.clientX, y: e.clientY });
+  if (pts.size === 2) {
+    const a = [...pts.values()];
+    pinchBase = Math.hypot(a[0].x - a[1].x, a[0].y - a[1].y) || 1;
+    zoomBase = zoom;
+  }
+  e.stopPropagation();
+}, true);
+screen.addEventListener('pointermove', e => {
+  if (!locked || !pts.has(e.pointerId)) return;
+  const prev = pts.get(e.pointerId);
+  pts.set(e.pointerId, { x: e.clientX, y: e.clientY });
+  if (pts.size >= 2) {
+    const a = [...pts.values()];
+    const d = Math.hypot(a[0].x - a[1].x, a[0].y - a[1].y) || 1;
+    zoom = Math.max(1, Math.min(6, zoomBase * d / pinchBase));
+  } else {
+    panX += e.clientX - prev.x;
+    panY += e.clientY - prev.y;
+  }
+  clampPan();
+  render();
+  e.stopPropagation();
+}, true);
+function endPt(e) { if (pts.has(e.pointerId)) { pts.delete(e.pointerId); if (locked) e.stopPropagation(); } }
+screen.addEventListener('pointerup', endPt, true);
+screen.addEventListener('pointercancel', endPt, true);
+</script>
+</body>
+</html>
