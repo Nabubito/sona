@@ -32,10 +32,9 @@ const VAULT   = process.env.CAM_VAULT || path.join(ROLL, '.vault');
 for (const d of [ROLL, VAULT, THUMBS]) fs.mkdirSync(d, { recursive: true });
 
 const PORT        = parseInt(process.env.PORT || '3060', 10);
-const PASSCODE    = process.env.CAM_PASS || 'changeme';
-// The 9-dot unlock pattern (dots 1-9, phone-keypad layout). The installer wizard
-// sets this per-install; the value below is a placeholder. Override with CAM_PATTERN.
-const PATTERN     = process.env.CAM_PATTERN || '0000';
+// The passcode that unlocks the Attic. Set your own with CAM_PASS; the value
+// below is a placeholder the first-run wizard replaces.
+const PASSCODE    = process.env.CAM_PASS || '0000';
 const COOKIE_NAME = 'cam_session';
 // Optional off-site backup. If you wire up rclone (`rclone config`) and set
 // CAM_RCLONE_REMOTE=myremote:camera, every archived shot is pushed there too.
@@ -72,7 +71,7 @@ setInterval(()=>{ const now=Date.now(); for (const [k,v] of fails) if (!v.until 
 function parseCookies(req){ const out={}; const h=req.headers.cookie; if(!h) return out; for (const p of h.split(';')){ const i=p.indexOf('='); if(i<0) continue; out[p.slice(0,i).trim()]=decodeURIComponent(p.slice(i+1).trim()); } return out; }
 function setCookie(res, req, name, val, maxAge){ const secure=(req.headers['x-forwarded-proto']==='https'); let c=`${name}=${encodeURIComponent(val)}; Path=/; HttpOnly; SameSite=Lax; Max-Age=${maxAge}`; if(secure) c+='; Secure'; const prev=res.getHeader('Set-Cookie'); res.setHeader('Set-Cookie', prev?[].concat(prev,c):c); }
 // Sona: self-contained gate. Auth = the native cam_session cookie that /api/auth
-// sets after a correct pattern. No external SSO — self-contained.
+// sets after a correct passcode. No external SSO — self-contained.
 function isAuthed(req){ const c = parseCookies(req)[COOKIE_NAME]; return !!c && safeEq(c, SESSION_TOKEN); }
 
 const app = express();
@@ -81,7 +80,7 @@ app.disable('x-powered-by');
 // ---- transport hardening (defense-in-depth on top of Cloudflare TLS) ----
 // HSTS tells every browser "only ever reach me over HTTPS" so a first-visit
 // http:// request can't be SSL-stripped before the edge redirect — the gate
-// pattern + session cookie never get a chance to travel in cleartext. The
+// passcode + session cookie never get a chance to travel in cleartext. The
 // rest stop MIME-sniffing, framing (clickjacking) and referrer leakage.
 app.use((req, res, next) => {
   res.setHeader('Strict-Transport-Security', 'max-age=63072000; includeSubDomains; preload');
@@ -100,7 +99,7 @@ app.use((req, res, next) => {
 // `true` Express would take the client-controlled leftmost X-Forwarded-For as
 // req.ip, letting an attacker rotate the header to dodge the auth lockout.
 app.set('trust proxy', 'loopback');
-// The native pattern gate below is the sole wall.
+// The native passcode gate below is the sole wall.
 app.use(express.json({ limit: '256mb' }));  // base64 frames are a few MB; clips are bigger
 
 // ---- public (pre-gate) ----
@@ -111,9 +110,9 @@ app.get('/api/auth-status', (req,res)=>res.json({ authed:isAuthed(req) }));
 app.post('/api/auth', (req,res)=>{
   const ip=req.ip||'x';
   if (locked(ip)) return res.status(429).json({ ok:false, error:'locked' });
-  // Pattern-only gate: the 9-dot pattern is the sole factor.
-  const pattern=String((req.body&&req.body.pattern)||'');
-  if (pattern && safeEq(pattern, PATTERN)) { setCookie(res,req,COOKIE_NAME,SESSION_TOKEN,60*60*24*30); noteSuccess(ip); return res.json({ ok:true }); }
+  // Passcode gate: the passcode is the sole factor.
+  const passcode=String((req.body&&req.body.passcode)||'');
+  if (passcode && safeEq(passcode, PASSCODE)) { setCookie(res,req,COOKIE_NAME,SESSION_TOKEN,60*60*24*30); noteSuccess(ip); return res.json({ ok:true }); }
   noteFail(ip); res.status(401).json({ ok:false, error:'denied' });
 });
 app.post('/api/logout', (req,res)=>{ setCookie(res,req,COOKIE_NAME,'',0); res.json({ ok:true }); });
@@ -122,7 +121,7 @@ app.get('/manifest.webmanifest', (req,res)=>{ res.type('application/manifest+jso
 app.get('/icon.png', (req,res)=>res.sendFile(path.join(PUB,'icon.png'), e=>{ if(e&&!res.headersSent) res.status(404).end(); }));
 
 // ---- auth wall ----
-app.use((req,res,next)=>{ if (isAuthed(req)) return next(); if (req.path.startsWith('/api/')) return res.status(401).json({ error:'auth' }); return res.redirect('/gate.html'); });   // unauthed page loads -> native pattern gate
+app.use((req,res,next)=>{ if (isAuthed(req)) return next(); if (req.path.startsWith('/api/')) return res.status(401).json({ error:'auth' }); return res.redirect('/gate.html'); });   // unauthed page loads -> native passcode gate
 
 app.use(express.static(PUB));
 
@@ -376,7 +375,7 @@ app.post('/api/reveal', (req,res)=>{
 // and the traffic rides inside the encrypted tunnel — nothing is exposed to the
 // public internet. If you instead put this behind your own reverse proxy, or
 // only ever use it on localhost, set CAM_HOST to '127.0.0.1'. Note: on a plain
-// untrusted LAN with no TLS, the gate pattern + session cookie travel in
+// untrusted LAN with no TLS, the gate passcode + session cookie travel in
 // cleartext — use the VPN or a proxy, not a bare LAN, for anything private.
 const HOST = process.env.CAM_HOST || '0.0.0.0';
 app.listen(PORT, HOST, ()=>{

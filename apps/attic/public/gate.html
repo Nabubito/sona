@@ -24,10 +24,18 @@
   @keyframes pulse{0%,100%{opacity:.5;transform:scale(.9)}50%{opacity:1;transform:scale(1.08)}}
   h1{margin:.2em 0 .05em;font-size:1.4rem;letter-spacing:.28em;font-weight:700;color:#eafaff;text-indent:.28em}
   h1 b{font-weight:300;color:var(--jv)}
-  .sub{margin:0 0 22px;font-size:.68rem;letter-spacing:.34em;color:rgba(125,210,240,.55);text-transform:uppercase}
-  #pad{touch-action:none;margin:6px auto 2px;display:block;cursor:pointer}
-  .hint{margin:4px 0 0;font-size:.66rem;letter-spacing:.22em;color:rgba(125,210,240,.5);text-transform:uppercase}
-  .err{min-height:18px;margin-top:13px;font-size:.74rem;letter-spacing:.08em;color:#ff7d8a}
+  .sub{margin:0 0 20px;font-size:.68rem;letter-spacing:.34em;color:rgba(125,210,240,.55);text-transform:uppercase}
+  .dots{display:flex;gap:15px;justify-content:center;margin:6px 0 24px}
+  .dots i{width:13px;height:13px;border-radius:50%;border:1.5px solid rgba(54,226,255,.5);transition:all .18s}
+  .dots i.on{background:var(--jv2);border-color:var(--jv2);box-shadow:0 0 12px var(--jv2)}
+  .pad{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;max-width:300px;margin:0 auto}
+  .key{aspect-ratio:1/1;display:flex;align-items:center;justify-content:center;font-size:1.5rem;font-weight:500;color:#eafaff;
+    border:1px solid rgba(54,226,255,.22);border-radius:16px;background:linear-gradient(180deg,rgba(20,40,64,.5),rgba(10,22,38,.35));
+    cursor:pointer;user-select:none;transition:all .13s;-webkit-tap-highlight-color:transparent}
+  .key:hover{border-color:rgba(54,226,255,.55);box-shadow:0 0 18px rgba(54,226,255,.18)}
+  .key:active{transform:scale(.94);background:rgba(54,226,255,.14)}
+  .key.fn{font-size:.72rem;letter-spacing:.14em;color:var(--jv);text-transform:uppercase}
+  .err{min-height:18px;margin-top:16px;font-size:.74rem;letter-spacing:.08em;color:#ff7d8a}
 </style>
 </head>
 <body>
@@ -36,10 +44,15 @@
   <div class="panel">
     <div class="ring"><i></i></div>
     <h1>THE <b>ATTIC</b></h1>
-    <p class="sub" id="sub">Draw to unlock</p>
+    <p class="sub">Enter passcode</p>
 
-    <canvas id="pad" width="280" height="280"></canvas>
-    <p class="hint">Draw your pattern</p>
+    <div class="dots" id="dots"><i></i><i></i><i></i><i></i></div>
+    <div class="pad" id="pad">
+      <div class="key" data-k="1">1</div><div class="key" data-k="2">2</div><div class="key" data-k="3">3</div>
+      <div class="key" data-k="4">4</div><div class="key" data-k="5">5</div><div class="key" data-k="6">6</div>
+      <div class="key" data-k="7">7</div><div class="key" data-k="8">8</div><div class="key" data-k="9">9</div>
+      <div class="key fn" data-k="clr">Clr</div><div class="key" data-k="0">0</div><div class="key fn" data-k="del">Del</div>
+    </div>
 
     <div class="err" id="e"></div>
   </div>
@@ -49,52 +62,29 @@
   function rs(){W=c.width=innerWidth;H=c.height=innerHeight;st=Array.from({length:140},()=>({x:Math.random()*W,y:Math.random()*H,z:Math.random()*.8+.2,s:Math.random()*1.5+.2}));}
   rs();addEventListener('resize',rs);
   (function loop(){x.clearRect(0,0,W,H);for(const s of st){s.y+=s.z*.25;if(s.y>H){s.y=0;s.x=Math.random()*W;}x.globalAlpha=s.z;x.fillStyle='#36e2ff';x.fillRect(s.x,s.y,s.s,s.s);}x.globalAlpha=1;requestAnimationFrame(loop);})();
-  const e=document.getElementById('e');
 
-  // ---- pattern pad (dots 1-9, phone-keypad layout) ----
-  const pad=document.getElementById('pad'),pc=pad.getContext('2d');
-  const S=280,M=46,GAP=(S-2*M)/2,R=26;
-  const dots=[];for(let r=0;r<3;r++)for(let col=0;col<3;col++)dots.push({n:r*3+col+1,x:M+col*GAP,y:M+r*GAP});
-  let sel=[],drawing=false;
-
-  function drawPad(seq,curPt){
-    pc.clearRect(0,0,S,S);
-    pc.lineCap='round';pc.lineJoin='round';
-    if(seq.length){
-      pc.strokeStyle='rgba(54,226,255,.85)';pc.lineWidth=5;pc.shadowColor='#36e2ff';pc.shadowBlur=14;
-      pc.beginPath();
-      for(let i=0;i<seq.length;i++){const d=dots[seq[i]-1];i?pc.lineTo(d.x,d.y):pc.moveTo(d.x,d.y);}
-      if(curPt)pc.lineTo(curPt.x,curPt.y);
-      pc.stroke();pc.shadowBlur=0;
-    }
-    for(const d of dots){
-      const active=seq.includes(d.n);
-      pc.beginPath();pc.arc(d.x,d.y,active?9:6,0,7);
-      pc.fillStyle=active?'#7df0c8':'rgba(125,210,240,.4)';pc.fill();
-      if(active){pc.beginPath();pc.arc(d.x,d.y,R,0,7);pc.strokeStyle='rgba(54,226,255,.4)';pc.lineWidth=2;pc.stroke();}
-    }
-  }
-  function hit(x,y){ for(const d of dots){ if((x-d.x)**2+(y-d.y)**2<=R*R) return d.n; } return 0; }
-  function pos(ev){ const r=pad.getBoundingClientRect(),t=ev.touches&&ev.touches[0]; const cx=(t?t.clientX:ev.clientX),cy=(t?t.clientY:ev.clientY); return {x:(cx-r.left)*S/r.width,y:(cy-r.top)*S/r.height}; }
-
-  function start(ev){ ev.preventDefault();drawing=true;sel=[];const q=pos(ev);const n=hit(q.x,q.y);if(n)sel.push(n);drawPad(sel,q); }
-  function move(ev){ if(!drawing)return;ev.preventDefault();const q=pos(ev);const n=hit(q.x,q.y);if(n&&!sel.includes(n))sel.push(n);drawPad(sel,q); }
-  function end(){ if(!drawing)return;drawing=false;drawPad(sel);if(sel.length>=4)submit(sel.join(''));else if(sel.length){e.textContent='Pattern too short.';setTimeout(()=>{sel=[];drawPad([]);e.textContent='';},600);} }
-
-  pad.addEventListener('pointerdown',start);
-  pad.addEventListener('pointermove',move);
-  window.addEventListener('pointerup',end);
-  drawPad([]);
-
-  async function submit(pattern){
+  const e=document.getElementById('e'), dotsEl=document.getElementById('dots');
+  const LEN=4; let code='';
+  function render(){ dotsEl.querySelectorAll('i').forEach((d,i)=>d.classList.toggle('on',i<code.length)); }
+  function press(k){
     e.textContent='';
+    if(k==='clr'){ code=''; return render(); }
+    if(k==='del'){ code=code.slice(0,-1); return render(); }
+    if(code.length>=LEN) return;
+    code+=k; render();
+    if(code.length===LEN) submit(code);
+  }
+  document.getElementById('pad').addEventListener('click',ev=>{ const b=ev.target.closest('.key'); if(b) press(b.dataset.k); });
+  addEventListener('keydown',ev=>{ if(/^[0-9]$/.test(ev.key)) press(ev.key); else if(ev.key==='Backspace') press('del'); else if(ev.key==='Escape') press('clr'); });
+
+  async function submit(passcode){
     try{
-      const r=await fetch('/api/auth',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({pattern})});
-      if(r.ok){e.style.color='#7df0c8';e.textContent='Access granted.';location.href='/';return;}
+      const r=await fetch('/api/auth',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({passcode})});
+      if(r.ok){ e.style.color='#7df0c8'; e.textContent='Access granted.'; location.href='/'; return; }
       const j=await r.json().catch(()=>({}));
-      e.textContent = j.error==='locked' ? 'Locked — too many attempts.' : 'Pattern not recognized.';
+      e.textContent = j.error==='locked' ? 'Locked — too many attempts.' : 'Passcode not recognized.';
     }catch{ e.textContent='Network error.'; }
-    sel=[];drawPad([]);
+    code=''; render();
   }
 </script>
 </body>

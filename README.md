@@ -34,12 +34,21 @@ Three today. Each one is a small, pure-JavaScript Node server — no database en
 
 > Coming later: **Ember** — your gaming PC, streamed to any browser (the "Stadia, but it's your rig" piece). It's Windows/NVIDIA-only and admin-install, so it ships as an optional add-on rather than part of the core kit.
 
+## A look inside
+
+Every app opens behind its own passcode — your house, your key.
+
+| Reel | Attic | Kin |
+|:---:|:---:|:---:|
+| ![Reel](docs/img/reel-gate.png) | ![Attic](docs/img/attic-gate.png) | ![Kin](docs/img/kin-gate.png) |
+| your media | your photos | your people |
+
 ## Quick start
 
 You need **[Node.js 22.5+](https://nodejs.org)** (24 LTS recommended — the apps use Node's built-in SQLite). That's it for the core kit. `ffmpeg` is optional and only used by Reel (transcoding) and Attic (video); both work without it.
 
 ```bash
-git clone https://github.com/<your-user>/sona.git
+git clone https://github.com/Nabubito/sona.git
 cd sona/apps/reel      # or attic, or kin
 npm install
 npm start

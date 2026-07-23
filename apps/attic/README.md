@@ -10,10 +10,10 @@ Part of [Sona](../..). One dependency (`express`). No native image libraries —
 
 ```bash
 npm install
-CAM_PATTERN=your-unlock-pattern npm start
+CAM_PASS=your-passcode npm start
 ```
 
-Open **http://localhost:3060**, draw your unlock pattern, and start shooting. Photos land in `Camera Roll/` on the host, archived into `Camera Roll/.vault/`.
+Open **http://localhost:3060**, enter your passcode, and start shooting. Photos land in `Camera Roll/` on the host, archived into `Camera Roll/.vault/`.
 
 ## Configure
 
@@ -22,7 +22,7 @@ All via environment variables:
 | Var | What it does |
 |---|---|
 | `PORT` | Port (default `3060`). |
-| `CAM_PATTERN` | Your 9-dot unlock pattern (e.g. a sequence of dot indices). **Set this** — the default `0000` is a placeholder. |
+| `CAM_PASS` | Your unlock passcode. **Set this** — the default `0000` is a placeholder. |
 | `CAM_ROLL` | Where photos are saved (default: a `Camera Roll` folder). |
 | `CAM_VAULT` | The private archive folder. |
 | `CAM_RCLONE_REMOTE` | Optional: an [rclone](https://rclone.org) remote for off-site backup. **Off by default — nothing leaves your machine unless you set this.** |
