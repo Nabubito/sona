@@ -1,0 +1,266 @@
+/* cyrillic-ext */
+@font-face {
+  font-family: 'Cormorant Garamond';
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url(fonts/co3bmX5slCNuHLi8bLeY9MK7whWMhyjYpHtKgS4.woff2) format('woff2');
+  unicode-range: U+0460-052F, U+1C80-1C8A, U+20B4, U+2DE0-2DFF, U+A640-A69F, U+FE2E-FE2F;
+}
+/* cyrillic */
+@font-face {
+  font-family: 'Cormorant Garamond';
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url(fonts/co3bmX5slCNuHLi8bLeY9MK7whWMhyjYrXtKgS4.woff2) format('woff2');
+  unicode-range: U+0301, U+0400-045F, U+0490-0491, U+04B0-04B1, U+2116;
+}
+/* vietnamese */
+@font-face {
+  font-family: 'Cormorant Garamond';
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url(fonts/co3bmX5slCNuHLi8bLeY9MK7whWMhyjYpntKgS4.woff2) format('woff2');
+  unicode-range: U+0102-0103, U+0110-0111, U+0128-0129, U+0168-0169, U+01A0-01A1, U+01AF-01B0, U+0300-0301, U+0303-0304, U+0308-0309, U+0323, U+0329, U+1EA0-1EF9, U+20AB;
+}
+/* latin-ext */
+@font-face {
+  font-family: 'Cormorant Garamond';
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url(fonts/co3bmX5slCNuHLi8bLeY9MK7whWMhyjYp3tKgS4.woff2) format('woff2');
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+/* latin */
+@font-face {
+  font-family: 'Cormorant Garamond';
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url(fonts/co3bmX5slCNuHLi8bLeY9MK7whWMhyjYqXtK.woff2) format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+/* cyrillic-ext */
+@font-face {
+  font-family: 'Cormorant Garamond';
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url(fonts/co3bmX5slCNuHLi8bLeY9MK7whWMhyjYpHtKgS4.woff2) format('woff2');
+  unicode-range: U+0460-052F, U+1C80-1C8A, U+20B4, U+2DE0-2DFF, U+A640-A69F, U+FE2E-FE2F;
+}
+/* cyrillic */
+@font-face {
+  font-family: 'Cormorant Garamond';
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url(fonts/co3bmX5slCNuHLi8bLeY9MK7whWMhyjYrXtKgS4.woff2) format('woff2');
+  unicode-range: U+0301, U+0400-045F, U+0490-0491, U+04B0-04B1, U+2116;
+}
+/* vietnamese */
+@font-face {
+  font-family: 'Cormorant Garamond';
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url(fonts/co3bmX5slCNuHLi8bLeY9MK7whWMhyjYpntKgS4.woff2) format('woff2');
+  unicode-range: U+0102-0103, U+0110-0111, U+0128-0129, U+0168-0169, U+01A0-01A1, U+01AF-01B0, U+0300-0301, U+0303-0304, U+0308-0309, U+0323, U+0329, U+1EA0-1EF9, U+20AB;
+}
+/* latin-ext */
+@font-face {
+  font-family: 'Cormorant Garamond';
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url(fonts/co3bmX5slCNuHLi8bLeY9MK7whWMhyjYp3tKgS4.woff2) format('woff2');
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+/* latin */
+@font-face {
+  font-family: 'Cormorant Garamond';
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url(fonts/co3bmX5slCNuHLi8bLeY9MK7whWMhyjYqXtK.woff2) format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+/* cyrillic */
+@font-face {
+  font-family: 'Jost';
+  font-style: normal;
+  font-weight: 300;
+  font-display: swap;
+  src: url(fonts/92zatBhPNqw73oDd4iYl.woff2) format('woff2');
+  unicode-range: U+0301, U+0400-045F, U+0490-0491, U+04B0-04B1, U+2116;
+}
+/* latin-ext */
+@font-face {
+  font-family: 'Jost';
+  font-style: normal;
+  font-weight: 300;
+  font-display: swap;
+  src: url(fonts/92zatBhPNqw73ord4iYl.woff2) format('woff2');
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+/* latin */
+@font-face {
+  font-family: 'Jost';
+  font-style: normal;
+  font-weight: 300;
+  font-display: swap;
+  src: url(fonts/92zatBhPNqw73oTd4g.woff2) format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+/* cyrillic */
+@font-face {
+  font-family: 'Jost';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url(fonts/92zatBhPNqw73oDd4iYl.woff2) format('woff2');
+  unicode-range: U+0301, U+0400-045F, U+0490-0491, U+04B0-04B1, U+2116;
+}
+/* latin-ext */
+@font-face {
+  font-family: 'Jost';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url(fonts/92zatBhPNqw73ord4iYl.woff2) format('woff2');
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+/* latin */
+@font-face {
+  font-family: 'Jost';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url(fonts/92zatBhPNqw73oTd4g.woff2) format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+/* cyrillic */
+@font-face {
+  font-family: 'Jost';
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url(fonts/92zatBhPNqw73oDd4iYl.woff2) format('woff2');
+  unicode-range: U+0301, U+0400-045F, U+0490-0491, U+04B0-04B1, U+2116;
+}
+/* latin-ext */
+@font-face {
+  font-family: 'Jost';
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url(fonts/92zatBhPNqw73ord4iYl.woff2) format('woff2');
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+/* latin */
+@font-face {
+  font-family: 'Jost';
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url(fonts/92zatBhPNqw73oTd4g.woff2) format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+/* ============================================================
+   Sona — shared design language
+   Warm charcoal + ember gold. The fire at the center of a home.
+   Used across Kin · Reel · Attic so they read as one family.
+   ============================================================ */
+:root{
+  --ember:#E7A94C; --firelight:#F3CE86; --ember-deep:#E1712B;
+  --charcoal:#161311; --ash:#241F1B; --ash-2:#2e2823;
+  --warm-white:#F4EEE6; --stone:#A99B89;
+  --sage:#8FA96A; --error:#C4482E;
+  --ember-grad:linear-gradient(180deg,#F3CE86 0%,#E7A94C 45%,#E1712B 100%);
+  --glow:radial-gradient(circle, rgba(231,169,76,.35) 0%, rgba(225,113,43,.10) 45%, rgba(22,19,17,0) 75%);
+  --hair:rgba(231,169,76,.16);
+  --serif:'Cormorant Garamond',Georgia,'Times New Roman',serif;
+  --sans:'Jost','Century Gothic','Futura',system-ui,sans-serif;
+}
+
+/* ---------- unified gate (lock screen) ---------- */
+.sona-gate{
+  margin:0; height:100%; min-height:100vh; overflow:hidden;
+  background:var(--charcoal); color:var(--warm-white);
+  font-family:var(--sans); font-weight:400;
+  display:flex; flex-direction:column; align-items:center; justify-content:center; gap:4px; padding:24px;
+  -webkit-font-smoothing:antialiased;
+}
+.sona-gate .vignette{position:fixed; inset:0; z-index:0; background:var(--glow);
+  transform:translateY(-14%) scale(1.3); opacity:.9; pointer-events:none;
+  animation:sona-breathe 7s ease-in-out infinite}
+@keyframes sona-breathe{0%,100%{opacity:.7}50%{opacity:1}}
+.sona-gate .grain{position:fixed; inset:0; z-index:0; pointer-events:none; opacity:.5;
+  background:radial-gradient(rgba(255,255,255,.02) 1px, transparent 1px); background-size:3px 3px}
+
+.gate-panel{position:relative; z-index:1; width:min(400px,92vw); text-align:center;
+  padding:46px 34px 40px;
+  border:1px solid var(--hair); border-radius:22px;
+  background:linear-gradient(180deg,rgba(36,31,27,.72),rgba(22,19,17,.86));
+  backdrop-filter:blur(14px);
+  box-shadow:0 40px 90px rgba(0,0,0,.5), inset 0 1px 0 rgba(255,255,255,.04);
+  animation:gate-rise .8s cubic-bezier(.2,.8,.2,1)}
+@keyframes gate-rise{from{opacity:0; transform:translateY(18px) scale(.985)}to{opacity:1; transform:none}}
+
+.ember-mark{width:62px; height:62px; margin:0 auto 20px; filter:drop-shadow(0 4px 22px rgba(231,169,76,.5));
+  animation:ember-float 4.5s ease-in-out infinite}
+@keyframes ember-float{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}
+.ember-mark svg{width:100%; height:100%; display:block}
+
+.app-name{margin:0; font-family:var(--serif); font-weight:600; font-size:2.5rem; line-height:1;
+  letter-spacing:.01em;
+  background:var(--ember-grad); -webkit-background-clip:text; background-clip:text; color:transparent;
+  filter:drop-shadow(0 2px 14px rgba(231,169,76,.25))}
+.app-tag{margin:10px 0 0; font-size:.64rem; font-weight:400; letter-spacing:.38em; text-transform:uppercase;
+  color:var(--stone)}
+
+.pin-dots{display:flex; gap:16px; justify-content:center; margin:26px 0 26px}
+.pin-dots i{width:12px; height:12px; border-radius:50%; border:1.5px solid rgba(231,169,76,.45); transition:all .2s ease}
+.pin-dots i.on{background:var(--ember); border-color:var(--ember); box-shadow:0 0 14px rgba(231,169,76,.7)}
+
+.keypad{display:grid; grid-template-columns:repeat(3,1fr); gap:13px; max-width:290px; margin:0 auto}
+.key{aspect-ratio:1/1; display:flex; align-items:center; justify-content:center;
+  font-family:var(--serif); font-weight:500; font-size:1.7rem; color:var(--warm-white);
+  border:1px solid var(--hair); border-radius:15px;
+  background:linear-gradient(180deg,rgba(46,40,35,.5),rgba(28,24,21,.4));
+  cursor:pointer; user-select:none; transition:all .13s ease; -webkit-tap-highlight-color:transparent}
+.key:hover{border-color:rgba(231,169,76,.5); box-shadow:0 0 20px rgba(231,169,76,.14)}
+.key:active{transform:scale(.94); background:rgba(231,169,76,.16); color:var(--firelight)}
+.key.fn{font-family:var(--sans); font-size:.7rem; font-weight:400; letter-spacing:.16em; text-transform:uppercase; color:var(--ember)}
+
+.gate-err{min-height:18px; margin:18px 0 0; font-size:.74rem; letter-spacing:.06em; color:var(--error)}
+.gate-foot{position:relative; z-index:1; margin-top:26px; font-size:.6rem; letter-spacing:.34em;
+  text-transform:uppercase; color:rgba(169,155,137,.6)}
+.gate-foot b{color:var(--ember); font-weight:400}
+
+/* ---------- Kin's in-SPA gate, mapped to the Sona family look ---------- */
+#gate.gate{ position:fixed; inset:0; z-index:50; background:var(--charcoal); color:var(--warm-white);
+  font-family:var(--sans); display:flex; flex-direction:column; align-items:center; justify-content:center; gap:4px; padding:24px; overflow:hidden; }
+#gate.gate::before{ content:""; position:absolute; inset:0; background:var(--glow); transform:translateY(-14%) scale(1.3); opacity:.9; pointer-events:none; animation:sona-breathe 7s ease-in-out infinite; }
+#gate .gate-card{ position:relative; z-index:1; width:min(400px,92vw); text-align:center; padding:44px 34px 38px;
+  border:1px solid var(--hair); border-radius:22px; background:linear-gradient(180deg,rgba(36,31,27,.72),rgba(22,19,17,.86));
+  backdrop-filter:blur(14px); box-shadow:0 40px 90px rgba(0,0,0,.5), inset 0 1px 0 rgba(255,255,255,.04); animation:gate-rise .8s cubic-bezier(.2,.8,.2,1); }
+#gate .ember-mark{ width:60px; height:60px; margin:0 auto 18px; filter:drop-shadow(0 4px 22px rgba(231,169,76,.5)); animation:ember-float 4.5s ease-in-out infinite; }
+#gate .ember-mark svg{ width:100%; height:100%; display:block; }
+#gate .wordmark{ margin:0; font-family:var(--serif); font-weight:600; font-size:2.5rem; line-height:1;
+  background:var(--ember-grad); -webkit-background-clip:text; background-clip:text; color:transparent; filter:drop-shadow(0 2px 14px rgba(231,169,76,.25)); }
+#gate .tagline{ margin:10px 0 0; font-size:.64rem; font-weight:400; letter-spacing:.38em; text-transform:uppercase; color:var(--stone); }
+#gate .pin-dots{ display:flex; gap:16px; justify-content:center; margin:26px 0; }
+#gate .pin-dots i{ width:12px; height:12px; border-radius:50%; border:1.5px solid rgba(231,169,76,.45); background:transparent; transition:all .2s; }
+#gate .pin-dots i.on,#gate .pin-dots i.filled{ background:var(--ember); border-color:var(--ember); box-shadow:0 0 14px rgba(231,169,76,.7); }
+#gate .pin-error{ min-height:18px; margin-top:4px; font-size:.74rem; color:var(--error); }
+#gate .keypad{ display:grid; grid-template-columns:repeat(3,1fr); gap:13px; max-width:290px; margin:8px auto 0; }
+#gate .keypad button{ aspect-ratio:1/1; display:flex; align-items:center; justify-content:center; font-family:var(--serif); font-weight:500; font-size:1.7rem; color:var(--warm-white);
+  border:1px solid var(--hair); border-radius:15px; background:linear-gradient(180deg,rgba(46,40,35,.5),rgba(28,24,21,.4)); cursor:pointer; transition:all .13s; }
+#gate .keypad button:hover{ border-color:rgba(231,169,76,.5); box-shadow:0 0 20px rgba(231,169,76,.14); }
+#gate .keypad button:active{ transform:scale(.94); background:rgba(231,169,76,.16); color:var(--firelight); }
+#gate .keypad button.ghost{ font-family:var(--sans); font-size:1.2rem; color:var(--ember); }
+#gate .gate-foot{ position:relative; z-index:1; margin-top:24px; font-size:.6rem; letter-spacing:.28em; text-transform:uppercase; color:rgba(169,155,137,.6); }

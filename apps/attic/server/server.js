@@ -120,6 +120,9 @@ app.get('/gate.html', (req,res)=>res.sendFile(path.join(PUB,'gate.html')));
 app.get('/manifest.webmanifest', (req,res)=>{ res.type('application/manifest+json'); res.sendFile(path.join(PUB,'manifest.webmanifest')); });
 app.get('/icon.png', (req,res)=>res.sendFile(path.join(PUB,'icon.png'), e=>{ if(e&&!res.headersSent) res.status(404).end(); }));
 
+// Shared Sona theme + fonts must load on the lock screen, before auth.
+app.use('/assets', express.static(path.join(PUB,'assets')));
+
 // ---- auth wall ----
 app.use((req,res,next)=>{ if (isAuthed(req)) return next(); if (req.path.startsWith('/api/')) return res.status(401).json({ error:'auth' }); return res.redirect('/gate.html'); });   // unauthed page loads -> native passcode gate
 

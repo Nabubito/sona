@@ -36,12 +36,17 @@ Three today. Each one is a small, pure-JavaScript Node server — no database en
 
 ## A look inside
 
-Every app opens behind its own passcode — your house, your key.
+One design language across the whole kit — warm charcoal and ember gold, the fire
+at the center of a home. Every app opens behind its own passcode: your house, your key.
 
 | Reel | Attic | Kin |
 |:---:|:---:|:---:|
-| ![Reel](docs/img/reel-gate.png) | ![Attic](docs/img/attic-gate.png) | ![Kin](docs/img/kin-gate.png) |
+| ![Reel lock screen](docs/img/reel-gate.png) | ![Attic lock screen](docs/img/attic-gate.png) | ![Kin lock screen](docs/img/kin-gate.png) |
 | your media | your photos | your people |
+
+**Reel — your library, streaming from your own files:**
+
+![Reel library](docs/img/reel-app.png)
 
 ## Quick start
 

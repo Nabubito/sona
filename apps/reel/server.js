@@ -292,13 +292,15 @@ app.post('/api/logout', (req, res) => {
   res.json({ ok: true });
 });
 
+// Shared Sona theme + fonts must load on the lock screen, before auth.
+app.use('/assets', express.static(path.join(PUBLIC_DIR, 'assets')));
 // gate everything below (PWA install assets stay public — no library data in them)
 const PUBLIC_PATHS = new Set(['/manifest.json', '/icon-192.png', '/icon-512.png']);
 app.use((req, res, next) => {
   if (PUBLIC_PATHS.has(req.path)) return next();
   if (isAuthed(req)) return next();
   const accept = req.headers.accept || '';
-  if (req.method === 'GET' && accept.includes('text/html')) return res.sendFile(path.join(PUBLIC_DIR, 'index.html'));   // fleet gate.js overlays
+  if (req.method === 'GET' && accept.includes('text/html')) return res.redirect('/gate.html');   // unauthed -> Sona lock screen
   return res.status(401).json({ error: 'unauthorized' });
 });
 

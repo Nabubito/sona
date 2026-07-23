@@ -40,3 +40,8 @@ desktop.ini
 .session-token
 config.json
 scan-progress.json
+
+# Reel generated album art (runtime)
+
+# Reel runtime album art (generated)
+apps/reel/art/
