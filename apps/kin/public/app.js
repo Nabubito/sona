@@ -19,22 +19,22 @@ function toast(msg, ms = 2400) {
 const nameOf = id => (S.roster.find(u => u.id === id) || {}).name || id;
 
 // ════════════ THEME ════════════
-const THEMES = ['amour', 'chambers', 'obsidian', 'turquoise', 'violet'];
+const THEMES = ['sona', 'amour', 'chambers', 'obsidian', 'turquoise', 'violet'];
 function applyTheme(t) {
-  if (!THEMES.includes(t)) t = 'amour';
+  if (!THEMES.includes(t)) t = 'sona';
   document.documentElement.setAttribute('data-theme', t);
   localStorage.setItem('kin_theme', t);
   document.querySelector('meta[name=theme-color]')?.setAttribute('content',
     getComputedStyle(document.documentElement).getPropertyValue('--head1').trim() || '#14233f');
   document.querySelectorAll('.sw').forEach(s => s.classList.toggle('active', s.dataset.t === t));
 }
-// One-time migration to the Amour rebrand: adopt it once for everyone,
+// One-time migration to the Sona look: adopt it once for everyone,
 // then respect any theme the user picks afterward.
-if (localStorage.getItem('kin_theme_v') !== '2') {
-  localStorage.setItem('kin_theme', 'amour');
-  localStorage.setItem('kin_theme_v', '2');
+if (localStorage.getItem('kin_theme_v') !== '3') {
+  localStorage.setItem('kin_theme', 'sona');
+  localStorage.setItem('kin_theme_v', '3');
 }
-applyTheme(localStorage.getItem('kin_theme') || 'amour');
+applyTheme(localStorage.getItem('kin_theme') || 'sona');
 document.addEventListener('DOMContentLoaded', () => {
   $('#btnTheme') && ($('#btnTheme').onclick = e => { e.stopPropagation(); $('#themePop').classList.toggle('hidden'); });
   document.querySelectorAll('.sw').forEach(s => s.onclick = () => { applyTheme(s.dataset.t); $('#themePop').classList.add('hidden'); });

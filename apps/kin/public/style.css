@@ -12,6 +12,18 @@
   --shadow:0 8px 30px rgba(0,0,0,.18);
   --safe-b:env(safe-area-inset-bottom,0px); --safe-t:env(safe-area-inset-top,0px);
 }
+/* ── SONA (warm charcoal + ember gold — the family look) ── */
+html[data-theme="sona"]{
+  --pg1:#1b1510; --pg2:#161311; --base1:#161311; --base2:#1b1714; --base3:#120f0d;
+  --head1:#1b1714; --head2:#241F1B;
+  --acc1:#E7A94C; --acc2:#E1712B; --accink:#161311; --accsoft:rgba(231,169,76,.5); --accline:rgba(231,169,76,.25);
+  --me1:#E1712B; --me2:#E7A94C; --meink:#181310;
+  --them:#241F1B; --themink:#F4EEE6;
+  --paper:#161311; --paper2:#1b1714; --card:#241F1B; --ink:#F4EEE6; --inkdim:#A99B89; --line:rgba(231,169,76,.14);
+  --top-ink:#F4EEE6; --online:#8FA96A; --danger:#C4482E;
+  --bg-art:none;
+  --shadow:0 12px 40px rgba(0,0,0,.45);
+}
 /* ── OBSIDIAN (black) ── */
 html[data-theme="obsidian"]{
   --pg1:#1a1a20; --pg2:#101014; --base1:#000000; --base2:#0a0a0c; --base3:#000000;
@@ -58,7 +70,7 @@ html[data-theme="amour"]{
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 html,body{height:100%;margin:0}
 body{
-  font-family:"Segoe UI",system-ui,-apple-system,Roboto,sans-serif;color:var(--ink);
+  font-family:'Jost',"Segoe UI",system-ui,-apple-system,Roboto,sans-serif;color:var(--ink);
   background:
     radial-gradient(1200px 800px at 15% -10%, var(--pg1) 0%, transparent 55%),
     radial-gradient(1000px 700px at 110% 10%, var(--pg2) 0%, transparent 45%),

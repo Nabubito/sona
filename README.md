@@ -48,6 +48,10 @@ at the center of a home. Every app opens behind its own passcode: your house, yo
 
 ![Reel library](docs/img/reel-app.png)
 
+**Kin — private messages and calls, device to device:**
+
+![Kin chat](docs/img/kin-app.png)
+
 ## Quick start
 
 You need **[Node.js 22.5+](https://nodejs.org)** (24 LTS recommended — the apps use Node's built-in SQLite). That's it for the core kit. `ffmpeg` is optional and only used by Reel (transcoding) and Attic (video); both work without it.
