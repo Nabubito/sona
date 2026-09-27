@@ -57,7 +57,7 @@ To reset a forgotten passcode, stop Forge and delete `data/auth.json`. The next 
 
 ## How private is it, really?
 
-Your files are read and written on this machine only. Forge calls `ffmpeg` and 7-Zip as local processes; nothing is sent anywhere. The page's content policy only lets it load from and connect to Forge itself, so it cannot fetch outside scripts or phone home. (It does allow inline scripts, which the UI uses.) There is no telemetry and no analytics. Results land in a plain folder you choose.
+Your files are read and written on this machine only. Forge calls `ffmpeg` and 7-Zip as local processes; nothing is sent anywhere. The page's content policy only lets it load from and connect to Forge itself, so it cannot fetch outside scripts or phone home. It runs no inline script at all: every script is a file Forge serves itself. There is no telemetry and no analytics. Results land in a plain folder you choose.
 
 ## Security, plainly
 

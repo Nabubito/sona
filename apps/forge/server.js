@@ -126,11 +126,12 @@ function securityHeaders(res) {
   res.setHeader('X-Content-Type-Options', 'nosniff');
   res.setHeader('X-Frame-Options', 'DENY');
   res.setHeader('Referrer-Policy', 'no-referrer');
-  // Only this server may be contacted or loaded from. Inline script is still
-  // allowed because the UI uses inline handlers; see README.
+  // Only this server may be contacted or loaded from. No inline script: every
+  // script is a file under /public or /assets and the UI binds its handlers in
+  // JS, so script-src is 'self' only. (Inline style attributes remain allowed.)
   res.setHeader('Content-Security-Policy',
     "default-src 'self'; img-src 'self' data: blob:; media-src 'self' blob:; " +
-    "script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; font-src 'self'; " +
+    "script-src 'self'; style-src 'self' 'unsafe-inline'; font-src 'self'; " +
     "connect-src 'self'; object-src 'none'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'");
 }
 

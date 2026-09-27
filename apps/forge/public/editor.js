@@ -8,6 +8,9 @@
   const mediaUrl = p => '/api/editor/media?path=' + encodeURIComponent(p);
   const thumbUrl = (p, t) => '/api/editor/thumb?path=' + encodeURIComponent(p) + '&t=' + (t || 0);
   const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+  // icons come from the shared Sona sprite, never Unicode glyphs (those can render as empty boxes)
+  const I = (n, c) => (window.Sona ? window.Sona.icon(n, c) : '');
+  const fill = (v, mn, mx) => (clamp((v - mn) / (mx - mn), 0, 1) * 100).toFixed(1) + '%';   // s-range track fill
   const tc = s => { s = Math.max(0, s || 0); const h = Math.floor(s / 3600), m = Math.floor(s % 3600 / 60), ss = Math.floor(s % 60), f = Math.floor((s % 1) * (P ? P.canvas.fps : 30)); return (h ? String(h).padStart(2, '0') + ':' : '') + String(m).padStart(2, '0') + ':' + String(ss).padStart(2, '0') + '.' + String(f).padStart(2, '0'); };
 
   // ---- state ----
@@ -49,6 +52,7 @@
   async function renderEditor() {
     const view = document.getElementById('view');
     view.className = 'view editor';
+    if (!P) view.innerHTML = `<div class="ved-skel" aria-hidden="true"><div class="s-skel ved-skel__stage"></div><div class="s-skel ved-skel__tl"></div></div>`;
     const projects = await A('/api/editor/projects');
     if (!P) {
       if (projects.length) P = await A('/api/editor/project?id=' + projects[0].id);
@@ -73,24 +77,24 @@
     view.innerHTML = `
     <div class="ved">
       <div class="ved-top">
-        <div class="ved-tabs">
-          ${tabBtn('import', '📥', 'Import')}
-          ${tabBtn('filters', '🎨', 'Filters')}
-          ${tabBtn('transitions', '⇄', 'Transitions')}
-          ${tabBtn('titles', 'T', 'Titles')}
-          ${tabBtn('stickers', '★', 'Stickers')}
-          ${tabBtn('panzoom', '🔍', 'Pan & Zoom')}
-          ${tabBtn('adjust', '⚙', 'Adjust')}
+        <div class="ved-tabs" role="tablist" aria-label="Editor tools">
+          ${tabBtn('import', 'import', 'Import')}
+          ${tabBtn('filters', 'palette', 'Filters')}
+          ${tabBtn('transitions', 'layers', 'Transitions')}
+          ${tabBtn('titles', 'text', 'Titles')}
+          ${tabBtn('stickers', 'star', 'Stickers')}
+          ${tabBtn('panzoom', 'expand', 'Pan &amp; Zoom')}
+          ${tabBtn('adjust', 'sliders', 'Adjust')}
         </div>
-        <div class="ved-panel" id="vedPanel"></div>
+        <div class="ved-panel" id="vedPanel" role="tabpanel"></div>
         <div class="ved-preview">
           <div class="ved-projbar">
-            <input id="vedName" class="ved-nameinput" value="${E(P.name)}" title="Project name">
-            <span class="ved-canvas" id="vedCanvas">${P.canvas.width}×${P.canvas.height} · ${P.canvas.fps}fps</span>
+            <input id="vedName" class="ved-nameinput" value="${E(P.name)}" title="Project name" aria-label="Project name">
+            <button type="button" class="ved-canvas" id="vedCanvas" title="Project settings">${P.canvas.width}×${P.canvas.height} · ${P.canvas.fps}fps</button>
             <span class="ved-spring"></span>
-            <button class="ved-btn ghost" id="vedNew" title="New project">＋ New</button>
-            <button class="ved-btn ghost" id="vedOpen" title="Open project">Projects</button>
-            <button class="ved-export" id="vedExport">Export ▸</button>
+            <button type="button" class="s-btn s-btn--ghost s-btn--sm ved-btn" id="vedNew" title="New project">${I('plus')}<span class="ved-lb">New</span></button>
+            <button type="button" class="s-btn s-btn--ghost s-btn--sm ved-btn" id="vedOpen" title="Open a project">${I('folder')}<span class="ved-lb">Projects</span></button>
+            <button type="button" class="s-btn s-btn--primary ved-export" id="vedExport">${I('download')}Export</button>
           </div>
           <div class="ved-stage" id="vedStage">
             <div class="ved-screen" id="vedScreen">
@@ -98,7 +102,7 @@
                 <div id="vedPool" aria-hidden="true"></div>
                 <canvas id="vedComposite"></canvas>
               </div>
-              <div class="ved-noframe" id="vedNoframe">Add clips to the Video track</div>
+              <div class="ved-noframe" id="vedNoframe">${I('film')}<span>Add a clip to start. Use Import, or the Media button below.</span></div>
               <div class="ved-loading" id="vedLoading" hidden>
                 <div class="ved-spin"></div>
                 <div class="ved-tip"><b id="vedTipHead"></b><span id="vedTipBody"></span></div>
@@ -106,9 +110,9 @@
             </div>
           </div>
           <div class="ved-transport">
-            <button class="ved-tb" id="tpStart" title="Start">⏮</button>
-            <button class="ved-tb" id="tpPlay" title="Play/Pause">▶</button>
-            <button class="ved-tb" id="tpEnd" title="End">⏭</button>
+            <button type="button" class="ved-tb" id="tpStart" title="Go to start" aria-label="Go to start">${I('prev')}</button>
+            <button type="button" class="ved-tb ved-tb--play" id="tpPlay" title="Play or pause (Space)" aria-label="Play">${I('play')}</button>
+            <button type="button" class="ved-tb" id="tpEnd" title="Go to end" aria-label="Go to end">${I('next')}</button>
             <span class="ved-tcode" id="vedTcode">00:00.00</span>
             <span class="ved-spring"></span>
             <span class="ved-tcode dim" id="vedTtotal">00:00.00</span>
@@ -118,19 +122,21 @@
       <div class="ved-timeline">
         <div class="ved-tltop">
           <div class="ved-tlbar">
-            <button class="ved-tb" id="tlAdd" title="Add media">＋ Media</button>
-            <button class="ved-tb" id="tlSplit" title="Split at playhead (S)">✂ Split</button>
-            <button class="ved-tb" id="tlDup" title="Duplicate">⧉ Copy</button>
-            <button class="ved-tb danger" id="tlDel" title="Delete (Del)">🗑 Delete</button>
+            <button type="button" class="ved-tb" id="tlAdd" title="Add media" aria-label="Add media">${I('plus')}<span class="ved-lb">Media</span></button>
+            <button type="button" class="ved-tb" id="tlSplit" title="Split at playhead (S)" aria-label="Split at playhead">${I('scissors')}<span class="ved-lb">Split</span></button>
+            <button type="button" class="ved-tb" id="tlDup" title="Duplicate" aria-label="Duplicate">${I('layers')}<span class="ved-lb">Copy</span></button>
+            <button type="button" class="ved-tb danger" id="tlDel" title="Delete (Del)" aria-label="Delete">${I('trash')}<span class="ved-lb">Delete</span></button>
             <span class="ved-sep"></span>
-            <button class="ved-tb" id="tlTitle" title="Add title">T Title</button>
-            <button class="ved-tb" id="tlAudio" title="Add music/audio">♪ Audio</button>
+            <button type="button" class="ved-tb" id="tlTitle" title="Add title" aria-label="Add title">${I('text')}<span class="ved-lb">Title</span></button>
+            <button type="button" class="ved-tb" id="tlAudio" title="Add music or audio" aria-label="Add music or audio">${I('music')}<span class="ved-lb">Audio</span></button>
             <span class="ved-spring"></span>
             <span class="ved-selinfo" id="vedSelInfo"></span>
-            <span class="ved-sep"></span>
-            <button class="ved-tb" id="zOut" title="Zoom out">－</button>
-            <input type="range" id="zSlide" min="12" max="200" value="${pps}" class="ved-zoom">
-            <button class="ved-tb" id="zIn" title="Zoom in">＋</button>
+            <span class="ved-sep ved-zsep"></span>
+            <span class="ved-zoomgrp">
+            <button type="button" class="ved-tb" id="zOut" title="Zoom out" aria-label="Zoom out">${I('minus')}</button>
+            <input type="range" id="zSlide" min="12" max="200" value="${pps}" class="ved-zoom s-range" style="--fill:${fill(pps, 12, 200)}" aria-label="Timeline zoom">
+            <button type="button" class="ved-tb" id="zIn" title="Zoom in" aria-label="Zoom in">${I('plus')}</button>
+            </span>
           </div>
         </div>
         <div class="ved-tracks" id="vedTracks"></div>
@@ -143,11 +149,11 @@
     seekPreview(head);
     updateTimes();
   }
-  const tabBtn = (id, ic, lb) => `<button class="ved-tab ${tab === id ? 'on' : ''}" data-tab="${id}"><i>${ic}</i><span>${lb}</span></button>`;
+  const tabBtn = (id, ic, lb) => `<button type="button" role="tab" aria-selected="${tab === id}" class="ved-tab ${tab === id ? 'on' : ''}" data-tab="${id}"><i>${I(ic)}</i><span>${lb}</span></button>`;
 
   function wire() {
     const $ = s => document.getElementById(s);
-    document.querySelectorAll('.ved-tab').forEach(b => b.onclick = () => { tab = b.dataset.tab; document.querySelectorAll('.ved-tab').forEach(x => x.classList.toggle('on', x.dataset.tab === tab)); panel(); });
+    document.querySelectorAll('.ved-tab').forEach(b => b.onclick = () => { tab = b.dataset.tab; document.querySelectorAll('.ved-tab').forEach(x => { x.classList.toggle('on', x.dataset.tab === tab); x.setAttribute('aria-selected', String(x.dataset.tab === tab)); }); panel(); });
     $('vedName').onchange = e => { P.name = e.target.value.trim() || 'Untitled'; save(); };
     $('vedNew').onclick = newProject;
     $('vedOpen').onclick = openProjects;
@@ -167,7 +173,7 @@
     $('tpEnd').onclick = () => { seekPreview(totalDur() - 0.05); };
   }
 
-  function setZoom(v) { pps = clamp(v, 12, 200); const z = document.getElementById('zSlide'); if (z) z.value = pps; timeline(); }
+  function setZoom(v) { pps = clamp(v, 12, 200); const z = document.getElementById('zSlide'); if (z) { z.value = pps; z.style.setProperty('--fill', fill(pps, 12, 200)); } timeline(); }
 
   // ---------- left panel (tab content) ----------
   function panel() {
@@ -186,23 +192,24 @@
 
   function panelImport(el) {
     el.innerHTML = panelHead('Import', 'Add clips, photos, and music. Click a thumbnail to drop it on the timeline.') +
-      `<div class="ved-imp"><button class="ved-big" id="impBtn">＋ Add files</button></div>
+      `<div class="ved-imp"><button type="button" class="s-btn s-btn--primary s-btn--block ved-big" id="impBtn">${I('plus')}Add files</button></div>
        <div class="ved-bin" id="vedBin"></div>`;
     document.getElementById('impBtn').onclick = () => addMedia();
     paintBin();
   }
   function paintBin() {
     const el = document.getElementById('vedBin'); if (!el) return;
-    if (!bin.length) { el.innerHTML = `<div class="ved-empty">No media yet.<br>Add a video, photo, or song.</div>`; return; }
-    el.innerHTML = bin.map((b, i) => `<div class="ved-binitem" data-ctx="binitem" data-i="${i}" title="${E(b.name)}">
-      <div class="ved-thumb">${b.type === 'audio' ? '<div class="ved-audioic">♪</div>' : `<img src="${thumbUrl(b.src, (b.duration || 2) / 3)}" loading="lazy">`}</div>
+    if (!bin.length) { el.innerHTML = `<div class="ved-empty">${I('film')}<b>No media yet</b><span>Add a video, photo, or song, then tap it to put it on the timeline.</span></div>`; return; }
+    el.innerHTML = bin.map((b, i) => `<div class="ved-binitem" data-ctx="binitem" data-i="${i}" title="${E(b.name)}" role="button" tabindex="0" aria-label="Add ${E(b.name)} to the timeline">
+      <div class="ved-thumb">${b.type === 'audio' ? `<div class="ved-audioic">${I('music')}</div>` : `<img src="${thumbUrl(b.src, (b.duration || 2) / 3)}" loading="lazy" alt="">`}</div>
       <div class="ved-binname">${E(b.name)}</div>
-      <div class="ved-bindur">${b.type === 'audio' ? '♪ ' : ''}${(b.duration || 0).toFixed(1)}s</div>
-      <button class="ved-binadd">＋ Timeline</button></div>`).join('');
+      <div class="ved-bindur">${b.type === 'audio' ? 'Audio · ' : ''}${(b.duration || 0).toFixed(1)}s</div>
+      <button type="button" class="ved-binadd" tabindex="-1" aria-hidden="true">${I('plus', 's-i--sm')}Timeline</button></div>`).join('');
     el.querySelectorAll('.ved-binitem').forEach(it => {
       const i = +it.dataset.i;
       it.querySelector('.ved-binadd').onclick = e => { e.stopPropagation(); binToTimeline(i); };
       it.onclick = () => binToTimeline(i);
+      it.onkeydown = e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); binToTimeline(i); } };
     });
   }
 
@@ -224,19 +231,21 @@
 
   const TRANSITIONS = [
     ['fade', 'Fade'], ['dissolve', 'Dissolve'], ['fadeblack', 'Fade Black'], ['fadewhite', 'Fade White'],
-    ['wipeleft', 'Wipe ◄'], ['wiperight', 'Wipe ►'], ['wipeup', 'Wipe ▲'], ['wipedown', 'Wipe ▼'],
-    ['slideleft', 'Slide ◄'], ['slideright', 'Slide ►'], ['circleopen', 'Circle Open'], ['circleclose', 'Circle Close'],
-    ['radial', 'Radial'], ['pixelize', 'Pixelize'], ['smoothleft', 'Smooth ◄'], ['smoothright', 'Smooth ►']
+    ['wipeleft', 'Wipe left'], ['wiperight', 'Wipe right'], ['wipeup', 'Wipe up'], ['wipedown', 'Wipe down'],
+    ['slideleft', 'Slide left'], ['slideright', 'Slide right'], ['circleopen', 'Circle Open'], ['circleclose', 'Circle Close'],
+    ['radial', 'Radial'], ['pixelize', 'Pixelize'], ['smoothleft', 'Smooth left'], ['smoothright', 'Smooth right']
   ];
+  // direction arrow for a transition preview: a rotated chevron icon
+  const trDir = id => { const m = /(left|right|up|down)$/.exec(id); return m ? I('chevron-right', 'ved-dir ved-dir--' + m[1]) : I('layers'); };
   function panelTransitions(el) {
     const idx = sel && sel.track === 'video' ? sel.i : -1;
     const ok = idx > 0;
     const cur = ok ? TRACK('video').clips[idx].transitionIn : null;
     el.innerHTML = panelHead('Transitions', ok ? 'Applied between the previous clip and the selected one.' : 'Select the second clip of a pair (not the first).') +
-      `<div class="ved-field"><label>Duration (s)</label><input id="trDur" type="number" step="0.1" min="0.2" value="${cur ? cur.duration : 1}" style="width:80px"></div>
+      `<div class="ved-field"><label for="trDur">Duration (s)</label><input id="trDur" type="number" step="0.1" min="0.2" value="${cur ? cur.duration : 1}" style="width:96px" inputmode="decimal"></div>
        <div class="ved-grid">
-        <button class="ved-cell ${!cur || cur.type === 'none' ? 'on' : ''}" data-t="none"><div class="ved-cellprev tr-none">✕</div><span class="ved-celllb">None</span></button>
-        ${TRANSITIONS.map(([id, lb]) => `<button class="ved-cell ${cur && cur.type === id ? 'on' : ''}" data-t="${id}"><div class="ved-cellprev tr"><span>${lb.replace(/[A-Za-z ]/g, '') || '⇄'}</span></div><span class="ved-celllb">${lb}</span></button>`).join('')}
+        <button class="ved-cell ${!cur || cur.type === 'none' ? 'on' : ''}" data-t="none"><div class="ved-cellprev tr-none">${I('close')}</div><span class="ved-celllb">None</span></button>
+        ${TRANSITIONS.map(([id, lb]) => `<button class="ved-cell ${cur && cur.type === id ? 'on' : ''}" data-t="${id}"><div class="ved-cellprev tr">${trDir(id)}</div><span class="ved-celllb">${lb}</span></button>`).join('')}
       </div>`;
     el.querySelectorAll('[data-t]').forEach(b => b.onclick = () => {
       if (!ok) return toastE('Select the 2nd clip of a pair');
@@ -263,7 +272,7 @@
 
   function panelStickers(el) {
     el.innerHTML = panelHead('Stickers', 'Drop your own image as an overlay (logo, PNG, badge). Positioned and timed on the timeline.') +
-      `<button class="ved-big" id="stkBtn">＋ Add image sticker</button>
+      `<button type="button" class="s-btn s-btn--primary s-btn--block ved-big" id="stkBtn">${I('image')}Add an image sticker</button>
        <div class="ved-note">Clean-room build: bring your own art. No bundled packs to pay for.</div>`;
     document.getElementById('stkBtn').onclick = addSticker;
   }
@@ -275,8 +284,8 @@
     el.innerHTML = panelHead('Pan & Zoom', isImg ? 'Ken Burns motion for the selected photo.' : 'Select a photo clip on the timeline.') +
       (isImg ? `<div class="ved-grid">
         <button class="ved-cell ${!pz.enabled ? 'on' : ''}" data-pz="off"><div class="ved-cellprev">Static</div><span class="ved-celllb">None</span></button>
-        <button class="ved-cell ${pz.enabled && pz.to !== 'out' ? 'on' : ''}" data-pz="in"><div class="ved-cellprev">⤢</div><span class="ved-celllb">Zoom In</span></button>
-        <button class="ved-cell ${pz.enabled && pz.to === 'out' ? 'on' : ''}" data-pz="out"><div class="ved-cellprev">⤡</div><span class="ved-celllb">Zoom Out</span></button>
+        <button class="ved-cell ${pz.enabled && pz.to !== 'out' ? 'on' : ''}" data-pz="in"><div class="ved-cellprev">${I('expand')}</div><span class="ved-celllb">Zoom In</span></button>
+        <button class="ved-cell ${pz.enabled && pz.to === 'out' ? 'on' : ''}" data-pz="out"><div class="ved-cellprev">${I('collapse')}</div><span class="ved-celllb">Zoom Out</span></button>
       </div>` : `<div class="ved-empty">Pan &amp; Zoom applies to photos.</div>`);
     el.querySelectorAll('[data-pz]').forEach(b => b.onclick = () => {
       const cl = selClip('video'); if (!cl || cl.type !== 'image') return;
@@ -296,7 +305,7 @@
         ${slider('Saturation', 'saturation', f.saturation ?? 1, 0, 3, 0.01)}
         ${slider('Gamma', 'gamma', f.gamma ?? 1, 0.3, 2, 0.01)}
       </div>` : '') +
-      `<div class="ved-ph"><h3 style="margin-top:14px">Audio</h3></div>
+      `<div class="ved-ph"><h3 style="margin-top:16px">Audio</h3></div>
        <div class="ved-sliders">
         ${slider('Volume', 'volume', c.volume ?? 1, 0, 3, 0.01)}
         ${slider('Fade in (s)', 'fadeIn', c.fadeIn ?? 0, 0, 5, 0.1)}
@@ -305,13 +314,14 @@
     el.querySelectorAll('input[data-adj]').forEach(inp => inp.oninput = () => {
       const k = inp.dataset.adj, v = +inp.value;
       inp.nextElementSibling.textContent = v;
+      inp.style.setProperty('--fill', fill(v, +inp.min, +inp.max));
       if (['volume', 'fadeIn', 'fadeOut'].includes(k)) c[k] = v;
       else { c.filter = c.filter || {}; c.filter[k] = v; }
       save(); if (isV) timeline();
     });
   }
-  const slider = (lb, k, v, mn, mx, st) => `<div class="ved-slider"><label>${lb}</label>
-    <input type="range" data-adj="${k}" min="${mn}" max="${mx}" step="${st}" value="${v}"><b>${v}</b></div>`;
+  const slider = (lb, k, v, mn, mx, st) => `<div class="ved-slider"><label for="adj_${k}">${lb}</label>
+    <input type="range" class="s-range" id="adj_${k}" data-adj="${k}" min="${mn}" max="${mx}" step="${st}" value="${v}" style="--fill:${fill(v, mn, mx)}"><b>${v}</b></div>`;
 
   function selClip(track) { return sel && sel.track === track ? TRACK(track).clips[sel.i] : null; }
 
@@ -340,7 +350,7 @@
         : { id: rid(), type: 'video', src: info.src, name: info.name, hasAudio: info.hasAudio, trimIn: 0, trimOut: info.duration || 5, duration: info.duration || 5, volume: 1, filter: {} });
       sel = { track: 'video', i: TRACK('video').clips.length - 1 };
     }
-    save(); timeline(); updateTimes();
+    save(); timeline(); updateTimes(); seekPreview(head);
   }
 
   function addTitle(styleId) {
@@ -365,9 +375,9 @@
     const dur = Math.max(totalDur(), 10);
     const width = Math.max(dur * pps + 200, el.clientWidth || 600);
     const rows = [
-      trackRow('overlay', 'T', 'Titles / Stickers'),
-      trackRow('video', '▷', 'Video'),
-      trackRow('audio', '♪', 'Audio')
+      trackRow('overlay', 'text', 'Titles'),
+      trackRow('video', 'film', 'Video'),
+      trackRow('audio', 'music', 'Audio')
     ].join('');
     el.innerHTML = `<div class="ved-ruler" style="width:${width}px" id="vedRuler">${ruler(dur)}</div>
       <div class="ved-lanes" style="width:${width}px">${rows}
@@ -389,7 +399,7 @@
         const on = sel && sel.track === 'video' && sel.i === i;
         const tr = c.transitionIn && c.transitionIn.type && c.transitionIn.type !== 'none';
         return `<div class="ved-clip ${on ? 'on' : ''} ${c.type}" data-ctx="clip" data-k="video" data-i="${i}" style="left:${left}px;width:${w}px">
-          ${tr ? `<div class="ved-trbadge" title="${c.transitionIn.type}">⇄</div>` : ''}
+          ${tr ? `<div class="ved-trbadge" title="${E(c.transitionIn.type)}">${I('layers')}</div>` : ''}
           <div class="ved-cliptn" style="background-image:url('${thumbUrl(c.src, (+c.trimIn || 0) + 0.1)}')"></div>
           <div class="ved-cliplbl">${E(c.name || c.type)}${c.filter && c.filter.preset ? ' · ' + c.filter.preset : ''}</div>
           <div class="ved-h l" data-h="l"></div><div class="ved-h r" data-h="r"></div></div>`;
@@ -400,12 +410,12 @@
         const on = sel && sel.track === kind && sel.i === i;
         const label = c.kind === 'text' ? ('“' + (c.text || '').slice(0, 18) + '”') : (c.name || c.kind);
         return `<div class="ved-clip ${on ? 'on' : ''} ${kind} ${c.kind}" data-ctx="clip" data-k="${kind}" data-i="${i}" style="left:${left}px;width:${w}px">
-          <div class="ved-cliplbl">${c.kind === 'text' ? 'T ' : c.kind === 'sticker' ? '★ ' : '♪ '}${E(label)}</div>
+          <div class="ved-cliplbl">${I(c.kind === 'text' ? 'text' : c.kind === 'sticker' ? 'star' : 'music', 's-i--sm')}${E(label)}</div>
           <div class="ved-h l" data-h="l"></div><div class="ved-h r" data-h="r"></div></div>`;
       }).join('');
     }
     return `<div class="ved-track ${kind}">
-      <div class="ved-thead"><b>${ic}</b><span>${lb}</span></div>
+      <div class="ved-thead" title="${lb}"><b>${I(ic)}</b><span>${lb}</span></div>
       <div class="ved-lane" data-track="${kind}">${inner || `<div class="ved-lanehint">${kind === 'video' ? 'Add clips from Import' : kind === 'overlay' ? 'Add a Title' : 'Add music'}</div>`}</div>
     </div>`;
   }
@@ -522,16 +532,16 @@
 
   // ---------- title editor ----------
   function editTitle(c) {
-    window.openModal(`<h3 style="margin-bottom:10px">Edit title</h3>
-      <div class="ved-field"><label>Text</label><textarea id="ttText" rows="2" style="width:100%">${E(c.text)}</textarea></div>
-      <div class="row" style="gap:12px;flex-wrap:wrap">
-        <div class="ved-field"><label>Size</label><input id="ttSize" type="number" value="${c.size || 64}" style="width:80px"></div>
-        <div class="ved-field"><label>Color</label><input id="ttColor" type="color" value="${(c.color || '#ffffff')}"></div>
-        <div class="ved-field"><label>Position</label><select id="ttPos"><option value="top">Top</option><option value="center">Center</option><option value="bottom">Bottom</option></select></div>
-        <div class="ved-field"><label>Duration (s)</label><input id="ttDur" type="number" step="0.1" value="${c.duration || 3}" style="width:80px"></div>
-        <div class="ved-field"><label><input id="ttBox" type="checkbox" ${c.box ? 'checked' : ''}> Background box</label></div>
+    window.openModal(`<h3>Edit title</h3>
+      <label class="s-field" style="margin-top:12px"><span class="s-label">Text</span><textarea class="s-textarea" id="ttText" rows="2">${E(c.text)}</textarea></label>
+      <div class="formgrid" style="margin:16px 0 0">
+        <label class="s-field"><span class="s-label">Size</span><input class="s-input" id="ttSize" type="number" inputmode="numeric" value="${c.size || 64}"></label>
+        <label class="s-field"><span class="s-label">Color</span><input class="s-input ved-color" id="ttColor" type="color" value="${E(c.color || '#ffffff')}"></label>
+        <label class="s-field"><span class="s-label">Position</span><select class="s-select" id="ttPos"><option value="top">Top</option><option value="center">Center</option><option value="bottom">Bottom</option></select></label>
+        <label class="s-field"><span class="s-label">Duration (s)</span><input class="s-input" id="ttDur" type="number" step="0.1" inputmode="decimal" value="${c.duration || 3}"></label>
+        <label class="ved-check span2"><input class="s-switch" id="ttBox" type="checkbox" ${c.box ? 'checked' : ''}><span>Background box</span></label>
       </div>
-      <div class="row" style="margin-top:14px;gap:8px"><button class="btn" id="ttOk">Apply</button><button class="btn ghost" onclick="closeModal()">Cancel</button></div>`);
+      <div class="modal-foot"><button type="button" class="s-btn s-btn--ghost" data-act="closeModal">Cancel</button><button type="button" class="s-btn s-btn--primary" id="ttOk">Apply</button></div>`);
     const pos = document.getElementById('ttPos'); if (pos) pos.value = c.y || 'center';
     document.getElementById('ttOk').onclick = () => {
       c.text = document.getElementById('ttText').value;
@@ -762,13 +772,14 @@
     updateTimes(); syncPlayback(t); drawFrame(t);
     rafId = requestAnimationFrame(frameLoop);
   }
-  function pausePlay() { playing = false; if (rafId) cancelAnimationFrame(rafId); rafId = 0; const b = document.getElementById('tpPlay'); if (b) b.textContent = '▶'; mediaEls.forEach(m => { if (m.kind === 'video') m.el.pause(); }); if (musicEl) musicEl.pause(); }
+  function setPlayIcon(on) { const b = document.getElementById('tpPlay'); if (b) { b.innerHTML = I(on ? 'pause' : 'play'); b.setAttribute('aria-label', on ? 'Pause' : 'Play'); } }
+  function pausePlay() { playing = false; if (rafId) cancelAnimationFrame(rafId); rafId = 0; setPlayIcon(false); mediaEls.forEach(m => { if (m.kind === 'video') m.el.pause(); }); if (musicEl) musicEl.pause(); }
   function togglePlay() {
     if (!P) return;
     if (playing) { pausePlay(); return; }
     if (!TRACK('video').clips.length) return toastE('Add a clip first');
     ensureMedia(); hideLoading(); playing = true; playAnchorWall = performance.now(); playAnchorHead = head >= totalDur() - 0.05 ? 0 : head;
-    const b = document.getElementById('tpPlay'); if (b) b.textContent = '⏸'; frameLoop();
+    setPlayIcon(true); frameLoop();
   }
 
   // ---------- projects / canvas / export ----------
@@ -778,29 +789,31 @@
   }
   async function openProjects() {
     const list = await A('/api/editor/projects');
-    window.openModal(`<h3 style="margin-bottom:10px">Projects</h3>
-      <div class="ved-projlist">${list.map(p => `<div class="ved-projrow" data-id="${p.id}">
-        <b>${E(p.name)}</b><span>${p.clips} clips · ${new Date(p.updatedAt).toLocaleString()}</span>
-        <button class="ved-del" data-del="${p.id}">🗑</button></div>`).join('') || '<div class="muted">No saved projects.</div>'}</div>
-      <button class="btn ghost" style="margin-top:12px" onclick="closeModal()">Close</button>`);
+    window.openModal(`<h3>Projects</h3>
+      <div class="ved-projlist">${list.map(p => `<div class="ved-projrow" data-id="${E(p.id)}" role="button" tabindex="0">
+        ${I('film')}<span class="ved-projmain"><b>${E(p.name)}</b><span>${Number(p.clips) || 0} clips · ${E(new Date(p.updatedAt).toLocaleString())}</span></span>
+        <button type="button" class="s-iconbtn ved-del" data-del="${E(p.id)}" aria-label="Delete ${E(p.name)}" title="Delete project">${I('trash')}</button></div>`).join('') || '<p class="muted">No saved projects yet. Your current movie autosaves as you edit.</p>'}</div>
+      <div class="modal-foot"><button type="button" class="s-btn s-btn--outline" data-act="closeModal">Close</button></div>`);
+    document.querySelectorAll('.ved-projrow').forEach(r => r.onkeydown = e => { if ((e.key === 'Enter' || e.key === ' ') && e.target === r) { e.preventDefault(); r.click(); } });
     document.querySelectorAll('.ved-projrow').forEach(r => r.onclick = async e => {
-      if (e.target.dataset.del) { await A('/api/editor/delete', { id: e.target.dataset.del }); openProjects(); return; }
+      const del = e.target.closest('[data-del]');
+      if (del) { await A('/api/editor/delete', { id: del.dataset.del }); openProjects(); return; }
       P = await A('/api/editor/project?id=' + r.dataset.id); bin = []; rebuildBin(); sel = null; head = 0; window.closeModal(); layout();
     });
   }
   function canvasDialog() {
-    window.openModal(`<h3 style="margin-bottom:10px">Project settings</h3>
-      <div class="row" style="gap:12px">
-        <div class="ved-field"><label>Resolution</label><select id="cvRes">
+    window.openModal(`<h3>Project settings</h3>
+      <div class="formgrid" style="margin:16px 0 0">
+        <label class="s-field"><span class="s-label">Resolution</span><select class="s-select" id="cvRes">
           <option value="3840x2160">4K UHD (3840×2160)</option>
           <option value="1920x1080" selected>Full HD (1920×1080)</option>
           <option value="1280x720">HD (1280×720)</option>
           <option value="1080x1920">Vertical 9:16 (1080×1920)</option>
           <option value="1080x1080">Square (1080×1080)</option>
-        </select></div>
-        <div class="ved-field"><label>FPS</label><select id="cvFps"><option>24</option><option selected>30</option><option>60</option></select></div>
+        </select></label>
+        <label class="s-field"><span class="s-label">Frames per second</span><select class="s-select" id="cvFps"><option>24</option><option selected>30</option><option>60</option></select></label>
       </div>
-      <div class="row" style="margin-top:14px;gap:8px"><button class="btn" id="cvOk">Apply</button><button class="btn ghost" onclick="closeModal()">Cancel</button></div>`);
+      <div class="modal-foot"><button type="button" class="s-btn s-btn--ghost" data-act="closeModal">Cancel</button><button type="button" class="s-btn s-btn--primary" id="cvOk">Apply</button></div>`);
     document.getElementById('cvRes').value = P.canvas.width + 'x' + P.canvas.height;
     document.getElementById('cvFps').value = String(P.canvas.fps);
     document.getElementById('cvOk').onclick = () => {
@@ -813,19 +826,19 @@
   let exportJobId = null;
   function exportDialog() {
     if (!TRACK('video').clips.length) return toastE('Add at least one clip first');
-    window.openModal(`<h3 style="margin-bottom:6px">Export video</h3>
-      <div class="muted" style="margin-bottom:12px">${P.canvas.width}×${P.canvas.height} · ${P.canvas.fps}fps · ${tc(totalDur())}. No watermark, ever.</div>
-      <div class="row" style="gap:12px;flex-wrap:wrap">
-        <div class="ved-field"><label>Format</label><select id="exFmt"><option value="mp4">MP4 (H.264)</option><option value="webm">WebM</option><option value="mov">MOV</option></select></div>
-        <div class="ved-field"><label>Quality</label><select id="exQ"><option value="18">High (large)</option><option value="20" selected>Good</option><option value="24">Small</option></select></div>
+    window.openModal(`<h3>Export video</h3>
+      <p class="muted" style="margin:0 0 16px">${P.canvas.width}×${P.canvas.height} · ${P.canvas.fps}fps · ${tc(totalDur())}. No watermark, ever.</p>
+      <div class="formgrid" style="margin:0">
+        <label class="s-field"><span class="s-label">Format</span><select class="s-select" id="exFmt"><option value="mp4">MP4 (H.264)</option><option value="webm">WebM</option><option value="mov">MOV</option></select></label>
+        <label class="s-field"><span class="s-label">Quality</span><select class="s-select" id="exQ"><option value="18">High (large)</option><option value="20" selected>Good</option><option value="24">Small</option></select></label>
       </div>
       <div id="exProg" style="margin-top:14px"></div>
-      <div class="row" style="margin-top:14px;gap:8px"><button class="btn" id="exGo">Start export</button><button class="btn ghost" onclick="closeModal()">Cancel</button></div>`);
+      <div class="modal-foot"><button type="button" class="s-btn s-btn--ghost" data-act="closeModal">Cancel</button><button type="button" class="s-btn s-btn--primary" id="exGo">${I('download')}Start export</button></div>`);
     document.getElementById('exGo').onclick = async () => {
       P.export = { format: document.getElementById('exFmt').value, crf: +document.getElementById('exQ').value };
       await A('/api/editor/save', { project: P });
       document.getElementById('exGo').disabled = true;
-      document.getElementById('exProg').innerHTML = `<div class="prog"><i id="exBar" style="width:0%"></i></div><div class="muted" id="exMsg" style="margin-top:6px">Rendering…</div>`;
+      document.getElementById('exProg').innerHTML = `<div class="prog"><i id="exBar" style="width:0%"></i></div><div class="muted" id="exMsg" role="status" style="margin-top:6px">Rendering. You can close this, the job keeps going in Jobs.</div>`;
       const r = await A('/api/editor/render', { id: P.id });
       exportJobId = r.jobId;
     };
@@ -836,12 +849,12 @@
     if (bar) bar.style.width = (job.progress || 0) + '%';
     if (job.status === 'done' && msg) {
       const dl = '/api/download?path=' + encodeURIComponent(job.out);
-      document.getElementById('exProg').innerHTML = `<div class="result"><b>✓ Done, no watermark</b>
-        <video src="${mediaUrl(job.out)}" controls style="width:100%;margin-top:10px;border-radius:8px"></video>
-        <div class="row" style="margin-top:10px;gap:8px"><a class="btn" href="${dl}">Save video</a>
-        ${window.forge ? `<button class="btn ghost" data-p="${E(job.out.replace(/\\/g, '/'))}" onclick="window.forge.reveal(this.dataset.p)">Show in folder</button>` : ''}</div></div>`;
+      document.getElementById('exProg').innerHTML = `<div class="result"><div class="result-head"><b>${I('check')}Done, no watermark</b></div>
+        <video src="${mediaUrl(job.out)}" controls style="width:100%"></video>
+        <div class="row" style="margin-top:12px"><a class="s-btn s-btn--primary" href="${dl}">${I('download')}Save video</a>
+        ${window.forge ? `<button type="button" class="s-btn s-btn--outline" data-act="reveal" data-p="${E(job.out.replace(/\\/g, '/'))}">${I('folder')}Show in folder</button>` : ''}</div></div>`;
       exportJobId = null;
-    } else if (job.status === 'error' && msg) { msg.innerHTML = `<span style="color:var(--err)">✗ ${E(job.error)}</span>`; exportJobId = null; document.getElementById('exGo').disabled = false; }
+    } else if (job.status === 'error' && msg) { msg.innerHTML = `<span style="color:var(--danger)">Export failed: ${E(job.error)}</span>`; exportJobId = null; document.getElementById('exGo').disabled = false; }
   };
 
   // ---------- utils ----------
@@ -874,32 +887,32 @@
       const c = TRACK(track).clips[i]; if (!c) return [];
       const items = [];
       if (track === 'video') {
-        items.push({ label: '✂ Split at playhead', run: () => splitAtHead() });
-        items.push({ label: '⧉ Duplicate', run: () => duplicateSel() });
-        if (i > 0 && c.transitionIn && c.transitionIn.type && c.transitionIn.type !== 'none') items.push({ label: '⇄ Remove transition', run: () => { c.transitionIn = null; save(); timeline(); } });
-        if (c.filter && c.filter.preset) items.push({ label: '🎨 Remove filter', run: () => { c.filter.preset = null; save(); timeline(); seekPreview(head); } });
-        items.push({ label: (c.volume === 0 ? '🔊 Unmute' : '🔇 Mute'), run: () => { c.volume = c.volume === 0 ? 1 : 0; save(); timeline(); } });
-        items.push({ label: '⚙ Adjust…', run: () => { tab = 'adjust'; layout(); } });
-        if (forgeOK()) items.push({ label: '📂 Reveal source', run: () => window.forge.reveal(c.src) });
+        items.push({ icon: 'scissors', label: 'Split at playhead', run: () => splitAtHead() });
+        items.push({ icon: 'layers', label: 'Duplicate', run: () => duplicateSel() });
+        if (i > 0 && c.transitionIn && c.transitionIn.type && c.transitionIn.type !== 'none') items.push({ icon: 'layers', label: 'Remove transition', run: () => { c.transitionIn = null; save(); timeline(); } });
+        if (c.filter && c.filter.preset) items.push({ icon: 'palette', label: 'Remove filter', run: () => { c.filter.preset = null; save(); timeline(); seekPreview(head); } });
+        items.push({ icon: c.volume === 0 ? 'volume' : 'volume-off', label: (c.volume === 0 ? 'Unmute' : 'Mute'), run: () => { c.volume = c.volume === 0 ? 1 : 0; save(); timeline(); } });
+        items.push({ icon: 'sliders', label: 'Adjust', run: () => { tab = 'adjust'; layout(); } });
+        if (forgeOK()) items.push({ icon: 'folder', label: 'Show source in folder', run: () => window.forge.reveal(c.src) });
         items.push({ sep: true });
-        items.push({ label: '🗑 Delete clip', danger: true, run: () => deleteSel() });
+        items.push({ icon: 'trash', label: 'Delete clip', danger: true, run: () => deleteSel() });
       } else {
-        if (c.kind === 'text') items.push({ label: '✎ Edit title…', run: () => editTitle(c) });
-        items.push({ label: '⧉ Duplicate', run: () => duplicateSel() });
-        if (track === 'audio') items.push({ label: (c.volume === 0 ? '🔊 Unmute' : '🔇 Mute'), run: () => { c.volume = c.volume === 0 ? 1 : 0; save(); timeline(); } });
-        if (c.src && forgeOK()) items.push({ label: '📂 Reveal source', run: () => window.forge.reveal(c.src) });
+        if (c.kind === 'text') items.push({ icon: 'edit', label: 'Edit title', run: () => editTitle(c) });
+        items.push({ icon: 'layers', label: 'Duplicate', run: () => duplicateSel() });
+        if (track === 'audio') items.push({ icon: c.volume === 0 ? 'volume' : 'volume-off', label: (c.volume === 0 ? 'Unmute' : 'Mute'), run: () => { c.volume = c.volume === 0 ? 1 : 0; save(); timeline(); } });
+        if (c.src && forgeOK()) items.push({ icon: 'folder', label: 'Show source in folder', run: () => window.forge.reveal(c.src) });
         items.push({ sep: true });
-        items.push({ label: '🗑 Delete', danger: true, run: () => deleteSel() });
+        items.push({ icon: 'trash', label: 'Delete', danger: true, run: () => deleteSel() });
       }
       return items;
     });
     window.CTX.register('binitem', (el) => {
       const i = +el.dataset.i, b = bin[i]; if (!b) return [];
-      const items = [{ label: '▷ Add to timeline', run: () => binToTimeline(i) }];
-      if (b.type !== 'audio') items.push({ label: '♪ Add soundtrack to Audio track', run: () => addBinInfoToTrack(b, 'audio') });
-      if (forgeOK()) items.push({ label: '📂 Reveal source', run: () => window.forge.reveal(b.src) });
+      const items = [{ icon: 'plus', label: 'Add to timeline', run: () => binToTimeline(i) }];
+      if (b.type !== 'audio') items.push({ icon: 'music', label: 'Use as the soundtrack', run: () => addBinInfoToTrack(b, 'audio') });
+      if (forgeOK()) items.push({ icon: 'folder', label: 'Show source in folder', run: () => window.forge.reveal(b.src) });
       items.push({ sep: true });
-      items.push({ label: '✕ Remove from bin', run: () => { bin.splice(i, 1); paintBin(); } });
+      items.push({ icon: 'close', label: 'Remove from bin', run: () => { bin.splice(i, 1); paintBin(); } });
       return items;
     });
   }

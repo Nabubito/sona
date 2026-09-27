@@ -1,3 +1,6 @@
+// Forge client. No inline handlers anywhere: every button carries
+// data-act="name" and one delegated listener runs ACTS[name]. That keeps the
+// page working under a strict script-src 'self' policy.
 const $ = s => document.querySelector(s);
 const view = $('#view');
 const jobsMap = new Map();
@@ -12,169 +15,219 @@ const api = async (path, body) => {
 };
 const fmt = n => { if (n == null) return ''; const u = ['B', 'KB', 'MB', 'GB', 'TB']; let i = 0; n = Number(n); while (n >= 1024 && i < 4) { n /= 1024; i++; } return n.toFixed(n < 10 && i ? 1 : 0) + ' ' + u[i]; };
 const esc = s => String(s == null ? '' : s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+const ic = (name, cls) => (window.Sona ? Sona.icon(name, cls) : '');
+const isPhone = () => window.matchMedia('(max-width: 720px)').matches;
+
+// ---------- actions (event delegation) ----------
+const ACTS = {
+  view: el => setView(el.dataset.arg),
+  pickRoute: () => pickThen(p => routeFile(p)),
+  pickOpen: () => pickThen(p => openContainer(p)),
+  pickMount: () => pickThen(p => mountDisc(p)),
+  pickMakeIso: () => pickThen(p => makeIsoFromFolder(p), true),
+  pickTool: el => pickThen(p => openMediaTool(el.dataset.arg, p)),
+  pickArchIn: () => pickThen(p => addArchiveInput(p)),
+  pickFolderInto: el => pickThen(p => { const f = document.getElementById(el.dataset.arg); if (f) f.value = p; }, true),
+  pickInput: () => pickThen(p => { window._in = p; const b = document.getElementById('inPath'); if (b) b.textContent = p; }),
+  tool: el => openMediaTool(el.dataset.arg),
+  jobs: () => openJobs(),
+  closeJobs: () => closeJobs(),
+  verb: el => doVerbAt(+el.dataset.arg),
+  mount: el => mountDisc(el.dataset.p),
+  extract: el => extractContainer(el.dataset.p),
+  test: el => testContainer(el.dataset.p),
+  install: el => startInstall(el.dataset.arg),
+  openDrive: el => openDrive(el.dataset.arg),
+  eject: el => unmountDrive(el.dataset.arg),
+  makeIso: () => makeIso(),
+  runMedia: el => runMedia(el.dataset.arg),
+  createArchive: () => createArchive(),
+  closeModal: () => closeModal(),
+  engines: () => showEngines(),
+  reveal: el => { if (window.forge && window.forge.reveal) window.forge.reveal(el.dataset.p); },
+  guide: el => toggleGuide(el.dataset.arg),
+  lock: () => lock()
+};
+window.FORGE_ACTS = ACTS;   // editor.js adds its own
+document.addEventListener('click', e => {
+  const el = e.target.closest('[data-act]');
+  if (!el || el.disabled) return;
+  const f = Object.prototype.hasOwnProperty.call(ACTS, el.dataset.act) ? ACTS[el.dataset.act] : null;
+  if (!f) return;
+  e.preventDefault();
+  f(el, e);
+});
+const btn = (act, label, icon, cls, extra) => `<button type="button" class="s-btn ${cls || ''}" data-act="${act}" ${extra || ''}>${icon ? ic(icon) : ''}${label}</button>`;
 
 // ---------- in-app guidance ----------
 const GUIDES = {
   home: {
     title: 'New here? Start with this',
-    body: `<p><b>Forge is a free, private workshop for your files.</b> Three things people usually pay for, upload to strangers, or install separate apps for, all in one window, all on <b>this machine</b>. Nothing ever leaves your computer.</p>
-      <p class="lead">What you can do here:</p>
+    body: `<p><b>Forge is a free, private workshop for your files.</b> Things people usually pay for, upload to strangers, or install separate apps for, all in one window, all on <b>this machine</b>. Nothing ever leaves your computer.</p>
+      <p class="lead">What you can do here</p>
       <ul>
-        <li>🎬 <b>Media</b>: turn a video into a GIF, shrink a huge clip so it fits in an email, rip the audio out of a video, resize an image for the web.</li>
-        <li>💿 <b>Discs</b>: open an <code>.iso</code> game or program and use it with no CD and no burning, or turn a folder into one <code>.iso</code> file.</li>
-        <li>🗜️ <b>Archives</b>: squeeze a folder into one small <code>.zip</code>, password-protect files, or unpack a <code>.zip</code>/<code>.rar</code> someone sent you.</li>
+        <li>${ic('film')}<span><b>Media</b>: turn a video into a GIF, shrink a huge clip so it fits in an email, rip the audio out of a video, resize an image for the web.</span></li>
+        <li>${ic('disc')}<span><b>Discs</b>: open an <code>.iso</code> game or program and use it with no CD and no burning, or turn a folder into one <code>.iso</code> file.</span></li>
+        <li>${ic('archive')}<span><b>Archives</b>: squeeze a folder into one small <code>.zip</code>, password-protect files, or unpack a <code>.zip</code> or <code>.rar</code> someone sent you.</span></li>
       </ul>
-      <p><b>To start:</b> drag any file onto this window and Forge shows you what it can do with it. Or click a toolset on the left.</p>`
+      <p><b>To start:</b> drop any file onto this window and Forge shows you what it can do with it. Or pick a toolset below.</p>`
   },
   discs: {
     title: 'What are Discs for?',
     body: `<p>A disc image (an <code>.iso</code> or <code>.img</code>) is an entire CD or DVD saved as a single file. This tab lets you use them with <b>no physical disc and no paid app</b>.</p>
-      <p class="lead">What you can do:</p>
+      <p class="lead">What you can do</p>
       <ul>
-        <li>▶️ <b>Play or install</b> an old game or program from its <code>.iso</code>. Just <b>Mount</b> it and it appears as a drive (e.g. <code>E:</code>) as if you inserted the disc. No burning needed. <span class="muted">(Windows)</span></li>
-        <li>📂 <b>Pull files out</b> of an <code>.iso</code> without mounting it (Open image, then Extract).</li>
-        <li>🏗️ <b>Build your own <code>.iso</code></b> from any folder, handy for backups or to run in another program. Any size, no cap. <span class="muted">(Windows)</span></li>
-      </ul>
-      <p class="muted">To start: Mount or Open an image below, or make one from a folder.</p>`
+        <li>${ic('play')}<span><b>Play or install</b> an old game or program from its <code>.iso</code>. <b>Mount</b> it and it appears as a drive (for example <code>E:</code>) as if you inserted the disc. <span class="muted">(Windows)</span></span></li>
+        <li>${ic('folder')}<span><b>Pull files out</b> of an <code>.iso</code> without mounting it: open the image, then Extract.</span></li>
+        <li>${ic('layers')}<span><b>Build your own <code>.iso</code></b> from any folder, handy for backups. Any size, no cap. <span class="muted">(Windows)</span></span></li>
+      </ul>`
   },
   media: {
     title: 'What is Media for?',
-    body: `<p>A <b>free, private GIF maker and video/audio converter</b>. Convert and edit video, audio, GIFs, and images with <b>no ads, no upload, and no size limit</b>.</p>
-      <p class="lead">What you can create:</p>
+    body: `<p>A <b>free, private GIF maker and video and audio converter</b>. No ads, no upload, and no size limit.</p>
+      <p class="lead">What you can make</p>
       <ul>
-        <li>🎞️ A shareable <b>GIF</b> from a video clip or screen recording.</li>
-        <li>📉 A <b>smaller MP4</b> that actually fits in an email or chat.</li>
-        <li>🎵 An <b>MP3</b> pulled out of any video.</li>
-        <li>🖼️ A <b>resized or reformatted image</b> ready for the web or a form.</li>
-        <li>✂️ A <b>trimmed clip</b> with just the part you want.</li>
+        <li>${ic('gif')}<span>A shareable <b>GIF</b> from a video clip or screen recording.</span></li>
+        <li>${ic('collapse')}<span>A <b>smaller MP4</b> that actually fits in an email or chat.</span></li>
+        <li>${ic('music')}<span>An <b>MP3</b> pulled out of any video.</span></li>
+        <li>${ic('image')}<span>A <b>resized or converted image</b> ready for the web or a form.</span></li>
+        <li>${ic('scissors')}<span>A <b>trimmed clip</b> with just the part you want.</span></li>
       </ul>
-      <p><b>To start:</b> pick a tool below, choose a file, Run, then Save. Or drop a file on Home and it suggests the right tool.</p>`
+      <p><b>To start:</b> pick a tool, choose a file, Run, then Save.</p>`
   },
   archives: {
     title: 'What are Archives for?',
     body: `<p>Bundle many files into one smaller, tidy file, or open ones you receive. Powered by <b>7-Zip</b>, free.</p>
-      <p class="lead">What you can do:</p>
+      <p class="lead">What you can do</p>
       <ul>
-        <li>📦 <b>Shrink a folder</b> of files into one smaller <code>.zip</code>/<code>.7z</code> to email, upload, or back up.</li>
-        <li>🔒 <b>Password-protect</b> sensitive files with real AES-256 encryption.</li>
-        <li>📤 <b>Open and unpack</b> a <code>.zip</code>/<code>.7z</code>/<code>.rar</code> someone sent you.</li>
-        <li>✅ <b>Check a download is not corrupt</b> before you trust it (Test integrity).</li>
-        <li>🪓 <b>Split</b> a huge archive into smaller parts.</li>
-      </ul>
-      <p><b>To start:</b> Open an archive to browse inside it, or New archive to create one.</p>`
-  },
-  jobs: {
-    title: 'What is Jobs for?',
-    body: `<p>Your <b>task tray</b>. Any operation that takes more than an instant (converting a video, making an ISO, zipping a folder) runs here so you can keep working while it finishes.</p>
-      <p class="lead">What you will see:</p>
-      <ul>
-        <li>⏳ A live <b>progress bar</b> while a task runs.</li>
-        <li>⬇️ A <b>download link</b> to the finished file.</li>
-        <li>⚠️ The <b>reason in red</b> if something failed.</li>
-      </ul>
-      <p class="muted">Open this tray any time with the ⚙ gear on the left rail.</p>`
+        <li>${ic('archive')}<span><b>Shrink a folder</b> into one smaller <code>.zip</code> or <code>.7z</code> to email, upload, or back up.</span></li>
+        <li>${ic('key')}<span><b>Password-protect</b> sensitive files with AES-256 encryption.</span></li>
+        <li>${ic('folder')}<span><b>Open and unpack</b> a <code>.zip</code>, <code>.7z</code> or <code>.rar</code> someone sent you.</span></li>
+        <li>${ic('check')}<span><b>Check a download is not corrupt</b> before you trust it (Test integrity).</span></li>
+      </ul>`
   },
   tool: {
     title: 'How this works',
     body: `<p>Pick a file, adjust the options if you want (the defaults are good), then press <b>Run</b>. Your result appears below with a <b>Save</b> button, and it never left your machine.</p>`
   }
 };
+function guideOpen(key) {
+  let v = null; try { v = localStorage.getItem('guide_' + key); } catch {}
+  if (v === '1') return true;
+  if (v === '0') return false;
+  return !isPhone() && key === 'home';
+}
 function guideBlock(key) {
   const g = GUIDES[key]; if (!g) return '';
-  const collapsed = localStorage.getItem('guide_' + key) === '0';
-  return `<div class="guide ${collapsed ? 'collapsed' : ''}" id="guide_${key}">
-    <div class="guide-h" onclick="toggleGuide('${key}')"><span>ⓘ ${esc(g.title)}</span><b>${collapsed ? '▸ show' : '▾ hide'}</b></div>
-    <div class="guide-b">${g.body}</div></div>`;
+  const open = guideOpen(key);
+  return `<div class="guide ${open ? '' : 'collapsed'}" id="guide_${key}">
+    <button type="button" class="guide-h" data-act="guide" data-arg="${key}" aria-expanded="${open}" aria-controls="guideb_${key}">${ic('info')}<span class="guide-t">${esc(g.title)}</span><span class="guide-c"><span>${open ? 'Hide' : 'Show'}</span>${ic('chevron-down')}</span></button>
+    <div class="guide-b" id="guideb_${key}">${g.body}</div></div>`;
 }
-window.toggleGuide = k => {
+function toggleGuide(k) {
   const el = document.getElementById('guide_' + k); if (!el) return;
   const c = el.classList.toggle('collapsed');
-  localStorage.setItem('guide_' + k, c ? '0' : '1');
-  el.querySelector('.guide-h b').textContent = c ? '▸ show' : '▾ hide';
-};
+  try { localStorage.setItem('guide_' + k, c ? '0' : '1'); } catch {}
+  const h = el.querySelector('.guide-h'); h.setAttribute('aria-expanded', String(!c));
+  h.querySelector('.guide-c span').textContent = c ? 'Show' : 'Hide';
+}
+window.toggleGuide = toggleGuide;
 
 // ---------- per-tab toolbar ----------
-// Each tab gets buttons for ITS OWN system (the old shared row was disc-centric).
-// [iconId, label, onclick]. Icons are glyphs, no image files.
-const TB_EMOJI = { open: '📂', openimg: '💿', mount: '⏏️', makeiso: '🏗️', gif: '🎞️', compress: '🗜️', resize: '📐', audio: '🎵', openarch: '📦', newarch: '➕', editor: '✂️', jobs: '⚙️' };
+// [id, label, icon, action, arg]
 const TOOLBARS = {
-  home: [['open', 'Open file', 'pickThen(p=>routeFile(p))'], ['editor', 'Video editor', "setView('edit')"], ['jobs', 'Jobs', 'openJobs()']],
-  discs: [['openimg', 'Open image', 'pickThen(p=>openContainer(p))'], ['mount', 'Mount', 'pickThen(p=>mountDisc(p))'], ['makeiso', 'Make ISO', 'pickThen(p=>makeIsoFromFolder(p),true)'], ['jobs', 'Jobs', 'openJobs()']],
-  media: [['open', 'Open file', 'pickThen(p=>routeFile(p))'], ['gif', 'Make GIF', "pickThen(p=>openMediaTool('video-to-gif',p))"], ['compress', 'Compress', "pickThen(p=>openMediaTool('compress-video',p))"], ['audio', 'Extract audio', "pickThen(p=>openMediaTool('extract-audio',p))"], ['jobs', 'Jobs', 'openJobs()']],
-  archives: [['openarch', 'Open archive', 'pickThen(p=>openContainer(p))'], ['newarch', 'New archive', 'pickThen(p=>addArchiveInput(p))'], ['jobs', 'Jobs', 'openJobs()']],
+  home: [['open', 'Open file', 'folder', 'pickRoute'], ['editor', 'Video editor', 'scissors', 'view', 'edit'], ['jobs', 'Jobs', 'layers', 'jobs']],
+  discs: [['openimg', 'Open image', 'disc', 'pickOpen'], ['mount', 'Mount', 'import', 'pickMount'], ['makeiso', 'Make ISO', 'layers', 'pickMakeIso'], ['jobs', 'Jobs', 'layers', 'jobs']],
+  media: [['open', 'Open file', 'folder', 'pickRoute'], ['gif', 'Make GIF', 'gif', 'pickTool', 'video-to-gif'], ['compress', 'Compress', 'collapse', 'pickTool', 'compress-video'], ['audio', 'Extract audio', 'music', 'pickTool', 'extract-audio'], ['jobs', 'Jobs', 'layers', 'jobs']],
+  archives: [['openarch', 'Open archive', 'folder', 'pickOpen'], ['newarch', 'Add to new archive', 'plus', 'pickArchIn'], ['jobs', 'Jobs', 'layers', 'jobs']],
   edit: []
 };
 function renderToolbar(name) {
   const tb = document.getElementById('toolbar'); if (!tb) return;
-  const items = (TOOLBARS[name] || []).filter(([ico]) => DISC_OK || !['mount', 'makeiso'].includes(ico));
-  if (!items.length) { tb.style.display = 'none'; tb.innerHTML = ''; return; }
-  tb.style.display = '';
-  tb.innerHTML = items.map(([ico, label, act]) =>
-    `<button onclick="${act.replace(/"/g, '&quot;')}"><i class="tbi">${TB_EMOJI[ico] || '•'}</i><span>${label}</span></button>`).join('');
+  const items = (TOOLBARS[name] || []).filter(([id]) => DISC_OK || !['mount', 'makeiso'].includes(id));
+  if (!items.length) { tb.hidden = true; tb.innerHTML = ''; return; }
+  tb.hidden = false;
+  tb.innerHTML = items.map(([id, label, icon, act, arg]) =>
+    `<button type="button" class="s-btn s-btn--ghost" data-tb="${id}" data-act="${act}"${arg ? ` data-arg="${esc(arg)}"` : ''}>${ic(icon)}${esc(label)}</button>`).join('');
 }
 
 // ---------- navigation ----------
 // Bumped whenever the view changes, so a slow async render never paints over a newer one.
 let viewSeq = 0;
+const TITLES = { home: 'Home', discs: 'Discs', media: 'Media', edit: 'Video editor', archives: 'Archives', jobs: 'Jobs' };
 function setView(name) {
+  if (name === 'jobs') { openJobs(); return; }
   viewSeq++;
+  closeJobs();
   document.body.dataset.tab = name;
-  document.querySelectorAll('.nav').forEach(b => b.classList.toggle('active', b.dataset.view === name));
+  document.querySelectorAll('.nav[data-view]').forEach(b => {
+    const on = b.dataset.view === name;
+    b.classList.toggle('is-active', on);
+    if (on) b.setAttribute('aria-current', 'page'); else b.removeAttribute('aria-current');
+  });
   view.className = 'view';  // reset so the editor's full-bleed class never leaks into other tabs
+  view.scrollTop = 0;
   renderToolbar(name);
-  ({ home: renderHome, discs: renderDiscs, media: renderMedia, edit: window.renderEditor, archives: renderArchives, jobs: renderJobs }[name] || renderHome)();
-  setStatus(name.charAt(0).toUpperCase() + name.slice(1));
+  ({ home: renderHome, discs: renderDiscs, media: renderMedia, edit: window.renderEditor, archives: renderArchives }[name] || renderHome)();
+  setStatus(TITLES[name] || 'Home');
+  document.title = (name === 'home' ? 'Forge' : (TITLES[name] || 'Forge') + ' · Forge') + ' · Sona';
 }
+window.setView = setView;
 function setStatus(msg, right) {
   const m = document.getElementById('stMsg'); if (m && msg !== undefined) m.textContent = msg;
   const r = document.getElementById('stRight'); if (r && right !== undefined) r.textContent = right;
 }
-document.querySelectorAll('.nav[data-view]').forEach(b => b.onclick = () => {
-  if (b.dataset.view === 'jobs') { $('#jobsTray').classList.toggle('open'); return; }
+document.querySelectorAll('.nav[data-view]').forEach(b => b.addEventListener('click', () => {
+  if (b.dataset.view === 'jobs') { toggleJobs(); return; }
   setView(b.dataset.view);
-});
-$('#themeBtn').onclick = () => {
-  const b = document.body, t = b.dataset.theme === 'dark' ? 'light' : 'dark';
-  b.dataset.theme = t; $('#themeBtn').textContent = t === 'dark' ? '☾' : '☀';
-};
+}));
 
 // ---------- home ----------
+function enginesChips() {
+  const chips = HEALTH.engines.filter(e => e.id !== 'ffprobe').map(e =>
+    `<span class="eng ${e.present ? 'eng--on' : 'eng--missing'}"><i class="s-dot" aria-hidden="true"></i>${esc(e.label)}${e.present ? '' : ' missing'}</span>`);
+  chips.push(`<span class="eng ${DISC_OK ? 'eng--on' : 'eng--off'}"><i class="s-dot" aria-hidden="true"></i>${DISC_OK ? 'discs' : 'discs off'}</span>`);
+  return chips.join('');
+}
 function renderHome() {
-  view.innerHTML = `
-    <h1>Forge</h1>
-    <div class="sub">Discs, media, and archives in one workshop. Your files never leave the box.</div>
-    ${missingBanner()}
-    ${guideBlock('home')}
-    <div class="dropzone" id="dz">
-      <b>Drop any file here</b>
-      Or click to pick a file from disk
-      <div class="fmts">iso · img · zip · 7z · rar · mp4 · mov · gif · webp · png · jpg · mp3 · wav …</div>
-    </div>
-    <div class="cards">
-      <div class="card"><h3>⊙ Discs</h3>
-        <button class="tool" onclick="pickThen(p=>openContainer(p))">Open image</button>
-        <button class="tool" onclick="setView('discs')">${DISC_OK ? 'Mount / make ISO' : 'Browse / extract images'}</button></div>
-      <div class="card"><h3>▷ Media</h3>
-        <button class="tool" onclick="setView('media')">All ${TOOLS.length || ''} media tools</button>
-        <button class="tool" onclick="pickThen(p=>routeFile(p))">Convert a file</button></div>
-      <div class="card"><h3>▤ Archives</h3>
-        <button class="tool" onclick="pickThen(p=>openContainer(p))">Open archive</button>
-        <button class="tool" onclick="setView('archives')">New archive</button></div>
+  const card = (icon, title, sub, viewName, tools) => `<div class="card">
+      <button type="button" class="card-head" data-act="view" data-arg="${viewName}"><span class="card-ic">${ic(icon)}</span><span><span class="card-title">${title}</span><span class="card-sub">${sub}</span></span>${ic('chevron-right')}</button>
+      ${tools.map(([label, icon2, act, arg]) => `<button type="button" class="tool" data-act="${act}"${arg ? ` data-arg="${arg}"` : ''}>${ic(icon2)}${label}</button>`).join('')}
     </div>`;
-  const dz = $('#dz');
-  dz.onclick = () => pickThen(p => routeFile(p));
+  view.innerHTML = `
+    <div class="hero"><div><h1 class="page-title s-wordmark">Forge</h1>
+      <p class="sub">Discs, media, and archives in one workshop. Your files never leave the box.</p></div>
+      <div class="home-engines"><button type="button" class="engines" data-act="engines" aria-label="Engines: tap for details">${enginesChips()}</button></div></div>
+    ${missingBanner()}
+    <button type="button" class="dropzone" id="dz" data-act="pickRoute">
+      <span class="dz-icon">${ic('upload')}</span>
+      <b>Drop any file here</b>
+      <span>or ${isPhone() ? 'tap' : 'click'} to pick one. Forge suggests what to do with it.</span>
+      <span class="fmts">iso · img · zip · 7z · rar · mp4 · mov · gif · webp · png · jpg · mp3 · wav</span>
+    </button>
+    <div class="cards">
+      ${card('film', 'Media', 'GIF, compress, audio, images', 'media', [['All media tools', 'film', 'view', 'media'], ['Convert a file', 'wand', 'pickRoute']])}
+      ${card('scissors', 'Video editor', 'Timeline, titles, export', 'edit', [['Open the editor', 'scissors', 'view', 'edit']])}
+      ${card('archive', 'Archives', 'Zip, 7z, unpack, test', 'archives', [['Open an archive', 'folder', 'pickOpen'], ['New archive', 'plus', 'view', 'archives']])}
+      ${card('disc', 'Discs', DISC_OK ? 'Mount and build ISOs' : 'Browse ISO images', 'discs', [['Open an image', 'disc', 'pickOpen'], [DISC_OK ? 'Mount or make ISO' : 'Browse and extract', 'layers', 'view', 'discs']])}
+    </div>
+    <div class="home-guide">${guideBlock('home')}</div>`;
 }
 
 // ---------- drop router ----------
 async function routeFile(p) {
   const info = await api('/api/inspect', { path: p });
-  if (!info.supported) { toast('No tool for .' + info.ext + ' yet'); return; }
-  const box = `<h3 style="margin-bottom:6px">${esc(info.name)}</h3>
-    <div class="muted" style="margin-bottom:14px">Pillar: ${info.pillar}. Pick an action.</div>
-    <div class="row">${info.verbs.map((v, i) =>
-      `<button class="btn" onclick="doVerbAt(${i})">${esc(v.label)}</button>`).join('')}</div>`;
+  if (!info.supported) { toast('No tool for .' + info.ext + ' files yet', true); return; }
   window._verbCtx = { verbs: info.verbs, p };
-  openModal(box);
+  openModal(`<h3>${esc(info.name)}</h3>
+    <div class="muted">${esc(info.pillar === 'media' ? 'Media file' : info.pillar === 'disc' ? 'Disc image' : 'Archive')}. Pick what to do with it.</div>
+    <div class="verbs">${info.verbs.map((v, i) => btn('verb', esc(v.label), verbIcon(v), i === 0 ? 's-btn--primary s-btn--block' : 's-btn--outline s-btn--block', `data-arg="${i}"`)).join('')}</div>
+    <div class="modal-foot">${btn('closeModal', 'Cancel', '', 's-btn--ghost')}</div>`);
+}
+function verbIcon(v) {
+  if (v.kind === 'container') return v.id === 'test' ? 'check' : v.id === 'extract' ? 'download' : 'folder';
+  if (v.kind === 'disc') return 'import';
+  return toolIcon(v.id);
 }
 window.doVerbAt = i => { const c = window._verbCtx; if (c && c.verbs[i]) doVerb(c.verbs[i], c.p); };
 window.doVerb = (v, p) => {
@@ -185,195 +238,224 @@ window.doVerb = (v, p) => {
 };
 
 // ---------- container browser (disc + archive) ----------
+const DISC_EXT = ['iso', 'img', 'bin', 'nrg', 'mdf', 'vhd', 'vhdx', 'dmg', 'wim'];
 async function openContainer(p) {
-  setView('discs');
+  setView(DISC_EXT.includes(String(p).split('.').pop().toLowerCase()) ? 'discs' : 'archives');
   viewSeq++;   // the archive listing below owns the view now
-  view.innerHTML = `<div class="muted">Reading ${esc(p)} …</div>`;
-  const info = await api('/api/inspect', { path: p });
   const mySeq = viewSeq;
+  view.innerHTML = `<div class="pathbar">${ic('folder')}<b>${esc(p)}</b></div><div class="s-skel s-skel--title"></div>${Sona.skeleton('rows', 6)}`;
+  setStatus('Reading ' + p.split(/[\\/]/).pop());
+  const info = await api('/api/inspect', { path: p });
   const data = await api('/api/container/list', { path: p });
   if (mySeq !== viewSeq) return;
-  if (data.error) { view.innerHTML = `<div class="result">Could not read: ${esc(data.error)}</div>`; return; }
+  if (data.error) { view.innerHTML = `<div class="result err">${ic('info')}<span>Could not read this file: ${esc(data.error)}</span></div>`; return; }
   const isDisc = info.pillar === 'disc';
   const totalSz = data.entries.reduce((a, e) => a + (e.size || 0), 0);
+  const P = `data-p="${esc(p)}"`;
   const verbs = isDisc
-    ? `${DISC_OK ? `<button class="btn" data-p="${esc(p)}" onclick="mountDisc(this.dataset.p)">Mount</button>` : ''}
-       <button class="btn ${DISC_OK ? 'ghost' : ''}" data-p="${esc(p)}" onclick="extractContainer(this.dataset.p)">Extract all</button>`
-    : `<button class="btn" data-p="${esc(p)}" onclick="extractContainer(this.dataset.p)">Extract all</button>
-       <button class="btn ghost" data-p="${esc(p)}" onclick="testContainer(this.dataset.p)">Test integrity</button>`;
+    ? `${DISC_OK ? btn('mount', 'Mount', 'import', 's-btn--primary', P) : ''}${btn('extract', 'Extract all', 'download', DISC_OK ? 's-btn--outline' : 's-btn--primary', P)}`
+    : `${btn('extract', 'Extract all', 'download', 's-btn--primary', P)}${btn('test', 'Test integrity', 'check', 's-btn--outline', P)}`;
   view.innerHTML = `
-    <div class="pathbar"><b>${esc(p)}</b> <span class="badge">${esc(data.type || info.ext)}</span></div>
-    <div class="row" style="margin-bottom:14px">${verbs}</div>
-    <table><thead><tr><th>Name</th><th class="sz">Size</th><th class="sz">Packed</th><th>Modified</th></tr></thead>
+    <div class="pathbar">${ic(isDisc ? 'disc' : 'archive')}<b>${esc(p)}</b> <span class="badge">${esc(data.type || info.ext)}</span></div>
+    <div class="row" style="margin-bottom:var(--sp-4)">${verbs}</div>
+    ${data.entries.length ? `<div class="tablewrap"><table><thead><tr><th>Name</th><th class="sz">Size</th><th class="sz col-hide">Packed</th><th class="col-hide">Modified</th></tr></thead>
     <tbody>${data.entries.slice(0, 500).map(e => `<tr class="${e.dir ? 'dir' : ''}" data-ctx="entry" data-container="${esc(p)}" data-path="${esc(e.path)}" data-dir="${e.dir ? 1 : 0}">
-      <td>${esc(e.path)}</td><td class="sz">${e.dir ? '' : fmt(e.size)}</td>
-      <td class="sz">${e.packed != null ? fmt(e.packed) : ''}</td><td class="muted">${esc(e.modified)}</td></tr>`).join('')}</tbody></table>
-    <div class="statusbar"><span>${data.entries.length} items</span><span>${fmt(totalSz)} total</span><span>${esc(data.type)}</span></div>`;
+      <td class="nm">${ic(e.dir ? 'folder' : 'file', 's-i--sm')}<span>${esc(e.path)}</span></td><td class="sz">${e.dir ? '' : fmt(e.size)}</td>
+      <td class="sz col-hide">${e.packed != null ? fmt(e.packed) : ''}</td><td class="muted col-hide">${esc(e.modified)}</td></tr>`).join('')}</tbody></table></div>`
+      : `<div class="s-empty"><div class="s-empty__icon">${ic('archive')}</div><h2 class="s-empty__title">It is empty</h2><p class="s-empty__text">This file holds no entries. Try another archive or image.</p></div>`}
+    <div class="statusbar"><span>${data.entries.length} items</span><span>${fmt(totalSz)} total</span><span>${esc(data.type)}</span>${data.entries.length > 500 ? '<span>Showing the first 500</span>' : ''}</div>`;
+  setStatus(p.split(/[\\/]/).pop());
 }
+window.openContainer = openContainer;
 window.extractContainer = async (p) => {
   const r = await api('/api/container/extract', { path: p });
-  toast('Extracting… (see Jobs)'); openJobs();
+  if (r && r.error) return toast(r.error, true);
+  toast('Extracting. Follow it in Jobs.'); openJobs();
 };
 window.testContainer = async (p) => {
   const r = await api('/api/container/test', { path: p });
-  toast(r.ok ? '✓ ' + r.message : '✗ ' + (r.message || 'failed'));
+  toast(r.ok ? 'Looks good: ' + r.message : 'Problem: ' + (r.message || 'the test failed'), !r.ok);
 };
 window.mountDisc = async (p) => {
   const r = await api('/api/disc/mount', { path: p });
-  if (r.error) return toast('Mount failed: ' + r.error);
+  if (r.error) return toast('Mount failed: ' + r.error, true);
   toast(`Mounted as ${r.drive}: (${r.label || 'disc'})`);
   renderDiscs();
 };
 
 // ---------- discs view ----------
 async function renderDiscs() {
+  const head = `<h1 class="page-title">Discs</h1><p class="sub">${DISC_OK ? 'Mount, browse, and build ISO images.' : 'Browse and extract ISO images.'}</p>${guideBlock('discs')}`;
   if (!DISC_OK) {
-    view.innerHTML = `
-      <h1>Discs</h1><div class="sub">Browse and extract ISO images.</div>
-      ${guideBlock('discs')}
-      <div class="notice"><b>Mounting and building ISOs are Windows-only.</b> ${esc(HEALTH.disc.reason || '')}
-        You can still open any disc image here to browse it and extract its files with 7-Zip.</div>
-      <div class="section-title">Open an image</div>
-      <button class="btn" onclick="pickThen(p=>openContainer(p))">Choose .iso / .img …</button>`;
+    view.innerHTML = `${head}
+      <div class="notice">${ic('info')}<span><b>Mount and Build ISO are off on this computer.</b> ${esc(HEALTH.disc.reason || '')}
+        You can still open any disc image here to browse it and extract its files with 7-Zip.</span></div>
+      <div class="s-empty"><div class="s-empty__icon">${ic('disc')}</div><h2 class="s-empty__title">Open a disc image</h2>
+        <p class="s-empty__text">Pick an .iso or .img file to see what is inside and pull files out.</p>
+        <div class="s-empty__actions">${btn('pickOpen', 'Choose an image', 'folder', 's-btn--primary')}</div></div>`;
     return;
   }
   const mySeq = viewSeq;
+  view.innerHTML = `${head}<div class="section-title s-eyebrow">Mounted now</div>${Sona.skeleton('rows', 2)}`;
   const m = await api('/api/disc/mounted');
   if (mySeq !== viewSeq) return;
-  view.innerHTML = `
-    <h1>Discs</h1><div class="sub">Mount, browse, and build ISO images.</div>
-    ${guideBlock('discs')}
-    <div class="section-title">Mounted now</div>
-    ${m.length ? `<table><thead><tr><th>Drive</th><th>Label</th><th class="sz">Size</th><th>Actions</th></tr></thead><tbody>
-      ${m.filter(v => /^[A-Za-z]$/.test(v.drive)).map(v => `<tr><td><b>${v.drive}:</b></td><td>${esc(v.label)}</td><td class="sz">${fmt(v.size)}</td>
-      <td class="row">
-        <button class="btn" onclick="startInstall('${v.drive}')">▶ Start install</button>
-        <button class="btn ghost" onclick="openDrive('${v.drive}')">Open in Explorer</button>
-        ${v.path ? `<button class="btn ghost" onclick="unmountDrive('${v.drive}')">Eject</button>` : ''}
-      </td></tr>`).join('')}</tbody></table>
-      <p class="muted" style="margin-top:8px">▶ Start install runs the disc's setup or autorun, from the Forge app window.</p>`
-      : '<div class="muted">Nothing mounted. Mount an image below to install or browse it.</div>'}
-    <div class="section-title">Open an image</div>
-    <button class="btn" onclick="pickThen(p=>openContainer(p))">Choose .iso / .img …</button>
-    <div class="section-title">Make ISO from a folder</div>
-    <div class="field"><label>Source folder</label>
-      <div class="row"><input id="mkFolder" placeholder="path/to/folder" style="max-width:420px">
-      <button class="btn ghost" onclick="pickThen(p=>{document.getElementById('mkFolder').value=p},true)">Browse…</button></div></div>
-    <div class="field"><label>Volume label</label><input id="mkLabel" placeholder="MY_DISC"></div>
-    <button class="btn" onclick="makeIso()">Build ISO</button>`;
+  const drives = (m || []).filter(v => /^[A-Za-z]$/.test(v.drive));
+  view.innerHTML = `${head}
+    <div class="section-title s-eyebrow">Mounted now</div>
+    ${drives.length ? `<div class="tablewrap"><table><thead><tr><th>Drive</th><th>Label</th><th class="sz">Size</th><th>Actions</th></tr></thead><tbody>
+      ${drives.map(v => `<tr><td><b>${v.drive}:</b></td><td>${esc(v.label)}</td><td class="sz">${fmt(v.size)}</td>
+      <td><div class="row">${btn('install', 'Start install', 'play', 's-btn--primary s-btn--sm', `data-arg="${v.drive}"`)}
+        ${btn('openDrive', 'Open', 'external', 's-btn--outline s-btn--sm', `data-arg="${v.drive}"`)}
+        ${v.path ? btn('eject', 'Eject', 'close', 's-btn--ghost s-btn--sm', `data-arg="${v.drive}"`) : ''}</div></td></tr>`).join('')}</tbody></table></div>
+      <p class="muted" style="margin-top:var(--sp-2)">Start install runs the disc's setup or autorun, from the Forge app window.</p>`
+      : `<p class="muted">Nothing mounted. Mount an image to install or browse it.</p>`}
+    <div class="section-title s-eyebrow">Open an image</div>
+    ${btn('pickOpen', 'Choose an .iso or .img', 'folder', 's-btn--outline')}
+    <div class="section-title s-eyebrow">Make ISO from a folder</div>
+    <div class="formgrid">
+      <label class="s-field span2"><span class="s-label">Source folder</span>
+        <span class="row" style="flex-wrap:nowrap"><input class="s-input" id="mkFolder" placeholder="path/to/folder">${btn('pickFolderInto', 'Browse', 'folder', 's-btn--outline', 'data-arg="mkFolder"')}</span></label>
+      <label class="s-field"><span class="s-label">Volume label</span><input class="s-input" id="mkLabel" placeholder="MY_DISC"></label>
+    </div>
+    ${btn('makeIso', 'Build ISO', 'layers', 's-btn--primary')}`;
 }
-window.makeIso = async () => {
+async function makeIso() {
   const folder = $('#mkFolder').value.trim(), label = $('#mkLabel').value.trim();
-  if (!folder) return toast('Pick a source folder');
+  if (!folder) return toast('Pick a source folder first', true);
   const r = await api('/api/disc/make', { folder, label });
-  if (r.error) return toast(r.error);
-  toast('Building ISO… (see Jobs)'); openJobs();
-};
+  if (r.error) return toast(r.error, true);
+  toast('Building the ISO. Follow it in Jobs.'); openJobs();
+}
+window.makeIso = makeIso;
 
 // ---------- media ----------
+const TOOL_ICONS = { 'video-to-gif': 'gif', 'gif-to-mp4': 'film', 'compress-video': 'collapse', 'resize-video': 'crop', 'cut-video': 'scissors',
+  'extract-audio': 'music', 'convert-audio': 'refresh', 'resize-image': 'crop', 'convert-image': 'image' };
+const GROUP_ICONS = { 'GIF & Animation': 'gif', Video: 'video', Audio: 'music', Image: 'image' };
+const toolIcon = id => TOOL_ICONS[id] || 'wand';
 function renderMedia() {
   const groups = {};
   TOOLS.forEach(t => (groups[t.group] = groups[t.group] || []).push(t));
-  view.innerHTML = `<h1>Media</h1><div class="sub">Local ffmpeg tools. No upload, no caps, no ads.</div>
+  view.innerHTML = `<h1 class="page-title">Media</h1><p class="sub">Local ffmpeg tools. No upload, no caps, no ads.</p>
     ${engineOk('ffmpeg') ? '' : missingBanner('ffmpeg')}
     ${guideBlock('media')}
-    <div class="cards">${Object.entries(groups).map(([g, ts]) => `<div class="card"><h3>${esc(g)}</h3>
-      ${ts.map(t => `<button class="tool" onclick="openMediaTool('${t.id}')">${esc(t.label)}</button>`).join('')}</div>`).join('')}</div>`;
+    ${TOOLS.length ? Object.entries(groups).map(([g, ts]) => `<section class="toolgroup"><h2 class="s-eyebrow">${ic(GROUP_ICONS[g] || 'wand', 's-i--sm')}${esc(g)}</h2>
+      <div class="tooltiles">${ts.map(t => `<button type="button" class="tooltile" data-act="tool" data-arg="${esc(t.id)}"><span class="tt-ic">${ic(toolIcon(t.id))}</span>
+        <span class="tt-main"><span class="tt-t">${esc(t.label)}</span><span class="tt-s">${esc(t.accepts.slice(0, 5).join(' · '))}</span></span></button>`).join('')}</div></section>`).join('')
+      : `<div class="s-empty"><div class="s-empty__icon">${ic('film')}</div><h2 class="s-empty__title">No media tools</h2><p class="s-empty__text">Forge could not load its tool list. Check that ffmpeg is installed, then restart Forge.</p><div class="s-empty__actions">${btn('engines', 'Check engines', 'cpu', 's-btn--primary')}</div></div>`}`;
 }
 async function openMediaTool(id, inputPath) {
   const t = TOOLS.find(x => x.id === id);
   if (!t) return;
+  if (document.body.dataset.tab !== 'media') setView('media');
+  viewSeq++;
   const opts = (t.options || []).map(o => {
-    if (o.type === 'select') return `<div class="field"><label>${esc(o.label)}</label><select data-k="${o.key}">${o.options.map(v => `<option ${v === o.default ? 'selected' : ''}>${v}</option>`).join('')}</select></div>`;
-    return `<div class="field"><label>${esc(o.label)}</label><input data-k="${o.key}" value="${esc(o.default)}" type="${o.type === 'number' ? 'number' : 'text'}"></div>`;
+    if (o.type === 'select') return `<label class="s-field"><span class="s-label">${esc(o.label)}</span><select class="s-select" data-k="${esc(o.key)}">${o.options.map(v => `<option ${v === o.default ? 'selected' : ''}>${esc(v)}</option>`).join('')}</select></label>`;
+    return `<label class="s-field"><span class="s-label">${esc(o.label)}</span><input class="s-input" data-k="${esc(o.key)}" value="${esc(o.default)}" type="${o.type === 'number' ? 'number' : 'text'}"${o.type === 'number' ? ' inputmode="numeric"' : ''}></label>`;
   }).join('');
   view.innerHTML = `<div class="toolpage">
-    <h1>${esc(t.label)}</h1><div class="sub">Accepts: ${t.accepts.join(', ')}</div>
+    ${btn('view', 'All media tools', 'back', 's-btn--ghost back', 'data-arg="media"')}
+    <h1 class="page-title">${esc(t.label)}</h1><p class="sub">Accepts ${esc(t.accepts.join(', '))}</p>
     ${guideBlock('tool')}
-    <div class="pathbar"><b id="inPath">${inputPath ? esc(inputPath) : '<span class="muted">no file chosen</span>'}</b>
-      <button class="btn ghost" onclick="pickThen(p=>{window._in=p;document.getElementById('inPath').textContent=p})">Choose file</button></div>
-    ${opts}
-    <button class="btn" id="runBtn" onclick="runMedia('${id}')">Run</button>
+    <div class="pathbar">${ic('file')}<b id="inPath">${inputPath ? esc(inputPath) : '<span class="muted">No file chosen yet</span>'}</b>
+      ${btn('pickInput', 'Choose file', 'folder', 's-btn--outline')}</div>
+    ${opts ? `<div class="formgrid">${opts}</div>` : ''}
+    <button type="button" class="s-btn s-btn--primary s-btn--lg" id="runBtn" data-act="runMedia" data-arg="${esc(id)}">${ic('play')}Run</button>
     <div id="mout"></div></div>`;
   window._in = inputPath || null;
+  setStatus(t.label);
 }
 window.openMediaTool = openMediaTool;
 window.runMedia = async (id) => {
-  if (!window._in) return toast('Choose a file first');
+  if (!window._in) return toast('Choose a file first', true);
   const opts = {};
   document.querySelectorAll('#view [data-k]').forEach(el => opts[el.dataset.k] = el.value);
-  const btn = $('#runBtn'); btn.disabled = true; btn.textContent = 'Running…';
-  $('#mout').innerHTML = `<div class="prog"><i id="pbar"></i></div>`;
+  const b = $('#runBtn'); b.disabled = true; b.lastChild.textContent = 'Running';
+  $('#mout').innerHTML = `<div class="result"><div class="muted">Working on it. Big files take a while.</div><div class="prog indet"><i id="pbar"></i></div></div>`;
   const r = await api('/api/media/run', { toolId: id, path: window._in, options: opts });
-  btn.disabled = false; btn.textContent = 'Run';
-  if (r.error) { $('#mout').innerHTML = `<div class="result">✗ ${esc(r.error)}</div>`; return; }
+  b.disabled = false; b.lastChild.textContent = 'Run';
+  if (r.error) { $('#mout').innerHTML = `<div class="result err">${ic('info')}<span>${esc(r.error)}</span></div>`; return; }
   const dl = '/api/download?path=' + encodeURIComponent(r.out);
   const ext = (r.out.split('.').pop() || '').toLowerCase();
   let preview = '';
-  if (['gif', 'png', 'jpg', 'jpeg', 'webp', 'bmp'].includes(ext)) preview = `<img src="${dl}">`;
+  if (['gif', 'png', 'jpg', 'jpeg', 'webp', 'bmp'].includes(ext)) preview = `<img src="${dl}" alt="Result preview">`;
   else if (['mp4', 'webm', 'mov'].includes(ext)) preview = `<video src="${dl}" controls></video>`;
   else if (['mp3', 'wav', 'm4a', 'ogg', 'flac'].includes(ext)) preview = `<audio src="${dl}" controls></audio>`;
   const outFwd = r.out.replace(/\\/g, '/');
-  $('#mout').innerHTML = `<div class="result" data-ctx="result" data-out="${esc(outFwd)}"><div class="row" style="justify-content:space-between">
-    <b>${esc(r.out.split(/[\\/]/).pop())}</b>
-    <span class="row" style="gap:8px"><a class="btn" href="${dl}">Save</a>
-    ${window.forge ? `<button class="btn ghost" data-p="${esc(outFwd)}" onclick="window.forge.reveal(this.dataset.p)">Show in folder</button>` : ''}</span></div>
-    <div style="margin-top:12px">${preview}</div></div>`;
+  $('#mout').innerHTML = `<div class="result" data-ctx="result" data-out="${esc(outFwd)}"><div class="result-head">
+    <b>${ic('check')}${esc(r.out.split(/[\\/]/).pop())}</b>
+    <span class="row"><a class="s-btn s-btn--primary" href="${dl}">${ic('download')}Save</a>
+    ${window.forge ? btn('reveal', 'Show in folder', 'folder', 's-btn--outline', `data-p="${esc(outFwd)}"`) : ''}</span></div>
+    ${preview}</div>`;
   setStatus('Done: ' + r.out.split(/[\\/]/).pop());
 };
 
 // ---------- archives ----------
 let archiveInputs = [];
 function renderArchives() {
-  view.innerHTML = `<h1>Archives</h1><div class="sub">Create zip / 7z with compression, password, and split volumes.</div>
+  view.innerHTML = `<h1 class="page-title">Archives</h1><p class="sub">Open zip, 7z and rar files, or pack your own with compression and a password.</p>
     ${engineOk('sevenzip') ? '' : missingBanner('sevenzip')}
     ${guideBlock('archives')}
-    <div class="section-title">Open an archive</div>
-    <button class="btn ghost" onclick="pickThen(p=>openContainer(p))">Open .zip / .7z / .rar …</button>
-    <div class="section-title">New archive</div>
-    <div class="field"><label>Files to include</label>
-      <div id="archFiles" class="muted">none</div>
-      <button class="btn ghost" style="margin-top:8px" onclick="pickThen(p=>addArchiveInput(p))">Add file/folder…</button></div>
-    <div class="row">
-      <div class="field"><label>Format</label><select id="afmt"><option>7z</option><option>zip</option><option>tar</option></select></div>
-      <div class="field"><label>Compression</label><select id="alvl"><option value="1">Fast</option><option value="5" selected>Balanced</option><option value="9">Max</option></select></div>
+    <div class="openbar"><span class="card-ic">${ic('folder')}</span><span class="openbar-main"><span class="card-title">Open an archive</span><span class="card-sub">Browse inside, extract one file or all, or test it</span></span>
+      ${btn('pickOpen', 'Choose a file', 'folder', 's-btn--primary')}</div>
+    <div class="section-title s-eyebrow">New archive</div>
+    <div class="formgrid">
+      <div class="s-field span2"><span class="s-label">Files to include</span>
+        <div id="archFiles" class="chosen"></div>
+        <div>${btn('pickArchIn', 'Add a file', 'plus', 's-btn--outline')}</div></div>
+      <label class="s-field"><span class="s-label">Format</span><select class="s-select" id="afmt"><option>7z</option><option>zip</option><option>tar</option></select></label>
+      <label class="s-field"><span class="s-label">Compression</span><select class="s-select" id="alvl"><option value="1">Fast</option><option value="5" selected>Balanced</option><option value="9">Max</option></select></label>
+      <label class="s-field span2"><span class="s-label">Password (optional, AES-256)</span><input class="s-input" id="apw" type="text" placeholder="Leave blank for none" autocomplete="off"></label>
+      <label class="s-field span2"><span class="s-label">Save the archive as</span><input class="s-input" id="aout" placeholder="${esc(HEALTH.outdir)}/archive.7z" value="${esc(HEALTH.outdir)}/archive.7z"></label>
     </div>
-    <div class="field"><label>Password (optional, AES-256)</label><input id="apw" type="text" placeholder="leave blank for none"></div>
-    <div class="field"><label>Output archive path</label><input id="aout" placeholder="${esc(HEALTH.outdir)}/archive.7z" value="${esc(HEALTH.outdir)}/archive.7z"></div>
-    <button class="btn" onclick="createArchive()">Create archive</button>`;
+    ${btn('createArchive', 'Create archive', 'archive', 's-btn--primary s-btn--lg')}`;
   renderArchInputs();
 }
-window.addArchiveInput = p => { archiveInputs.push(p); renderArchInputs(); };
-function renderArchInputs() { const el = $('#archFiles'); if (el) el.innerHTML = archiveInputs.length ? archiveInputs.map(esc).join('<br>') : 'none'; }
-window.createArchive = async () => {
-  if (!archiveInputs.length) return toast('Add at least one file');
+window.addArchiveInput = p => { archiveInputs.push(p); if (document.body.dataset.tab !== 'archives') setView('archives'); renderArchInputs(); };
+function renderArchInputs() { const el = $('#archFiles'); if (el) el.innerHTML = archiveInputs.map(p => `<span class="chip">${ic('file', 's-i--sm')}${esc(p)}</span>`).join(''); }
+async function createArchive() {
+  if (!archiveInputs.length) return toast('Add at least one file', true);
   const out = $('#aout').value.trim();
-  await api('/api/archive/create', {
+  const r = await api('/api/archive/create', {
     inputs: archiveInputs, out, format: $('#afmt').value,
     level: Number($('#alvl').value), password: $('#apw').value.trim() || undefined
   });
-  toast('Creating archive… (see Jobs)'); openJobs();
-};
+  if (r && r.error) return toast(r.error, true);
+  toast('Creating the archive. Follow it in Jobs.'); openJobs();
+}
+window.createArchive = createArchive;
 
 // ---------- jobs ----------
-function renderJobs() { view.innerHTML = `<h1>Jobs</h1><div class="sub">Live queue and history.</div>${guideBlock('jobs')}<div id="jobsMain"></div>`; paintJobs('#jobsMain'); }
 function paintJobs(sel) {
   const el = document.querySelector(sel) || $('#jobsList');
   const arr = [...jobsMap.values()].sort((a, b) => b.at - a.at);
   el.innerHTML = arr.length ? arr.map(j => `<div class="job" data-ctx="job" data-id="${esc(j.id)}">
-    <div class="t"><b>${esc(j.label)}</b><span class="st ${j.status}">${j.status}</span></div>
-    ${j.status === 'running' ? `<div class="prog"><i style="width:${j.progress}%"></i></div>` : ''}
-    ${j.out ? `<a href="/api/download?path=${encodeURIComponent(j.out)}">↓ ${esc(String(j.out).split(/[\\/]/).pop())}</a>` : ''}
-    ${j.error ? `<div class="muted" style="color:var(--err)">${esc(j.error)}</div>` : ''}
-  </div>`).join('') : '<div class="muted">No jobs yet.</div>';
+    <div class="t"><b>${esc(j.label)}</b><span class="st ${esc(j.status)}">${esc(j.status === 'error' ? 'failed' : j.status)}</span></div>
+    ${j.status === 'running' ? `<div class="prog"><i style="width:${Number(j.progress) || 0}%"></i></div>` : ''}
+    ${j.out ? `<a class="dl" href="/api/download?path=${encodeURIComponent(j.out)}">${ic('download')}${esc(String(j.out).split(/[\\/]/).pop())}</a>` : ''}
+    ${j.error ? `<div class="jerr">${esc(j.error)}</div>` : ''}
+  </div>`).join('') : `<div class="s-empty jobs-empty"><div class="s-empty__icon">${ic('layers')}</div><h2 class="s-empty__title">No jobs yet</h2>
+      <p class="s-empty__text">Convert a file, extract an archive or export a video. Long tasks show up here with a progress bar and a download link.</p></div>`;
 }
-function openJobs() { $('#jobsTray').classList.add('open'); }
+function openJobs() {
+  const t = $('#jobsTray'); t.classList.add('open'); t.setAttribute('aria-hidden', 'false');
+  document.querySelectorAll('.nav[data-view="jobs"]').forEach(b => b.setAttribute('aria-expanded', 'true'));
+  setTimeout(() => { try { $('#jobsClose').focus({ preventScroll: true }); } catch {} }, 40);
+}
+function closeJobs() {
+  const t = $('#jobsTray'); if (!t.classList.contains('open')) return;
+  t.classList.remove('open'); t.setAttribute('aria-hidden', 'true');
+  document.querySelectorAll('.nav[data-view="jobs"]').forEach(b => b.setAttribute('aria-expanded', 'false'));
+}
+function toggleJobs() { if ($('#jobsTray').classList.contains('open')) closeJobs(); else openJobs(); }
+window.openJobs = openJobs;
+paintJobs('#jobsList');
 const es = new EventSource('/api/jobs/stream');
 es.onmessage = e => {
   const m = JSON.parse(e.data);
-  if (m.type === 'job') { jobsMap.set(m.job.id, m.job); paintJobs('#jobsList'); if (document.querySelector('#jobsMain')) paintJobs('#jobsMain'); if (window.onForgeJob) window.onForgeJob(m.job); }
+  if (m.type === 'job') { jobsMap.set(m.job.id, m.job); paintJobs('#jobsList'); if (window.onForgeJob) window.onForgeJob(m.job); }
   const running = [...jobsMap.values()].filter(j => j.status === 'running').length;
-  const b = $('#jobBadge'); b.textContent = running || ''; b.classList.toggle('show', !!running);
+  document.querySelectorAll('.jobbadge').forEach(b => { b.textContent = running || ''; b.classList.toggle('show', !!running); });
 };
 
 // ---------- file picker ----------
@@ -388,80 +470,98 @@ function pickThen(cb, dirsOnly) {
   // Browser file pick: open the real OS file dialog via a hidden <input>, then upload.
   nativeFilePick(cb);
 }
+window.pickThen = pickThen;
 function nativeFilePick(cb) {
   let inp = document.getElementById('_nativePick');
-  if (!inp) { inp = document.createElement('input'); inp.type = 'file'; inp.id = '_nativePick'; inp.style.display = 'none'; document.body.appendChild(inp); }
+  if (!inp) { inp = document.createElement('input'); inp.type = 'file'; inp.id = '_nativePick'; inp.hidden = true; document.body.appendChild(inp); }
   inp.value = '';
   inp.onchange = async () => {
     const f = inp.files[0]; if (!f) return;
-    toast('Uploading ' + f.name + ' …');
-    const r = await fetch('/api/upload?filename=' + encodeURIComponent(f.name), { method: 'POST', body: f });
-    const j = await r.json();
-    if (j.path) cb(j.path); else toast('Upload failed');
+    const p = await upload(f);
+    if (p) cb(p);
   };
   inp.click();
 }
+async function upload(f) {
+  toast('Uploading ' + f.name);
+  setStatus('Uploading ' + f.name);
+  try {
+    const r = await fetch('/api/upload?filename=' + encodeURIComponent(f.name), { method: 'POST', body: f });
+    const j = await r.json();
+    if (j.path) { setStatus('Ready: ' + f.name); return j.path; }
+    toast(j.error || 'Upload failed', true);
+  } catch { toast('Upload failed', true); }
+  return null;
+}
 function makeIsoFromFolder(folder) {
   setView('discs');
-  setTimeout(() => { const f = document.getElementById('mkFolder'); if (f) { f.value = folder; f.scrollIntoView(); } toast('Folder set. Add a label, then Build ISO'); }, 60);
+  setTimeout(() => { const f = document.getElementById('mkFolder'); if (f) { f.value = folder; f.scrollIntoView({ block: 'center' }); } toast('Folder set. Add a label, then Build ISO'); }, 60);
 }
 async function openPicker(dir, cb, dirsOnly) {
   const d = await api('/api/fs?dir=' + encodeURIComponent(dir));
-  if (d.error) { toast(d.error); return; }
+  if (d.error) { toast(d.error, true); return; }
   const rows = [
-    d.parent ? `<div class="fsrow d" data-dir="${esc(d.parent)}">.. up</div>`
-      : (d.roots || []).filter(r => r !== d.cwd).map(r => `<div class="fsrow d" data-dir="${esc(r)}">⌂ ${esc(r)}</div>`).join(''),
-    dirsOnly ? `<div class="fsrow" data-pick="${esc(d.cwd)}"><b>Use this folder</b></div>` : '',
+    d.parent ? `<button type="button" class="fsrow d" data-dir="${esc(d.parent)}">${ic('back')}Up one folder</button>`
+      : (d.roots || []).filter(r => r !== d.cwd).map(r => `<button type="button" class="fsrow d" data-dir="${esc(r)}">${ic('home')}${esc(r)}</button>`).join(''),
+    dirsOnly ? `<button type="button" class="fsrow pick" data-pick="${esc(d.cwd)}">${ic('check')}Use this folder</button>` : '',
     ...d.entries.map(e => e.dir
-      ? `<div class="fsrow d" data-dir="${esc(e.path)}">▸ ${esc(e.name)}</div>`
-      : (dirsOnly ? '' : `<div class="fsrow" data-pick="${esc(e.path)}">${esc(e.name)}</div>`))
+      ? `<button type="button" class="fsrow d" data-dir="${esc(e.path)}">${ic('folder')}${esc(e.name)}</button>`
+      : (dirsOnly ? '' : `<button type="button" class="fsrow" data-pick="${esc(e.path)}">${ic('file')}${esc(e.name)}</button>`))
   ].join('');
-  openModal(`<h3 style="margin-bottom:4px">${dirsOnly ? 'Pick a folder' : 'Pick a file'}</h3>
-    <div class="pathbar"><b>${esc(d.cwd)}</b></div><div class="fslist">${rows}</div>
-    <button class="btn ghost" onclick="closeModal()">Cancel</button>`);
-  document.querySelectorAll('.fsrow').forEach(r => r.onclick = () => {
+  openModal(`<h3>${dirsOnly ? 'Pick a folder' : 'Pick a file'}</h3>
+    <div class="pathbar" style="margin:var(--sp-3) 0 0">${ic('folder')}<b>${esc(d.cwd)}</b></div><div class="fslist s-list s-list--inset">${rows}</div>
+    <div class="modal-foot">${btn('closeModal', 'Cancel', '', 's-btn--ghost')}</div>`);
+  document.querySelectorAll('#modalBox .fsrow').forEach(r => r.onclick = () => {
     if (r.dataset.dir) openPicker(r.dataset.dir, cb, dirsOnly);
     else { closeModal(); cb(r.dataset.pick); }
   });
 }
 
 // ---------- modal / toast / drop ----------
-function openModal(html) { $('#modalBox').innerHTML = html; $('#modal').classList.remove('hidden'); }
-function closeModal() { $('#modal').classList.add('hidden'); }
-$('#modal').onclick = e => { if (e.target.id === 'modal') closeModal(); };
-window.closeModal = closeModal;
-let toastT;
-function toast(msg) {
-  let t = $('#toast'); if (!t) { t = document.createElement('div'); t.id = 'toast'; t.style.cssText = 'position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:var(--bg3);color:var(--tx);border:1px solid var(--line);padding:11px 18px;border-radius:12px;z-index:99;font-size:13px;box-shadow:0 12px 30px -10px rgba(0,0,0,.6)'; document.body.appendChild(t); }
-  t.textContent = msg; t.style.opacity = 1; clearTimeout(toastT); toastT = setTimeout(() => t.style.opacity = 0, 2800);
+const modal = $('#modal');
+function openModal(html) {
+  const box = $('#modalBox');
+  box.innerHTML = html;
+  const h = box.querySelector('h3');
+  if (h) { h.id = 'modalTitle'; box.setAttribute('aria-labelledby', 'modalTitle'); box.removeAttribute('aria-label'); }
+  else { box.removeAttribute('aria-labelledby'); box.setAttribute('aria-label', 'Dialog'); }
+  if (!modal.hasAttribute('data-open')) Sona.open(modal);
+  else { const f = $('#modalBox').querySelector('button,input,select,textarea'); if (f) f.focus({ preventScroll: true }); }
 }
+function closeModal() { if (modal.hasAttribute('data-open')) Sona.close(modal); }
+window.openModal = openModal;
+window.closeModal = closeModal;
+function toast(msg, isError) { if (window.Sona) Sona.toast(String(msg), { error: !!isError }); }
+window.toast = toast;
 window.openInExplorer = p => { if (window.forge) window.forge.openDrive(String(p).replace(/[:/\\]+$/, '') + ':'); else toast('Drive ' + p + ' is mounted'); };
-window.openDrive = d => { if (window.forge) window.forge.openDrive(d + ':'); else toast('Drive ' + d + ': is mounted. Open it in Explorer'); };
-window.startInstall = async d => {
+function openDrive(d) { if (window.forge) window.forge.openDrive(d + ':'); else toast('Drive ' + d + ': is mounted. Open it in Explorer'); }
+window.openDrive = openDrive;
+async function startInstall(d) {
   if (!window.forge) { toast('Start install runs in the Forge app window (npm run app)'); return; }
-  setStatus('Launching installer on ' + d + ':…');
+  setStatus('Launching the installer on ' + d + ':');
   const r = await window.forge.runInstaller(d);
-  if (r.launched) { toast('▶ Launched ' + r.target); setStatus('Launched ' + r.target + ' from ' + d + ':'); }
+  if (r.launched) { toast('Launched ' + r.target); setStatus('Launched ' + r.target + ' from ' + d + ':'); }
   else if (r.opened) { toast('No installer found, opened ' + d + ':'); setStatus('No installer on ' + d + ':, opened the drive'); }
-  else { toast('Could not launch: ' + (r.error || 'unknown')); }
-};
-window.unmountDrive = async d => {
+  else { toast('Could not launch: ' + (r.error || 'unknown'), true); }
+}
+window.startInstall = startInstall;
+async function unmountDrive(d) {
   const r = await api('/api/disc/unmount-drive', { drive: d });
-  if (r && r.error) return toast(r.error);
+  if (r && r.error) return toast(r.error, true);
   toast('Ejected ' + d + ':'); renderDiscs();
-};
+}
+window.unmountDrive = unmountDrive;
 
 // whole-window drag & drop -> upload -> route
 const hint = $('#drophint');
-window.addEventListener('dragover', e => { e.preventDefault(); hint.classList.add('show'); });
-window.addEventListener('dragleave', e => { if (e.clientX === 0 && e.clientY === 0) hint.classList.remove('show'); });
+window.addEventListener('dragover', e => { e.preventDefault(); hint.classList.add('show'); const dz = $('#dz'); if (dz) dz.classList.add('hot'); });
+window.addEventListener('dragleave', e => { if (e.clientX === 0 && e.clientY === 0) { hint.classList.remove('show'); const dz = $('#dz'); if (dz) dz.classList.remove('hot'); } });
 window.addEventListener('drop', async e => {
   e.preventDefault(); hint.classList.remove('show');
+  const dz = $('#dz'); if (dz) dz.classList.remove('hot');
   const f = e.dataTransfer.files[0]; if (!f) return;
-  toast('Uploading ' + f.name + ' …');
-  const r = await fetch('/api/upload?filename=' + encodeURIComponent(f.name), { method: 'POST', body: f });
-  const j = await r.json();
-  if (j.path) routeFile(j.path); else toast('Upload failed');
+  const p = await upload(f);
+  if (p) routeFile(p);
 });
 
 // ---------- engines ----------
@@ -469,83 +569,134 @@ function engineOk(id) { const e = HEALTH.engines.find(x => x.id === id); return 
 function missingBanner(only) {
   const miss = HEALTH.engines.filter(e => !e.present && e.id !== 'ffprobe' && (!only || e.id === only));
   if (!miss.length) return '';
-  return `<div class="notice warn"><b>${miss.map(e => esc(e.label)).join(' and ')} not found.</b>
+  return `<div class="notice warn">${ic('info')}<span><b>${miss.map(e => esc(e.label)).join(' and ')} not found.</b>
     ${miss.map(e => esc(e.powers)).join('; ')} will not work until ${miss.length > 1 ? 'they are' : 'it is'} installed.
-    <a href="#" onclick="showEngines();return false">How to install</a></div>`;
+    <button type="button" class="linkbtn" data-act="engines">How to install</button></span></div>`;
 }
 function showEngines() {
   const rows = HEALTH.engines.map(e => `<tr>
-    <td><b>${esc(e.label)}</b><div class="muted" style="font-size:12px">${esc(e.powers)}</div></td>
-    <td>${e.present ? `<span class="pill ok">found</span> <span class="muted" style="font-size:11px">${esc(e.via || '')}</span>`
-      : `<span class="pill bad">missing</span>${e.note ? `<div class="muted" style="font-size:12px">${esc(e.note)}</div>` : ''}`}</td>
-    <td>${e.present ? '' : `<code>${esc(e.install)}</code>`}</td></tr>`).join('');
-  openModal(`<h3 style="margin-bottom:4px">Engines</h3>
-    <div class="muted" style="margin-bottom:12px">Forge ships no binaries. It uses the tools already on this machine, found on your PATH or set in <code>config.json</code> (<code>engines.ffmpeg</code>, <code>engines.ffprobe</code>, <code>engines.sevenzip</code>) or the <code>FORGE_FFMPEG</code> / <code>FORGE_FFPROBE</code> / <code>FORGE_7Z</code> environment variables. Restart Forge after installing.</div>
-    <table><thead><tr><th>Engine</th><th>Status</th><th>Install</th></tr></thead><tbody>${rows}
-    <tr><td><b>Disc tools</b><div class="muted" style="font-size:12px">Mount, eject, build ISO</div></td>
-      <td>${DISC_OK ? '<span class="pill ok">available</span>' : '<span class="pill">off</span>'}</td>
-      <td class="muted" style="font-size:12px">${DISC_OK ? 'Built into Windows' : esc(HEALTH.disc.reason || '')}</td></tr></tbody></table>
-    <div class="muted" style="margin:12px 0">Output folder: <code>${esc(HEALTH.outdir)}</code></div>
-    <button class="btn ghost" onclick="closeModal()">Close</button>`);
+    <td><b>${esc(e.label)}</b><div class="muted">${esc(e.powers)}</div></td>
+    <td>${e.present ? `<span class="pill ok">found</span> <div class="muted">${esc(e.via || '')}</div>`
+      : `<span class="pill bad">missing</span>${e.note ? `<div class="muted">${esc(e.note)}</div>` : ''}${e.install ? `<div style="margin-top:6px"><code>${esc(e.install)}</code></div>` : ''}`}</td></tr>`).join('');
+  openModal(`<h3>Engines</h3>
+    <p class="muted" style="margin:0 0 var(--sp-4)">Forge ships no binaries. It uses the tools already on this machine, found on your PATH, in <code>config.json</code> (<code>engines.ffmpeg</code>, <code>engines.ffprobe</code>, <code>engines.sevenzip</code>), or in the <code>FORGE_FFMPEG</code>, <code>FORGE_FFPROBE</code> and <code>FORGE_7Z</code> environment variables. Restart Forge after installing.</p>
+    <div class="tablewrap"><table class="engtable"><thead><tr><th>Engine</th><th>Status</th></tr></thead><tbody>${rows}
+    <tr><td><b>Disc tools</b><div class="muted">Mount, eject, build ISO</div></td>
+      <td>${DISC_OK ? '<span class="pill ok">available</span>' : '<span class="pill">off</span>'}<div class="muted">${DISC_OK ? 'Built into Windows' : esc(HEALTH.disc.reason || '')}</div></td></tr></tbody></table></div>
+    <p class="muted" style="margin:var(--sp-4) 0 0">Output folder: <code>${esc(HEALTH.outdir)}</code></p>
+    <div class="modal-foot">${btn('closeModal', 'Close', '', 's-btn--outline')}</div>`);
 }
 window.showEngines = showEngines;
 
+// ---------- search (Ctrl+K) ----------
+const SEARCH_EXTRA = [
+  { label: 'Home', icon: 'home', kw: 'start drop', run: () => setView('home') },
+  { label: 'Video editor', icon: 'scissors', kw: 'timeline movie edit cut titles export', run: () => setView('edit') },
+  { label: 'Open an archive', icon: 'folder', kw: 'zip 7z rar unpack extract browse', run: () => pickThen(p => openContainer(p)) },
+  { label: 'New archive', icon: 'archive', kw: 'zip 7z compress password create', run: () => setView('archives') },
+  { label: 'Open a disc image', icon: 'disc', kw: 'iso img disc browse extract', run: () => pickThen(p => openContainer(p)) },
+  { label: 'Jobs', icon: 'layers', kw: 'queue progress tasks downloads', run: () => openJobs() },
+  { label: 'Engines', icon: 'cpu', kw: 'ffmpeg 7-zip install missing', run: () => showEngines() }
+];
+const searchIn = $('#search'), searchList = $('#searchList');
+let searchHits = [], searchSel = 0;
+function searchItems() {
+  return TOOLS.map(t => ({ label: t.label, icon: toolIcon(t.id), kw: (t.group + ' ' + t.accepts.join(' ') + ' ' + t.id.replace(/-/g, ' ')).toLowerCase(), hint: t.group, accepts: t.accepts, run: () => openMediaTool(t.id) })).concat(SEARCH_EXTRA);
+}
+function runSearch() {
+  const q = searchIn.value.trim().toLowerCase();
+  if (!q) { closeSearch(); return; }
+  const words = q.replace(/\bto\b/g, ' ').split(/\s+/).filter(Boolean);
+  const conv = /(\w+)\s+to\s+(\w+)/.exec(q);   // "mp4 to gif": takes mp4, makes gif
+  searchHits = searchItems().map(it => {
+    const hay = (it.label + ' ' + it.kw).toLowerCase(), lbl = it.label.toLowerCase();
+    let score = words.reduce((a, w) => a + (hay.includes(w) ? (lbl.includes(w) ? 2 : 1) : 0), 0);
+    if (conv && it.accepts && it.accepts.includes(conv[1]) && lbl.includes(conv[2])) score += 4;
+    return { it, score };
+  }).filter(x => x.score > 0).sort((a, b) => b.score - a.score).slice(0, 8).map(x => x.it);
+  searchSel = 0;
+  searchList.innerHTML = searchHits.length ? searchHits.map((it, i) => `<button type="button" class="s-menu__item" role="option" id="sr${i}" data-i="${i}" aria-selected="${i === 0}">${ic(it.icon)}<span>${esc(it.label)}</span>${it.hint ? `<small>${esc(it.hint)}</small>` : ''}</button>`).join('')
+    : `<div class="empty">Nothing matches. Try "gif", "zip" or "audio".</div>`;
+  searchList.hidden = false; searchIn.setAttribute('aria-expanded', 'true');
+  if (searchHits.length) searchIn.setAttribute('aria-activedescendant', 'sr0');
+}
+function closeSearch() { searchList.hidden = true; searchIn.setAttribute('aria-expanded', 'false'); searchIn.removeAttribute('aria-activedescendant'); }
+function pickSearch(i) { const it = searchHits[i]; if (!it) return; closeSearch(); searchIn.value = ''; searchIn.blur(); it.run(); }
+searchIn.addEventListener('input', runSearch);
+searchIn.addEventListener('focus', () => { if (searchIn.value.trim()) runSearch(); });
+searchIn.addEventListener('keydown', e => {
+  if (e.key === 'Escape') { closeSearch(); searchIn.blur(); return; }
+  if (!searchHits.length || searchList.hidden) return;
+  if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+    e.preventDefault();
+    searchSel = (searchSel + (e.key === 'ArrowDown' ? 1 : searchHits.length - 1)) % searchHits.length;
+    searchList.querySelectorAll('[role="option"]').forEach((b, i) => b.setAttribute('aria-selected', String(i === searchSel)));
+    searchIn.setAttribute('aria-activedescendant', 'sr' + searchSel);
+  } else if (e.key === 'Enter') { e.preventDefault(); pickSearch(searchSel); }
+});
+searchList.addEventListener('mousedown', e => e.preventDefault());   // keep focus in the field
+searchList.addEventListener('click', e => { const b = e.target.closest('[data-i]'); if (b) pickSearch(+b.dataset.i); });
+searchIn.addEventListener('blur', () => setTimeout(closeSearch, 120));
+
 // ---------- boot ----------
+async function lock() { try { await fetch('/api/logout', { method: 'POST' }); } catch {} location.href = '/gate.html'; }
+$('#lockBtn').addEventListener('click', lock);
+$('#lockBtnPhone').addEventListener('click', lock);
+$('#engines').addEventListener('click', showEngines);
+document.addEventListener('keydown', e => {
+  if ((e.ctrlKey || e.metaKey) && e.key === 'k') { e.preventDefault(); searchIn.focus(); searchIn.select(); }
+  else if (e.key === 'Escape' && $('#jobsTray').classList.contains('open') && !modal.hasAttribute('data-open')) closeJobs();
+});
+if (!isPhone()) searchIn.placeholder = 'Search tools, try "mp4 to gif"';
 (async () => {
   HEALTH = await api('/api/health');
   DISC_OK = !!(HEALTH.disc && HEALTH.disc.available);
   document.body.classList.toggle('no-disc', !DISC_OK);
-  const chips = HEALTH.engines.filter(e => e.id !== 'ffprobe').map(e =>
-    `<span class="${e.present ? 'on' : 'off'}">${e.present ? '●' : '○'} ${esc(e.label)}</span>`);
-  chips.push(`<span class="${DISC_OK ? 'on' : 'na'}">${DISC_OK ? '●' : '○'} discs</span>`);
-  $('#engines').innerHTML = chips.join('');
-  $('#engines').onclick = showEngines;
+  $('#engines').innerHTML = enginesChips();
   TOOLS = await api('/api/tools');
   setView('home');
 })();
-$('#lockBtn').onclick = async () => { try { await fetch('/api/logout', { method: 'POST' }); } catch {} location.href = '/gate.html'; };
-document.addEventListener('keydown', e => { if ((e.ctrlKey || e.metaKey) && e.key === 'k') { e.preventDefault(); $('#search').focus(); } });
 
 // ---------- context-menu providers (shared UI) ----------
 window.extractOne = async (container, entryPath) => {
   await api('/api/container/extract', { path: container, selection: [entryPath] });
-  toast('Extracting ' + entryPath.split(/[\\/]/).pop() + '… (see Jobs)'); openJobs();
+  toast('Extracting ' + entryPath.split(/[\\/]/).pop() + '. Follow it in Jobs.'); openJobs();
 };
 window.sendToEditor = async (out) => {
   setView('edit');
-  setTimeout(() => { if (window.forgeEditorImport) window.forgeEditorImport(out); else toast('Opened editor. Add it from Import'); }, 300);
+  setTimeout(() => { if (window.forgeEditorImport) window.forgeEditorImport(out); else toast('Opened the editor. Add it from Import'); }, 300);
 };
 if (window.CTX) {
   const forgeOK = () => !!(window.forge && window.forge.reveal);
   CTX.register('entry', (el) => {
     const container = el.dataset.container, path = el.dataset.path, isDir = el.dataset.dir === '1';
     const items = [];
-    if (!isDir) items.push({ label: '⬇ Extract this item', run: () => extractOne(container, path) });
-    items.push({ label: '⬇ Extract all', run: () => extractContainer(container) });
-    items.push({ label: '⧉ Copy name', run: () => CTX.copyText(path) });
+    if (!isDir) items.push({ icon: 'download', label: 'Extract this item', run: () => extractOne(container, path) });
+    items.push({ icon: 'download', label: 'Extract all', run: () => extractContainer(container) });
+    items.push({ icon: 'layers', label: 'Copy name', run: () => CTX.copyText(path) });
     return items;
   });
   CTX.register('job', (el) => {
     const j = jobsMap.get(el.dataset.id); if (!j) return [];
     const items = [];
     if (j.out) {
-      items.push({ label: '⬇ Open result', run: () => { window.location.href = '/api/download?path=' + encodeURIComponent(j.out); } });
-      if (forgeOK()) items.push({ label: '📂 Show in folder', run: () => window.forge.reveal(j.out) });
-      items.push({ label: '⧉ Copy output path', run: () => CTX.copyText(j.out) });
+      items.push({ icon: 'download', label: 'Open result', run: () => { window.location.href = '/api/download?path=' + encodeURIComponent(j.out); } });
+      if (forgeOK()) items.push({ icon: 'folder', label: 'Show in folder', run: () => window.forge.reveal(j.out) });
+      items.push({ icon: 'layers', label: 'Copy output path', run: () => CTX.copyText(j.out) });
     }
-    if (j.error) items.push({ label: '⧉ Copy error', run: () => CTX.copyText(j.error) });
+    if (j.error) items.push({ icon: 'layers', label: 'Copy error', run: () => CTX.copyText(j.error) });
     items.push({ sep: true });
-    items.push({ label: '✕ Remove from list', run: () => { jobsMap.delete(el.dataset.id); paintJobs('#jobsList'); if (document.querySelector('#jobsMain')) paintJobs('#jobsMain'); } });
+    items.push({ icon: 'close', label: 'Remove from list', run: () => { jobsMap.delete(el.dataset.id); paintJobs('#jobsList'); } });
     return items;
   });
   CTX.register('result', (el) => {
     const out = el.dataset.out; if (!out) return [];
     const items = [
-      { label: '↪ Open in another tool…', run: () => routeFile(out) },
-      { label: '🎬 Send to Video Editor', run: () => sendToEditor(out) }
+      { icon: 'wand', label: 'Open in another tool', run: () => routeFile(out) },
+      { icon: 'scissors', label: 'Send to the video editor', run: () => sendToEditor(out) }
     ];
-    if (forgeOK()) items.push({ label: '📂 Show in folder', run: () => window.forge.reveal(out) });
-    items.push({ label: '⧉ Copy output path', run: () => CTX.copyText(out) });
+    if (forgeOK()) items.push({ icon: 'folder', label: 'Show in folder', run: () => window.forge.reveal(out) });
+    items.push({ icon: 'layers', label: 'Copy output path', run: () => CTX.copyText(out) });
     return items;
   });
 }
