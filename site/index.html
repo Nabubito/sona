@@ -1,0 +1,416 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Sona: Big Tech, brought home</title>
+<meta name="description" content="Five private apps that run on your own PC: calls and chat, your media, your photos, a file workshop and a video studio. No cloud account, no tracking. Nothing leaves the house.">
+<meta name="theme-color" content="#0D0B0A">
+<meta name="color-scheme" content="dark">
+<link rel="canonical" href="https://sona.casa/">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="img/apple-touch-icon.png">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Sona">
+<meta property="og:url" content="https://sona.casa/">
+<meta property="og:title" content="Sona: Big Tech, brought home">
+<meta property="og:description" content="Five private apps that run on your own PC. No cloud account, no tracking. Nothing leaves the house.">
+<meta property="og:image" content="https://sona.casa/img/og.jpg">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Sona. Big Tech, brought home. A gold flame on black marble.">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Sona: Big Tech, brought home">
+<meta name="twitter:description" content="Five private apps that run on your own PC. No cloud account, no tracking. Nothing leaves the house.">
+<meta name="twitter:image" content="https://sona.casa/img/og.jpg">
+<link rel="preload" href="fonts/cormorant-latin.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="fonts/jost-latin.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="css/site.css">
+<script src="js/site.js" defer></script>
+</head>
+<body>
+<svg class="sprite" aria-hidden="true" focusable="false">
+  <symbol id="i-flame" viewBox="0 0 48 48"><path fill="currentColor" stroke="none" d="M24 3c1 7-3 11-7 15-2 2-4 5-4 9a11 11 0 0 0 22 0c0-5-3-8-6-12-1 3-3 4-5 5 2-6-1-12 0-17Z"/></symbol>
+  <symbol id="i-github" viewBox="0 0 16 16"><path fill="currentColor" stroke="none" d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0 0 16 8c0-4.42-3.58-8-8-8z"/></symbol>
+  <symbol id="i-lock" viewBox="0 0 24 24"><rect x="5" y="10.5" width="14" height="10" rx="2.5"/><path d="M8.2 10.5V7.8a3.8 3.8 0 0 1 7.6 0v2.7"/></symbol>
+  <symbol id="i-monitor" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="12.5" rx="2"/><path d="M9 20.5h6M12 16.5v4"/></symbol>
+  <symbol id="i-phone" viewBox="0 0 24 24"><rect x="6.5" y="2.5" width="11" height="19" rx="2.5"/><path d="M10.5 18.5h3"/></symbol>
+  <symbol id="i-user-off" viewBox="0 0 24 24"><circle cx="12" cy="8.5" r="3.8"/><path d="M4.5 20.5c1.2-3.6 4.1-5.5 7.5-5.5s6.3 1.9 7.5 5.5"/><path d="m3 3 18 18"/></symbol>
+  <symbol id="i-eye-off" viewBox="0 0 24 24"><path d="M3 12s3.5-6.5 9-6.5c1.6 0 3 .5 4.3 1.2M21 12s-3.5 6.5-9 6.5c-1.6 0-3-.5-4.3-1.2"/><path d="M9.9 9.9a3 3 0 0 0 4.2 4.2"/><path d="m3 3 18 18"/></symbol>
+  <symbol id="i-cloud-off" viewBox="0 0 24 24"><path d="M7 18.5h9.5M20 16.4A4 4 0 0 0 17.5 9a5.5 5.5 0 0 0-9-3M5.4 8.2A4.5 4.5 0 0 0 7 18.5"/><path d="m3 3 18 18"/></symbol>
+  <symbol id="i-check" viewBox="0 0 24 24"><path d="m5 12.5 4.5 4.5L19 7.5"/></symbol>
+  <symbol id="i-arrow" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></symbol>
+  <symbol id="i-code" viewBox="0 0 24 24"><path d="m8.5 7-5 5 5 5M15.5 7l5 5-5 5"/></symbol>
+  <symbol id="i-folder" viewBox="0 0 24 24"><path d="M3.5 7.5a2 2 0 0 1 2-2h4l2 2.5h7a2 2 0 0 1 2 2v7.5a2 2 0 0 1-2 2h-13a2 2 0 0 1-2-2z"/></symbol>
+  <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+  <symbol id="i-mail" viewBox="0 0 24 24"><rect x="3" y="5.5" width="18" height="13" rx="2.5"/><path d="m4 7 8 6 8-6"/></symbol>
+</svg>
+
+<a class="skip" href="#main">Skip to content</a>
+
+<header class="nav" id="top">
+  <div class="nav__inner">
+    <a class="brand" href="#top" aria-label="Sona, back to top">
+      <svg class="brand__mark" aria-hidden="true"><use href="#i-flame"/></svg>
+      <span class="brand__word">Sona</span>
+    </a>
+    <nav class="nav__links" aria-label="Sections">
+      <a href="#apps">Apps</a>
+      <a href="#private">Privacy</a>
+      <a href="#open">Open source</a>
+      <a href="#faq">FAQ</a>
+    </nav>
+    <div class="nav__actions">
+      <a class="btn btn--ghost btn--sm nav__join" href="#waitlist">Waitlist</a>
+      <a class="btn btn--glass btn--sm" href="https://github.com/Nabubito/sona">
+        <svg class="i" aria-hidden="true"><use href="#i-github"/></svg><span>GitHub</span>
+      </a>
+    </div>
+  </div>
+</header>
+
+<main id="main">
+
+  <!-- ============ HERO ============ -->
+  <section class="hero marble" aria-labelledby="hero-title">
+    <div class="hero__glow" aria-hidden="true"></div>
+    <div class="wrap hero__inner">
+      <p class="chip"><svg class="i" aria-hidden="true"><use href="#i-lock"/></svg>Five apps. One home. Zero cloud.</p>
+      <h1 class="hero__title" id="hero-title">Big Tech,<br><span class="gold">brought home.</span></h1>
+      <p class="hero__lead">Calls, chat, films, music, photos, files and video edits: the everyday apps you rent from Big Tech, running on your own PC instead. You reach them from anywhere, and nothing ever leaves the house.</p>
+
+      <div class="hero__cta">
+        <a class="btn btn--primary btn--lg" href="https://github.com/Nabubito/sona">
+          <svg class="i" aria-hidden="true"><use href="#i-github"/></svg><span>Get it on GitHub</span>
+        </a>
+        <p class="hero__fine">Free and open source under AGPL-3.0</p>
+      </div>
+
+      <div class="waitlist" id="waitlist">
+        <div class="notice notice--ok" id="joined" role="status" tabindex="-1">
+          <svg class="i" aria-hidden="true"><use href="#i-check"/></svg>
+          <div><p class="notice__title">You are on the list.</p><p class="notice__text">We will send one email when the one click installer is ready. Nothing else, ever.</p></div>
+        </div>
+        <div class="notice notice--err" id="join-failed" role="alert" tabindex="-1">
+          <svg class="i" aria-hidden="true"><use href="#i-mail"/></svg>
+          <div><p class="notice__title">That did not go through.</p><p class="notice__text">Please try again in a moment, or write to <a href="mailto:hello@sona.casa">hello@sona.casa</a> and we will add you by hand.</p></div>
+        </div>
+        <form class="wl" action="/notify" method="post">
+          <label class="wl__label" for="wl-email">Want the one click installer? Get one email when it is ready.</label>
+          <div class="wl__row">
+            <input class="wl__input" id="wl-email" name="email" type="email" required autocomplete="email" inputmode="email" autocapitalize="off" spellcheck="false" placeholder="Your email" aria-describedby="wl-hint wl-msg">
+            <button class="btn btn--light wl__btn" type="submit">Join the waitlist</button>
+          </div>
+          <p class="wl__hint" id="wl-hint">One email when it ships. No newsletter, no tracking.</p>
+          <p class="wl__msg" id="wl-msg" aria-live="polite"></p>
+        </form>
+      </div>
+    </div>
+
+    <div class="hero__stage wrap" aria-label="Kin, Reel and Attic on a phone">
+      <figure class="device device--phone hero__phone hero__phone--l">
+        <img src="img/kin-phone.webp" width="520" height="1125" alt="Kin on a phone: a private chat with a loved one about Sunday dinner.">
+      </figure>
+      <figure class="device device--phone hero__phone hero__phone--c">
+        <img src="img/reel-phone.webp" width="520" height="1125" fetchpriority="high" alt="Reel on a phone: the now playing screen with a song, what plays next and the artist card.">
+      </figure>
+      <figure class="device device--phone hero__phone hero__phone--r">
+        <img src="img/attic-phone.webp" width="520" height="1125" alt="Attic on a phone: today's photos in a grid, saved in the vault on your PC.">
+      </figure>
+    </div>
+  </section>
+
+  <!-- ============ REPLACES ============ -->
+  <section class="swap" aria-labelledby="swap-title">
+    <div class="wrap">
+      <h2 class="swap__title" id="swap-title">Everything you rent, <span class="gold">owned.</span></h2>
+      <ul class="swap__list" role="list">
+        <li><s>WhatsApp</s></li><li><s>FaceTime</s></li><li><s>Netflix</s></li><li><s>Spotify</s></li>
+        <li><s>iCloud Photos</s></li><li><s>Google Photos</s></li><li><s>Online converters</s></li>
+        <li><s>PowerISO</s></li><li><s>WinRAR</s></li><li><s>CapCut</s></li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- ============ APPS ============ -->
+  <section class="apps" id="apps" aria-labelledby="apps-title">
+    <div class="wrap">
+      <header class="head">
+        <p class="eyebrow">The suite</p>
+        <h2 class="head__title" id="apps-title">Five apps. One roof.</h2>
+        <p class="head__lead">Each one is a small program on your computer. Run one, or run all five. They share one look, one lock screen and one rule: your things stay yours.</p>
+      </header>
+
+      <!-- Kin -->
+      <article class="app reveal" aria-labelledby="kin-name">
+        <div class="app__copy">
+          <p class="app__tag">Your people</p>
+          <h3 class="app__name" id="kin-name">Kin</h3>
+          <p class="app__replaces">Instead of <s>WhatsApp</s> and <s>FaceTime</s></p>
+          <p class="app__text">Private calls and chat with the people you love. Voice and video go straight from device to device, and messages stay on the server in your home. No phone number handed to a company, no one in the middle.</p>
+          <ul class="ticks" role="list">
+            <li><svg class="i" aria-hidden="true"><use href="#i-check"/></svg>Voice and video calls, device to device</li>
+            <li><svg class="i" aria-hidden="true"><use href="#i-check"/></svg>Messages, voice notes and scheduled messages</li>
+            <li><svg class="i" aria-hidden="true"><use href="#i-check"/></svg>Installs to your home screen like any app</li>
+          </ul>
+        </div>
+        <div class="app__media">
+          <figure class="device device--window">
+            <div class="device__bar" aria-hidden="true"><i></i><i></i><i></i><span>Kin</span></div>
+            <img src="img/kin-desktop.webp" width="1200" height="750" loading="lazy" decoding="async" alt="Kin on a computer: a chat with Call and Video buttons and a note that messages stay on this home server.">
+          </figure>
+        </div>
+      </article>
+
+      <!-- Reel -->
+      <article class="app app--flip reveal" aria-labelledby="reel-name">
+        <div class="app__copy">
+          <p class="app__tag">Your music and film</p>
+          <h3 class="app__name" id="reel-name">Reel</h3>
+          <p class="app__replaces">Instead of <s>Netflix</s> and <s>Spotify</s></p>
+          <p class="app__text">Your own media, streamed from your own files. Point Reel at a folder and it sorts everything into a library that plays on any screen you own. No ads, no rent, no one logging what you watch.</p>
+          <ul class="ticks" role="list">
+            <li><svg class="i" aria-hidden="true"><use href="#i-check"/></svg>Music and video from the files you already have</li>
+            <li><svg class="i" aria-hidden="true"><use href="#i-check"/></svg>Albums, artists, genres, playlists and favorites</li>
+            <li><svg class="i" aria-hidden="true"><use href="#i-check"/></svg>Plays on your phone, laptop or TV</li>
+          </ul>
+        </div>
+        <div class="app__media">
+          <figure class="device device--window">
+            <div class="device__bar" aria-hidden="true"><i></i><i></i><i></i><span>Reel</span></div>
+            <img src="img/reel-desktop.webp" width="1200" height="750" loading="lazy" decoding="async" alt="Reel on a computer: an album playing, with its track list, a visualizer and a Shuffle button.">
+          </figure>
+        </div>
+      </article>
+
+      <!-- Attic -->
+      <article class="app reveal" aria-labelledby="attic-name">
+        <div class="app__copy">
+          <p class="app__tag">Your photos</p>
+          <h3 class="app__name" id="attic-name">Attic</h3>
+          <p class="app__replaces">Instead of <s>iCloud Photos</s> and <s>Google Photos</s></p>
+          <p class="app__text">A photo and video vault that lives in a plain folder on your computer. Shoot from any phone's browser and every frame lands at home. Delete Sona tomorrow and your photos are still right there.</p>
+          <ul class="ticks" role="list">
+            <li><svg class="i" aria-hidden="true"><use href="#i-check"/></svg>Camera, library and favorites from any device</li>
+            <li><svg class="i" aria-hidden="true"><use href="#i-check"/></svg>Normal images in normal folders</li>
+            <li><svg class="i" aria-hidden="true"><use href="#i-check"/></svg>No storage plan to upgrade, ever</li>
+          </ul>
+        </div>
+        <div class="app__media">
+          <figure class="device device--window">
+            <div class="device__bar" aria-hidden="true"><i></i><i></i><i></i><span>Attic</span></div>
+            <img src="img/attic-desktop.webp" width="1200" height="750" loading="lazy" decoding="async" alt="Attic on a computer: a library of today's photos with a vault card that says everything is saved on this computer.">
+          </figure>
+        </div>
+      </article>
+
+      <!-- Forge -->
+      <article class="app app--flip reveal" aria-labelledby="forge-name">
+        <div class="app__copy">
+          <p class="app__tag">Your file workshop</p>
+          <h3 class="app__name" id="forge-name">Forge</h3>
+          <p class="app__replaces">Instead of <s>online converters</s>, <s>PowerISO</s> and <s>WinRAR</s></p>
+          <p class="app__text">Drop in a video, an archive or a disc image and Forge shows you what it can do. Turn a clip into a GIF, trim it, shrink it for email, convert it, open or build a zip or 7z, browse a disc image. No upload, no size caps, no watermark.</p>
+          <ul class="ticks" role="list">
+            <li><svg class="i" aria-hidden="true"><use href="#i-check"/></svg>Video to GIF, trim, shrink, convert, pull out the audio</li>
+            <li><svg class="i" aria-hidden="true"><use href="#i-check"/></svg>Open and build zip and 7z archives</li>
+            <li><svg class="i" aria-hidden="true"><use href="#i-check"/></svg>Browse and extract disc images, mount them on Windows</li>
+          </ul>
+        </div>
+        <div class="app__media">
+          <figure class="device device--window mock" aria-label="Illustration of Forge: a drop zone with a video becoming a GIF, an archive and a disc image.">
+            <div class="device__bar" aria-hidden="true"><i></i><i></i><i></i><span>Forge</span></div>
+            <div class="mock__body mock--forge" aria-hidden="true">
+              <div class="forge__drop">
+                <svg class="i"><use href="#i-plus"/></svg>
+                <span>Drop a file here</span>
+              </div>
+              <div class="forge__jobs">
+                <div class="forge__job"><span class="forge__ext">MP4</span><span class="forge__name">birthday.mp4</span><svg class="i forge__to"><use href="#i-arrow"/></svg><span class="forge__ext forge__ext--gold">GIF</span><span class="forge__bar"><b class="p100"></b></span></div>
+                <div class="forge__job"><span class="forge__ext">7Z</span><span class="forge__name">old-projects.7z</span><svg class="i forge__to"><use href="#i-arrow"/></svg><span class="forge__ext forge__ext--gold">Files</span><span class="forge__bar"><b class="p64"></b></span></div>
+                <div class="forge__job"><span class="forge__ext">ISO</span><span class="forge__name">family-dvd.iso</span><svg class="i forge__to"><use href="#i-arrow"/></svg><span class="forge__ext forge__ext--gold">Browse</span><span class="forge__bar"><b class="p28"></b></span></div>
+              </div>
+            </div>
+            <figcaption class="mock__note">Illustration. Screenshots soon.</figcaption>
+          </figure>
+        </div>
+      </article>
+
+      <!-- Flicker -->
+      <article class="app reveal" aria-labelledby="flicker-name">
+        <div class="app__copy">
+          <p class="app__tag">Your video studio</p>
+          <h3 class="app__name" id="flicker-name">Flicker</h3>
+          <p class="app__replaces">Instead of <s>CapCut</s> and <s>online editors</s></p>
+          <p class="app__text">A video effects studio made for your phone and run by your PC. Cut a clip, loop it into a GIF, reframe it for vertical feeds, burn in captions, or pin words to something and watch them follow it through the shot.</p>
+          <ul class="ticks" role="list">
+            <li><svg class="i" aria-hidden="true"><use href="#i-check"/></svg>Cut, GIF and reframe to 9:16, 4:5, 1:1 and more</li>
+            <li><svg class="i" aria-hidden="true"><use href="#i-check"/></svg>Your own words or captions, burned in</li>
+            <li><svg class="i" aria-hidden="true"><use href="#i-check"/></svg>Text that follows what moves</li>
+          </ul>
+        </div>
+        <div class="app__media">
+          <figure class="device device--window mock" aria-label="Illustration of Flicker: a vertical video frame with a label following a moving subject along a timeline.">
+            <div class="device__bar" aria-hidden="true"><i></i><i></i><i></i><span>Flicker</span></div>
+            <div class="mock__body mock--flicker" aria-hidden="true">
+              <div class="fl__frame">
+                <div class="fl__sun"></div>
+                <div class="fl__hill"></div>
+                <div class="fl__subject"><span class="fl__label">Our dog, Sunday</span></div>
+                <span class="fl__ratio">9:16</span>
+              </div>
+              <div class="fl__side">
+                <div class="fl__tools"><span class="is-on">Follow</span><span>Cut</span><span>GIF</span><span>Reframe</span><span>Words</span></div>
+                <div class="fl__rail"><span class="fl__sel"></span><span class="fl__head"></span></div>
+                <div class="fl__render">Render MP4</div>
+              </div>
+            </div>
+            <figcaption class="mock__note">Illustration. Screenshots soon.</figcaption>
+          </figure>
+        </div>
+      </article>
+    </div>
+  </section>
+
+  <!-- ============ PRIVATE ============ -->
+  <section class="private" id="private" aria-labelledby="private-title">
+    <div class="wrap">
+      <header class="head">
+        <p class="eyebrow">How it stays private</p>
+        <h2 class="head__title" id="private-title">Your PC is the cloud now.</h2>
+        <p class="head__lead">Not a privacy policy you have to trust. The data physically never leaves your house, and you can read the code to check.</p>
+      </header>
+
+      <div class="route reveal" role="img" aria-label="Your phone connects over your own encrypted mesh VPN straight to your PC at home. No company cloud sits in between.">
+        <div class="route__node">
+          <span class="route__icon"><svg class="i" aria-hidden="true"><use href="#i-phone"/></svg></span>
+          <span class="route__label">Your phone</span>
+          <span class="route__sub">anywhere</span>
+        </div>
+        <div class="route__link">
+          <span class="route__line"></span>
+          <span class="route__lock"><svg class="i" aria-hidden="true"><use href="#i-lock"/></svg></span>
+          <span class="route__cap">your private mesh VPN</span>
+        </div>
+        <div class="route__node route__node--home">
+          <span class="route__icon"><svg class="i" aria-hidden="true"><use href="#i-flame"/></svg></span>
+          <span class="route__label">Your PC</span>
+          <span class="route__sub">at home</span>
+        </div>
+      </div>
+
+      <ul class="pillars" role="list">
+        <li class="pillar reveal">
+          <span class="pillar__icon"><svg class="i" aria-hidden="true"><use href="#i-monitor"/></svg></span>
+          <h3 class="pillar__title">Runs on your PC</h3>
+          <p class="pillar__text">Every app is a small program on a computer you already own. Your files stay in plain folders on your own disk.</p>
+        </li>
+        <li class="pillar reveal">
+          <span class="pillar__icon"><svg class="i" aria-hidden="true"><use href="#i-lock"/></svg></span>
+          <h3 class="pillar__title">Reach it from your phone</h3>
+          <p class="pillar__text">Your phone and your PC join your own private mesh VPN, end to end encrypted. Nothing is opened to the public internet.</p>
+        </li>
+        <li class="pillar reveal">
+          <span class="pillar__icon"><svg class="i" aria-hidden="true"><use href="#i-user-off"/></svg></span>
+          <h3 class="pillar__title">No cloud account</h3>
+          <p class="pillar__text">No sign up, no subscription, no company server holding your life. Each app opens with a passcode only you know.</p>
+        </li>
+        <li class="pillar reveal">
+          <span class="pillar__icon"><svg class="i" aria-hidden="true"><use href="#i-eye-off"/></svg></span>
+          <h3 class="pillar__title">No tracking</h3>
+          <p class="pillar__text">No telemetry, no analytics, no phone home. Not in the apps, and not on this page either.</p>
+        </li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- ============ OPEN SOURCE ============ -->
+  <section class="open" id="open" aria-labelledby="open-title">
+    <div class="wrap">
+      <div class="open__card reveal">
+        <div class="open__copy">
+          <p class="eyebrow">Open source, AGPL-3.0</p>
+          <h2 class="head__title" id="open-title">Read every line.</h2>
+          <p class="open__text">Sona is free software. Self host it forever, change it, share it. The AGPL means anyone who runs a changed Sona as a service has to share their changes too, so it can never be quietly taken closed.</p>
+          <div class="open__cta">
+            <a class="btn btn--primary" href="https://github.com/Nabubito/sona"><svg class="i" aria-hidden="true"><use href="#i-github"/></svg><span>View the code</span></a>
+            <a class="btn btn--glass" href="https://github.com/Nabubito/sona/blob/main/LICENSE"><span>Read the license</span></a>
+          </div>
+        </div>
+        <pre class="open__code" aria-label="Get started in three commands"><code><span class="c"># clone it, pick an app, start it</span>
+git clone https://github.com/Nabubito/sona
+cd sona/apps/reel
+npm start</code></pre>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ FAQ ============ -->
+  <section class="faq" id="faq" aria-labelledby="faq-title">
+    <div class="wrap wrap--narrow">
+      <header class="head">
+        <p class="eyebrow">Questions</p>
+        <h2 class="head__title" id="faq-title">Good to know</h2>
+      </header>
+      <div class="faq__list">
+        <details class="qa">
+          <summary>Do I need to be technical?</summary>
+          <p>Today, a little. You install Node.js and start each app with one command, and the guide walks you through it. A one click installer is on the way: join the waitlist above and we will tell you when it is ready.</p>
+        </details>
+        <details class="qa">
+          <summary>What does it cost?</summary>
+          <p>The apps are free and open source, and they stay that way. A paid Sona Pro with the one click installer and priority support is planned to keep the project going.</p>
+        </details>
+        <details class="qa">
+          <summary>What computer do I need?</summary>
+          <p>Any Windows, macOS or Linux computer that can stay on while you want to use it. A few extras ask for more: mounting disc images in Forge is Windows only, and text follow in Flicker wants an NVIDIA graphics card.</p>
+        </details>
+        <details class="qa">
+          <summary>How do I reach it when I am away from home?</summary>
+          <p>Install a private mesh VPN, such as Tailscale or any WireGuard mesh, on your PC and on your phone. They meet on your own encrypted network, so your phone reaches your apps from anywhere with nothing exposed to the internet.</p>
+        </details>
+        <details class="qa">
+          <summary>What happens to my things if I stop using Sona?</summary>
+          <p>Nothing. Your music, films and photos are plain files in plain folders on your own disk. Uninstall Sona and they are exactly where you left them.</p>
+        </details>
+        <details class="qa">
+          <summary>Does this website track me?</summary>
+          <p>No. No cookies, no analytics, no fonts or scripts from anyone else. This page only talks to sona.casa, and your email is used for one message about the installer.</p>
+        </details>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ CLOSING ============ -->
+  <section class="closing marble" aria-labelledby="closing-title">
+    <div class="wrap closing__inner reveal">
+      <svg class="closing__mark" aria-hidden="true"><use href="#i-flame"/></svg>
+      <h2 class="closing__title" id="closing-title">My house. <span class="gold">My rules.</span></h2>
+      <p class="closing__text">Bring your calls, media, photos, files and videos home.</p>
+      <div class="closing__cta">
+        <a class="btn btn--primary btn--lg" href="https://github.com/Nabubito/sona"><svg class="i" aria-hidden="true"><use href="#i-github"/></svg><span>Get it on GitHub</span></a>
+        <a class="btn btn--glass btn--lg" href="#waitlist"><span>Join the waitlist</span></a>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer class="foot">
+  <div class="wrap foot__inner">
+    <div class="foot__brand">
+      <a class="brand" href="#top" aria-label="Sona, back to top">
+        <svg class="brand__mark" aria-hidden="true"><use href="#i-flame"/></svg>
+        <span class="brand__word">Sona</span>
+      </a>
+      <p class="foot__tag">Big Tech, brought home.</p>
+    </div>
+    <nav class="foot__links" aria-label="Footer">
+      <a href="mailto:hello@sona.casa">hello@sona.casa</a>
+      <a href="https://github.com/Nabubito/sona">GitHub</a>
+      <a href="https://github.com/Nabubito/sona/blob/main/LICENSE">AGPL-3.0</a>
+    </nav>
+    <p class="foot__fine">No cookies. No analytics. Nothing on this page comes from anyone else.</p>
+  </div>
+</footer>
+</body>
+</html>
