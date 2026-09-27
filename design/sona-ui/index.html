@@ -287,6 +287,25 @@
       </div>
       <p class="s-gate__foot"><b>Sona</b><span aria-hidden="true">·</span><span>under your roof</span></p>
     </div>
+    <p>Forge and Flicker take a longer text passcode, so they use the passphrase variant: same room, a field instead of the keypad.</p>
+    <div class="s-gate s-gate--inline" aria-labelledby="demoPassName">
+      <div class="s-gate__glow" aria-hidden="true"></div><div class="s-gate__grain" aria-hidden="true"></div>
+      <div class="s-gate__panel">
+        <div class="s-gate__mark" aria-hidden="true"><svg viewBox="0 0 48 48"><path fill="url(#sonaFlameGrad)" d="M24 3c1 7-3 11-7 15-2 2-4 5-4 9a11 11 0 0 0 22 0c0-5-3-8-6-12-1 3-3 4-5 5 2-6-1-12 0-17Z"/><path fill="#161311" opacity=".22" d="M24 20c1 3-1 6-3 8-1 1-2 3-2 5a5 5 0 0 0 10 0c0-3-2-5-4-7 0 2-1 3-2 4 1-3 0-7 1-10Z"/></svg></div>
+        <h3 class="s-gate__name" id="demoPassName">Forge</h3>
+        <p class="s-gate__tag">Your workshop</p>
+        <form class="s-gate__form" autocomplete="off" onsubmit="return false">
+          <label class="s-visually-hidden" for="demoPass">Passcode</label>
+          <div class="s-pass">
+            <input class="s-input" id="demoPass" type="password" placeholder="Passcode" autocomplete="off">
+            <button type="button" class="s-iconbtn s-pass__eye" aria-label="Show passcode" aria-pressed="false"><svg class="s-i" aria-hidden="true"><use href="icons.svg#eye"/></svg></button>
+          </div>
+          <button class="s-btn s-btn--primary s-btn--lg s-btn--block" type="submit">Unlock</button>
+        </form>
+        <p class="s-gate__msg" role="alert"></p>
+      </div>
+      <p class="s-gate__foot"><b>Sona</b><span aria-hidden="true">·</span><span>under your roof</span></p>
+    </div>
   </section>
 </main>
 

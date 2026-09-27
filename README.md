@@ -64,7 +64,7 @@ icons and the lock screen, with a live showcase (`node design/sync.mjs --serve`)
 
 ## Quick start
 
-You need **[Node.js 22.5+](https://nodejs.org)** (24 LTS recommended — the apps use Node's built-in SQLite). That's it for the core kit. `ffmpeg` is optional and only used by Reel (transcoding) and Attic (video); both work without it.
+You need **[Node.js 22.5+](https://nodejs.org)** (24 LTS recommended — the apps use Node's built-in SQLite). That's it for the core kit. `ffmpeg` is optional for Reel (transcoding) and Attic (video), and both work without it. Forge and Flicker do their work with `ffmpeg` (Forge also uses 7-Zip for archives), so install it if you run those two.
 
 ```bash
 git clone https://github.com/Nabubito/sona.git

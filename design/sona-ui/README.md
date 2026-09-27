@@ -1,7 +1,7 @@
 # Sona UI
 
-The shared design system for Kin, Reel and Attic. One set of tokens, one set of
-components, one lock screen, so the three apps read as one product.
+The shared design system for Kin, Reel, Attic, Forge and Flicker. One set of tokens,
+one set of components, one lock screen, so the five apps read as one product.
 
 Warm charcoal and ember gold. Cormorant Garamond for the voice, Jost for the work.
 The flame at the center of a home.
@@ -43,7 +43,7 @@ Each app carries its own copy in `public/assets/sona-ui/`, so every app stays
 deployable on its own. Never edit the copies. Edit `design/sona-ui/`, then run:
 
 ```bash
-node design/sync.mjs          # copy into apps/kin, apps/reel, apps/attic
+node design/sync.mjs          # copy into apps/kin, reel, attic, forge, flicker
 node design/sync.mjs --check  # exit 1 if any copy has drifted (good for CI)
 ```
 
@@ -59,7 +59,7 @@ In a page:
 <script src="/assets/sona-ui/ui.js"></script>
 ```
 
-For Attic and Reel, `/assets` is served before the auth wall, which is what lets
+For every app, `/assets` is served before the auth wall, which is what lets
 the lock screen load its own CSS, fonts and icons while logged out. Anything the
 gate needs must live under `/assets`.
 
@@ -163,6 +163,23 @@ Identical in every app. Only the name, the tagline and the config differ.
   <p class="s-gate__foot"><b>Sona</b><span aria-hidden="true">·</span><span>under your roof</span></p>
 </main>
 <script src="/assets/sona-ui/gate.js"></script>
+```
+
+Forge and Flicker take a longer text passcode (8 characters or more) instead of
+digits, so they swap the keypad for the passphrase variant. Same glow, mark, name,
+tagline and footer; each app's own small script handles the form (Forge also runs
+its first run setup through it):
+
+```html
+<form class="s-gate__form" autocomplete="off">
+  <label class="s-visually-hidden" for="pass">Passcode</label>
+  <div class="s-pass">
+    <input class="s-input" id="pass" type="password" autocomplete="current-password" placeholder="Passcode">
+    <button type="button" class="s-iconbtn s-pass__eye" aria-label="Show passcode" aria-pressed="false"><svg class="s-i" aria-hidden="true"><use href="/assets/sona-ui/icons.svg#eye"/></svg></button>
+  </div>
+  <button class="s-btn s-btn--primary s-btn--lg s-btn--block" type="submit">Unlock</button>
+</form>
+<p class="s-gate__msg" role="alert"></p>
 ```
 
 Leave out `data-endpoint` to handle the code yourself (Kin does this, because its
