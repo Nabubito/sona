@@ -1,0 +1,348 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#161311">
+<title>Sona UI</title>
+<link rel="icon" href="flame.svg" type="image/svg+xml">
+<link rel="stylesheet" href="tokens.css">
+<link rel="stylesheet" href="components.css">
+<script src="theme.js"></script>
+<style>
+  /* showcase-only layout */
+  .sc-wrap { max-width: 1120px; margin: 0 auto; padding: 0 var(--gutter) var(--sp-20); }
+  .sc-head { position: sticky; top: 0; z-index: var(--z-sticky); }
+  .sc-hero { padding: var(--sp-16) 0 var(--sp-10); }
+  .sc-hero h1 { margin: 0; font-size: var(--fs-4xl); }
+  .sc-hero p { max-width: 60ch; color: var(--text-2); font-size: var(--fs-lg); margin: var(--sp-4) 0 0; }
+  .sc-sec { padding: var(--sp-10) 0; border-top: 1px solid var(--border); scroll-margin-top: 64px; }
+  .sc-sec h2, .sc-sec h3 { font-variant-numeric: lining-nums; }
+  @media (max-width: 520px) { .sc-head .s-seg__btn { font-size: 0; gap: 0; } .sc-head .s-seg__btn .s-i { font-size: 1rem; } }
+  .sc-sec > h2 { margin: 0 0 var(--sp-2); font-family: var(--font-display); font-weight: 600; font-size: var(--fs-2xl); }
+  .sc-sec > p { margin: 0 0 var(--sp-6); color: var(--text-3); max-width: 64ch; font-size: var(--fs-sm); }
+  .sc-row { display: flex; flex-wrap: wrap; gap: var(--sp-3); align-items: center; }
+  .sc-cols { display: grid; gap: var(--sp-6); grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); align-items: start; }
+  .sc-swatches { display: grid; gap: var(--sp-3); grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); }
+  .sc-sw { border: 1px solid var(--border); border-radius: var(--r-md); overflow: hidden; background: var(--surface-1); }
+  .sc-sw i { display: block; height: 64px; border-bottom: 1px solid var(--border); }
+  .sc-sw div { padding: var(--sp-2) var(--sp-3); }
+  .sc-sw b { display: block; font-family: var(--font-mono); font-size: var(--fs-2xs); font-weight: 500; }
+  .sc-sw code { font-family: var(--font-mono); font-size: var(--fs-2xs); color: var(--text-3); }
+  .sc-type > div { display: flex; align-items: baseline; gap: var(--sp-5); padding: var(--sp-3) 0; border-bottom: 1px solid var(--border); }
+  .sc-type code { flex: none; width: 88px; font-family: var(--font-mono); font-size: var(--fs-2xs); color: var(--text-3); }
+  .sc-type span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .sc-boxes { display: flex; flex-wrap: wrap; gap: var(--sp-5); align-items: flex-end; }
+  .sc-box { display: grid; gap: var(--sp-2); justify-items: center; font-family: var(--font-mono); font-size: var(--fs-2xs); color: var(--text-3); }
+  .sc-box i { display: block; width: 72px; height: 72px; background: var(--surface-2); border: 1px solid var(--border-strong); }
+  .sc-icons { display: grid; gap: var(--sp-2); grid-template-columns: repeat(auto-fill, minmax(96px, 1fr)); }
+  .sc-icons div { display: grid; justify-items: center; gap: var(--sp-2); padding: var(--sp-3) var(--sp-1); border-radius: var(--r-sm); background: var(--surface-1); border: 1px solid var(--border); }
+  .sc-icons .s-i { width: 24px; height: 24px; color: var(--text); }
+  .sc-icons code { font-family: var(--font-mono); font-size: 10px; color: var(--text-3); }
+  .sc-phone { width: 340px; max-width: 100%; height: 300px; position: relative; overflow: hidden; border-radius: var(--r-xl); border: 1px solid var(--border-strong); background: var(--bg-tint), var(--bg); }
+  .sc-phone .s-tabbar { position: absolute; }
+  .sc-phone .s-appbar { position: absolute; left: 0; right: 0; top: 0; }
+  .sc-motion { display: flex; gap: var(--sp-4); flex-wrap: wrap; }
+  .sc-motion button { width: 148px; }
+  .sc-motion .dot { width: 18px; height: 18px; border-radius: 50%; background: var(--accent); margin-top: var(--sp-3); }
+  .sc-motion .run .dot { transform: translateX(120px); }
+  .sc-note { font-size: var(--fs-xs); color: var(--text-3); }
+</style>
+</head>
+<body>
+<a class="s-skip" href="#main">Skip to content</a>
+
+<header class="s-appbar sc-head">
+  <svg class="s-i s-i--lg" style="color:var(--accent)" aria-hidden="true"><use href="icons.svg#flame"/></svg>
+  <h1 class="s-appbar__title"><span class="s-wordmark">Sona UI</span></h1>
+  <div class="s-seg s-scheme" role="group" aria-label="Color theme">
+    <button class="s-seg__btn" data-scheme-set="auto"><svg class="s-i" aria-hidden="true"><use href="icons.svg#auto"/></svg>Auto</button>
+    <button class="s-seg__btn" data-scheme-set="light"><svg class="s-i" aria-hidden="true"><use href="icons.svg#sun"/></svg>Light</button>
+    <button class="s-seg__btn" data-scheme-set="dark"><svg class="s-i" aria-hidden="true"><use href="icons.svg#moon"/></svg>Dark</button>
+  </div>
+</header>
+
+<main id="main" class="sc-wrap">
+  <section class="sc-hero">
+    <p class="s-eyebrow">Design system</p>
+    <h1 class="s-display">One home, three rooms.</h1>
+    <p>Warm charcoal and ember gold, Cormorant Garamond for the voice and Jost for the work. This page renders every token and component straight from <code>tokens.css</code> and <code>components.css</code>, so what you see here is exactly what Kin, Reel and Attic ship.</p>
+  </section>
+
+  <section class="sc-sec" id="color">
+    <h2>Color</h2>
+    <p>Semantic tokens, resolved live for the current theme. Every text pair clears WCAG AA (4.5:1) in both dark and light.</p>
+    <div class="sc-swatches" id="swatches"></div>
+  </section>
+
+  <section class="sc-sec" id="type">
+    <h2>Type</h2>
+    <p>Fluid sizes that scale from a 360px phone to a 1440px desktop with <code>clamp()</code>. Display in Cormorant Garamond, everything else in Jost.</p>
+    <div class="sc-type">
+      <div><code>--fs-4xl</code><span class="s-display" style="font-size:var(--fs-4xl)">Big Tech, brought home</span></div>
+      <div><code>--fs-3xl</code><span class="s-display" style="font-size:var(--fs-3xl)">Your library at a glance</span></div>
+      <div><code>--fs-2xl</code><span class="s-display" style="font-size:var(--fs-2xl)">Low Light Hours</span></div>
+      <div><code>--fs-xl</code><span style="font-size:var(--fs-xl)">Recently added</span></div>
+      <div><code>--fs-lg</code><span style="font-size:var(--fs-lg)">Nothing ever leaves your house.</span></div>
+      <div><code>--fs-md</code><span style="font-size:var(--fs-md)">Body text reads at 15 to 16 pixels with a relaxed line height.</span></div>
+      <div><code>--fs-sm</code><span style="font-size:var(--fs-sm)">Secondary labels and helper copy.</span></div>
+      <div><code>--fs-xs</code><span style="font-size:var(--fs-xs)">Meta, timestamps, counts: 3 tracks, 12 min</span></div>
+      <div><code>.s-eyebrow</code><span class="s-eyebrow">Section eyebrow</span></div>
+    </div>
+  </section>
+
+  <section class="sc-sec" id="space">
+    <h2>Space, radius, elevation</h2>
+    <p>A 4px spacing grid, five radii, and four warm shadows. Surfaces carry a faint lit top edge in dark mode.</p>
+    <div class="sc-boxes" style="margin-bottom:var(--sp-8)">
+      <div class="sc-box"><i style="width:4px;height:48px;background:var(--accent)"></i>sp-1</div>
+      <div class="sc-box"><i style="width:8px;height:48px;background:var(--accent)"></i>sp-2</div>
+      <div class="sc-box"><i style="width:12px;height:48px;background:var(--accent)"></i>sp-3</div>
+      <div class="sc-box"><i style="width:16px;height:48px;background:var(--accent)"></i>sp-4</div>
+      <div class="sc-box"><i style="width:24px;height:48px;background:var(--accent)"></i>sp-6</div>
+      <div class="sc-box"><i style="width:32px;height:48px;background:var(--accent)"></i>sp-8</div>
+      <div class="sc-box"><i style="width:48px;height:48px;background:var(--accent)"></i>sp-12</div>
+    </div>
+    <div class="sc-boxes" style="margin-bottom:var(--sp-8)">
+      <div class="sc-box"><i style="border-radius:var(--r-xs)"></i>r-xs 6</div>
+      <div class="sc-box"><i style="border-radius:var(--r-sm)"></i>r-sm 10</div>
+      <div class="sc-box"><i style="border-radius:var(--r-md)"></i>r-md 14</div>
+      <div class="sc-box"><i style="border-radius:var(--r-lg)"></i>r-lg 20</div>
+      <div class="sc-box"><i style="border-radius:var(--r-xl)"></i>r-xl 28</div>
+      <div class="sc-box"><i style="border-radius:var(--r-full)"></i>r-full</div>
+    </div>
+    <div class="sc-boxes">
+      <div class="sc-box"><i style="border:0;background:var(--surface-1);box-shadow:var(--shadow-1),var(--lit-edge);border-radius:var(--r-md)"></i>shadow-1</div>
+      <div class="sc-box"><i style="border:0;background:var(--surface-1);box-shadow:var(--shadow-2),var(--lit-edge);border-radius:var(--r-md)"></i>shadow-2</div>
+      <div class="sc-box"><i style="border:0;background:var(--surface-1);box-shadow:var(--shadow-3),var(--lit-edge);border-radius:var(--r-md)"></i>shadow-3</div>
+      <div class="sc-box"><i style="border:0;background:var(--surface-1);box-shadow:var(--shadow-4),var(--lit-edge);border-radius:var(--r-md)"></i>shadow-4</div>
+      <div class="sc-box"><i style="border:0;background:var(--surface-1);box-shadow:var(--glow-accent);border-radius:var(--r-md)"></i>glow-accent</div>
+    </div>
+  </section>
+
+  <section class="sc-sec" id="motion">
+    <h2>Motion</h2>
+    <p>Short, springy and quiet. With reduced motion switched on in the OS, every duration collapses to 1ms and the ambient glows stop.</p>
+    <div class="sc-motion" id="motionDemo">
+      <div><button class="s-btn s-btn--outline" data-ease="var(--ease-out)" data-dur="var(--dur-slow)">ease-out, slow</button><div class="dot"></div></div>
+      <div><button class="s-btn s-btn--outline" data-ease="var(--ease-spring)" data-dur="var(--dur-slow)">spring, slow</button><div class="dot"></div></div>
+      <div><button class="s-btn s-btn--outline" data-ease="var(--ease-in-out)" data-dur="var(--dur-base)">in-out, base</button><div class="dot"></div></div>
+    </div>
+  </section>
+
+  <section class="sc-sec" id="icons">
+    <h2>Icons</h2>
+    <p>One sprite, <code>icons.svg</code>. Stroke icons inherit color from the text around them.</p>
+    <div class="sc-icons" id="iconGrid"></div>
+  </section>
+
+  <section class="sc-sec" id="buttons">
+    <h2>Buttons</h2>
+    <p>Every control is at least 44 by 44 pixels, including the small icon buttons, which keep an invisible hit area.</p>
+    <div class="sc-row" style="margin-bottom:var(--sp-4)">
+      <button class="s-btn s-btn--primary"><svg class="s-i" aria-hidden="true"><use href="icons.svg#play"/></svg>Play all</button>
+      <button class="s-btn">Secondary</button>
+      <button class="s-btn s-btn--outline">Outline</button>
+      <button class="s-btn s-btn--ghost">Ghost</button>
+      <button class="s-btn s-btn--danger"><svg class="s-i" aria-hidden="true"><use href="icons.svg#trash"/></svg>Delete</button>
+      <button class="s-btn" disabled>Disabled</button>
+    </div>
+    <div class="sc-row">
+      <button class="s-btn s-btn--primary s-btn--lg">Large primary</button>
+      <button class="s-btn s-btn--sm">Small</button>
+      <button class="s-iconbtn" aria-label="Search"><svg class="s-i" aria-hidden="true"><use href="icons.svg#search"/></svg></button>
+      <button class="s-iconbtn s-iconbtn--filled" aria-label="Favorite"><svg class="s-i" aria-hidden="true"><use href="icons.svg#heart"/></svg></button>
+      <button class="s-iconbtn" aria-pressed="true" aria-label="Shuffle"><svg class="s-i" aria-hidden="true"><use href="icons.svg#shuffle"/></svg></button>
+      <button class="s-iconbtn s-iconbtn--primary s-iconbtn--lg" aria-label="Play"><svg class="s-i" aria-hidden="true"><use href="icons.svg#play"/></svg></button>
+      <span style="display:inline-grid;place-items:center;padding:8px;border-radius:14px;background:linear-gradient(135deg,#6B7FD7,#120F2A)">
+        <button class="s-iconbtn s-iconbtn--glass" aria-label="Grid"><svg class="s-i" aria-hidden="true"><use href="icons.svg#grid"/></svg></button>
+      </span>
+    </div>
+  </section>
+
+  <section class="sc-sec" id="inputs">
+    <h2>Inputs</h2>
+    <p>Inputs never drop below 16px, so phones do not zoom on focus.</p>
+    <div class="sc-cols">
+      <label class="s-field"><span class="s-label">Profile name</span><input class="s-input" placeholder="Guest room"><span class="s-hint">Shown on the lock screen greeting.</span></label>
+      <label class="s-field"><span class="s-label">Access lasts</span>
+        <select class="s-select"><option>Permanent</option><option>1 hour</option><option>24 hours</option></select></label>
+      <div class="s-field"><span class="s-label">Search</span><div class="s-search"><svg class="s-i" aria-hidden="true"><use href="icons.svg#search"/></svg><input class="s-input" type="search" placeholder="Songs, artists, albums"></div></div>
+      <label class="s-field"><span class="s-label">Note</span><textarea class="s-textarea" placeholder="Something to remember"></textarea></label>
+      <div class="s-field"><span class="s-label">Volume</span><input class="s-range" type="range" value="64" style="--fill:64%" oninput="this.style.setProperty('--fill',this.value+'%')"></div>
+      <label class="s-row sc-row" style="justify-content:space-between"><span>Beat glow</span><input class="s-switch" type="checkbox" checked></label>
+    </div>
+  </section>
+
+  <section class="sc-sec" id="cards">
+    <h2>Cards and lists</h2>
+    <p>Cards hold settings and summaries. Lists are the workhorse: 56px rows with a leading thumbnail and trailing actions.</p>
+    <div class="sc-cols">
+      <div class="s-card">
+        <p class="s-eyebrow" style="margin:0 0 var(--sp-2)">Library</p>
+        <h3 class="s-card__title">11 tracks, 4 albums</h3>
+        <p class="s-card__text">Scanned from one folder on this computer. Nothing was uploaded anywhere.</p>
+        <div class="sc-row" style="margin-top:var(--sp-4)"><button class="s-btn s-btn--primary s-btn--sm">Rescan</button><button class="s-btn s-btn--ghost s-btn--sm">Manage folders</button></div>
+      </div>
+      <ul class="s-list s-list--inset">
+        <li><button class="s-list__item"><span class="s-list__media" style="background:linear-gradient(135deg,#E7A94C,#3A1C0E)"></span><span class="s-list__main"><span class="s-list__title">Porch Light</span><span class="s-list__sub">Ember Lane, Low Light Hours</span></span><span class="s-list__trail s-num">0:27</span></button></li>
+        <li><button class="s-list__item"><span class="s-list__media" style="background:linear-gradient(135deg,#8FA96A,#1E2A18)"></span><span class="s-list__main"><span class="s-list__title">Morning Table</span><span class="s-list__sub">The Quiet Hours, Cedar Rooms</span></span><span class="s-list__trail s-num">0:27</span></button></li>
+        <li><button class="s-list__item s-list__item--danger"><span class="s-list__media"><svg class="s-i" aria-hidden="true"><use href="icons.svg#trash"/></svg></span><span class="s-list__main"><span class="s-list__title">Clear history</span><span class="s-list__sub">Removes every message for both of you</span></span></button></li>
+      </ul>
+    </div>
+  </section>
+
+  <section class="sc-sec" id="tiles">
+    <h2>Media tiles</h2>
+    <p>Square art with the caption underneath, the way photos and albums read best. Hover lifts; touch devices always show the play button.</p>
+    <div class="s-grid" style="--tile-min:150px">
+      <a class="s-tile" href="#tiles"><div class="s-tile__art" style="background:linear-gradient(135deg,#E7A94C,#3A1C0E)"><span class="s-tile__badge s-badge">2024</span><span class="s-tile__play s-iconbtn s-iconbtn--primary"><svg class="s-i" aria-hidden="true"><use href="icons.svg#play"/></svg></span></div><div class="s-tile__title">Low Light Hours</div><div class="s-tile__sub">Ember Lane</div></a>
+      <a class="s-tile" href="#tiles"><div class="s-tile__art" style="background:linear-gradient(135deg,#8FA96A,#1E2A18)"><span class="s-tile__badge s-badge">2019</span></div><div class="s-tile__title">Cedar Rooms</div><div class="s-tile__sub">The Quiet Hours</div></a>
+      <a class="s-tile" href="#tiles"><div class="s-tile__art" style="background:linear-gradient(135deg,#6B7FD7,#120F2A)"><span class="s-tile__badge s-badge">2021</span></div><div class="s-tile__title">Static Bloom</div><div class="s-tile__sub">Nightjar Radio</div></a>
+      <a class="s-tile" href="#tiles"><div class="s-tile__art" style="background:linear-gradient(135deg,#C4482E,#2A0E08)"><span class="s-tile__badge s-badge">1998</span></div><div class="s-tile__title">Harbor Nights</div><div class="s-tile__sub">Salt and Cedar</div></a>
+    </div>
+  </section>
+
+  <section class="sc-sec" id="tabs">
+    <h2>Tabs, segments, chips, badges</h2>
+    <p>Tabs switch views, segments switch modes, chips filter.</p>
+    <div class="s-tabs" role="tablist" style="margin-bottom:var(--sp-6)">
+      <button class="s-tab" role="tab" aria-selected="true">All photos</button><button class="s-tab" role="tab" aria-selected="false">Favorites</button><button class="s-tab" role="tab" aria-selected="false">Videos</button>
+    </div>
+    <div class="sc-row" style="margin-bottom:var(--sp-6)">
+      <div class="s-seg" role="group" aria-label="Capture mode"><button class="s-seg__btn" aria-pressed="true">Photo</button><button class="s-seg__btn" aria-pressed="false">Video</button></div>
+      <div class="s-chips"><button class="s-chip" aria-pressed="true">A to Z</button><button class="s-chip" aria-pressed="false">Newest</button><button class="s-chip" aria-pressed="false">By year</button></div>
+    </div>
+    <div class="sc-row">
+      <span class="s-badge">1:05</span><span class="s-badge s-badge--accent">New</span><span class="s-badge s-badge--soft">Owner</span>
+      <span class="s-avatar">L</span><span class="sc-row" style="gap:8px"><span class="s-dot s-dot--on"></span><span class="s-muted" style="font-size:var(--fs-sm)">Online</span></span>
+    </div>
+  </section>
+
+  <section class="sc-sec" id="nav">
+    <h2>Navigation</h2>
+    <p>Phones get a glass app bar and a bottom tab bar. From 1024px up, the tab bar gives way to a sidebar.</p>
+    <div class="sc-row" style="align-items:flex-start;gap:var(--sp-6)">
+      <div class="sc-phone">
+        <div class="s-appbar"><h3 class="s-appbar__title">Library</h3><button class="s-iconbtn" aria-label="Search"><svg class="s-i" aria-hidden="true"><use href="icons.svg#search"/></svg></button></div>
+        <nav class="s-tabbar" aria-label="Demo tabs">
+          <a class="s-tabbar__item" href="#nav"><svg class="s-i" aria-hidden="true"><use href="icons.svg#camera"/></svg>Camera</a>
+          <a class="s-tabbar__item" href="#nav" aria-current="page"><svg class="s-i" aria-hidden="true"><use href="icons.svg#images"/></svg>Library</a>
+          <a class="s-tabbar__item" href="#nav"><svg class="s-i" aria-hidden="true"><use href="icons.svg#star"/></svg>Favorites</a>
+        </nav>
+      </div>
+      <div class="s-card s-card--flat" style="width:260px;padding:var(--sp-3)">
+        <a class="s-navlink" href="#nav" aria-current="page"><svg class="s-i" aria-hidden="true"><use href="icons.svg#home"/></svg>Home</a>
+        <a class="s-navlink" href="#nav"><svg class="s-i" aria-hidden="true"><use href="icons.svg#disc"/></svg>Albums</a>
+        <a class="s-navlink" href="#nav"><svg class="s-i" aria-hidden="true"><use href="icons.svg#heart"/></svg>Favorites</a>
+        <a class="s-navlink" href="#nav"><svg class="s-i" aria-hidden="true"><use href="icons.svg#playlist"/></svg>Playlists</a>
+      </div>
+    </div>
+  </section>
+
+  <section class="sc-sec" id="states">
+    <h2>Empty, loading, feedback</h2>
+    <p>Empty states teach the next step. Skeletons hold the layout while data loads. Toasts and sheets confirm and ask.</p>
+    <div class="sc-cols">
+      <div class="s-card s-card--flat">
+        <div class="s-empty" style="margin:0 auto">
+          <div class="s-empty__icon"><svg class="s-i" aria-hidden="true"><use href="icons.svg#music"/></svg></div>
+          <h3 class="s-empty__title">Your library is empty</h3>
+          <p class="s-empty__text">Point Reel at a folder of music on this computer. It reads the tags and builds everything else.</p>
+          <ol class="s-steps"><li>Open Admin and add a folder path</li><li>Save and rescan</li><li>Press play</li></ol>
+          <div class="s-empty__actions"><button class="s-btn s-btn--primary">Add a folder</button></div>
+        </div>
+      </div>
+      <div class="s-card s-card--flat">
+        <div class="s-skel s-skel--title" style="margin-bottom:var(--sp-4)"></div>
+        <div id="skelRows"></div>
+        <div id="skelTiles" style="margin-top:var(--sp-5)"></div>
+      </div>
+    </div>
+    <div class="sc-row" style="margin-top:var(--sp-6)">
+      <button class="s-btn" id="demoToast"><svg class="s-i" aria-hidden="true"><use href="icons.svg#check"/></svg>Show a toast</button>
+      <button class="s-btn" id="demoToastErr">Show an error toast</button>
+      <button class="s-btn s-btn--outline" data-sheet-open="demoSheet">Open a sheet</button>
+    </div>
+  </section>
+
+  <section class="sc-sec" id="gate">
+    <h2>Lock screen</h2>
+    <p>The first impression, identical in every app. Try it: the demo code is 0000. Your keyboard works too.</p>
+    <div class="s-gate s-gate--inline" data-sona-gate data-len="4" aria-labelledby="demoGateName">
+      <div class="s-gate__glow" aria-hidden="true"></div><div class="s-gate__grain" aria-hidden="true"></div>
+      <div class="s-gate__panel">
+        <div class="s-gate__mark" aria-hidden="true"><svg viewBox="0 0 48 48"><defs><linearGradient id="sonaFlameGrad" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#F3CE86"/><stop offset=".5" stop-color="#E7A94C"/><stop offset="1" stop-color="#E1712B"/></linearGradient></defs><path fill="url(#sonaFlameGrad)" d="M24 3c1 7-3 11-7 15-2 2-4 5-4 9a11 11 0 0 0 22 0c0-5-3-8-6-12-1 3-3 4-5 5 2-6-1-12 0-17Z"/><path fill="#161311" opacity=".22" d="M24 20c1 3-1 6-3 8-1 1-2 3-2 5a5 5 0 0 0 10 0c0-3-2-5-4-7 0 2-1 3-2 4 1-3 0-7 1-10Z"/></svg></div>
+        <h3 class="s-gate__name" id="demoGateName">Sona</h3>
+        <p class="s-gate__tag">Under your roof</p>
+        <div class="s-gate__dots" role="status" aria-live="polite"></div>
+        <p class="s-gate__msg" role="alert"></p>
+        <div class="s-gate__pad" role="group" aria-label="Passcode keypad">
+          <button type="button" class="s-key" data-k="1">1</button><button type="button" class="s-key" data-k="2">2</button><button type="button" class="s-key" data-k="3">3</button>
+          <button type="button" class="s-key" data-k="4">4</button><button type="button" class="s-key" data-k="5">5</button><button type="button" class="s-key" data-k="6">6</button>
+          <button type="button" class="s-key" data-k="7">7</button><button type="button" class="s-key" data-k="8">8</button><button type="button" class="s-key" data-k="9">9</button>
+          <button type="button" class="s-key s-key--fn" data-k="clr">Clear</button><button type="button" class="s-key" data-k="0">0</button>
+          <button type="button" class="s-key s-key--fn" data-k="del" aria-label="Delete"><svg class="s-i" aria-hidden="true"><use href="icons.svg#backspace"/></svg></button>
+        </div>
+      </div>
+      <p class="s-gate__foot"><b>Sona</b><span aria-hidden="true">·</span><span>under your roof</span></p>
+    </div>
+  </section>
+</main>
+
+<div class="s-scrim" id="demoSheet">
+  <section class="s-sheet" role="dialog" aria-modal="true" aria-labelledby="demoSheetTitle">
+    <header class="s-sheet__head"><h3 class="s-sheet__title" id="demoSheetTitle">Add to playlist</h3>
+      <button class="s-iconbtn" data-sheet-close aria-label="Close"><svg class="s-i" aria-hidden="true"><use href="icons.svg#close"/></svg></button></header>
+    <div class="s-sheet__body">
+      <ul class="s-list">
+        <li><button class="s-list__item" data-sheet-close><span class="s-list__media"><svg class="s-i" aria-hidden="true"><use href="icons.svg#plus"/></svg></span><span class="s-list__main"><span class="s-list__title">New playlist</span></span></button></li>
+        <li><button class="s-list__item" data-sheet-close><span class="s-list__media"><svg class="s-i" aria-hidden="true"><use href="icons.svg#playlist"/></svg></span><span class="s-list__main"><span class="s-list__title">Sunday kitchen</span><span class="s-list__sub">14 songs</span></span></button></li>
+        <li><button class="s-list__item" data-sheet-close><span class="s-list__media"><svg class="s-i" aria-hidden="true"><use href="icons.svg#playlist"/></svg></span><span class="s-list__main"><span class="s-list__title">Long drive</span><span class="s-list__sub">32 songs</span></span></button></li>
+      </ul>
+    </div>
+    <footer class="s-sheet__foot"><button class="s-btn s-btn--ghost" data-sheet-close>Cancel</button></footer>
+  </section>
+</div>
+
+<script src="ui.js"></script>
+<script src="gate.js"></script>
+<script>
+  // swatches: read the live token values so the page can never drift from tokens.css
+  var TOKENS = ['bg','surface-1','surface-2','surface-3','text','text-2','text-3','accent','accent-text','accent-soft','border','border-strong','success','danger','warning','focus'];
+  function paint() {
+    var cs = getComputedStyle(document.documentElement);
+    document.getElementById('swatches').innerHTML = TOKENS.map(function (t) {
+      var v = cs.getPropertyValue('--' + t).trim();
+      return '<div class="sc-sw"><i style="background:var(--' + t + ')"></i><div><b>--' + t + '</b><code>' + v + '</code></div></div>';
+    }).join('');
+  }
+  paint(); document.addEventListener('sona:scheme', paint);
+
+  // icon grid straight from the sprite
+  fetch('icons.svg').then(function (r) { return r.text(); }).then(function (svg) {
+    var ids = (svg.match(/<symbol id="([^"]+)"/g) || []).map(function (m) { return m.slice(12, -1); });
+    document.getElementById('iconGrid').innerHTML = ids.map(function (id) { return '<div>' + Sona.icon(id) + '<code>' + id + '</code></div>'; }).join('');
+  });
+
+  document.getElementById('skelRows').innerHTML = Sona.skeleton('rows', 3);
+  document.getElementById('skelTiles').innerHTML = Sona.skeleton('tiles', 3);
+  document.getElementById('demoToast').onclick = function () { Sona.toast('Added to Sunday kitchen', { icon: 'check' }); };
+  document.getElementById('demoToastErr').onclick = function () { Sona.toast('Could not reach home', { error: true }); };
+
+  document.querySelectorAll('#motionDemo button').forEach(function (b) {
+    b.onclick = function () {
+      var box = b.parentNode, dot = box.querySelector('.dot');
+      dot.style.transition = 'transform ' + b.dataset.dur + ' ' + b.dataset.ease;
+      box.classList.toggle('run');
+    };
+  });
+
+  // the demo gate handles its own code: 0000 opens, anything else shakes
+  document.querySelector('.s-gate--inline').addEventListener('sona:pin', function (e) {
+    if (e.detail.code === '0000') e.detail.ok(function () { setTimeout(SonaGate.reset, 900); });
+    else e.detail.fail('That is not the key. Try 0000.');
+  });
+</script>
+</body>
+</html>
