@@ -24,13 +24,14 @@ const els = {
   pipeline:$('#pipeline'),
   gallery:$('#gallery'), galleryEmpty:$('#galleryEmpty'), gStats:$('#gStats'),
   pStats:$('#pStats'), pClock:$('#pClock'),
-  btnReveal:$('#btnReveal'), btnLogout:$('#btnLogout'),
   tabs:$$('.tab'),
   lightbox:$('#lightbox'), lbImg:$('#lbImg'), lbVid:$('#lbVid'), lbMeta:$('#lbMeta'), lbClose:$('#lbClose'),
   lbPrev:$('#lbPrev'), lbNext:$('#lbNext'), lbFav:$('#lbFav'), lbDownload:$('#lbDownload'), lbDelete:$('#lbDelete'),
   toast:$('#toast'),
 };
 
+const IC = n => `<svg class="s-i" aria-hidden="true"><use href="/assets/sona-ui/icons.svg#${n}"/></svg>`;
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const state = {
   stream:null, facing:'environment', mirror:false, grid:false, timer:0, torch:false,
   geoOn:false, geo:null, busy:false, hasMultiCam:false, levelOn:false,
@@ -159,20 +160,45 @@ function pickVideoMime(){
 // boot
 // ---------------------------------------------------------------------------
 async function boot(){
-  const lines = [
-    'initializing optical core …',
-    'mounting Camera Roll → Desktop …',
-    'linking private vault …',
-    'pipeline armed: capture › upload › save › archive',
-  ];
-  for (let i=0;i<lines.length;i++){
-    await sleep(230);
-    els.bootlog.insertAdjacentHTML('beforeend', `<div>› ${lines[i]} <span class="ok">ok</span></div>`);
-  }
-  await sleep(360);
+  // a short, quiet splash: the flame, then the app
+  const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  await sleep(reduce ? 0 : 420);
   els.boot.classList.add('gone');
   setTimeout(()=>els.boot.remove(), 700);
 }
+
+// ---------------------------------------------------------------------------
+// views: camera, library, favorites. Phones use the tab bar, desktop the
+// sidebar. Each switch is a history entry so the back button stays in-app.
+// ---------------------------------------------------------------------------
+const VIEWS = ['camera','library','fav'];
+function setView(v, push){
+  if (!VIEWS.includes(v)) v = 'library';
+  if (state.recording && v !== 'camera'){ toast('Stop recording first', true); return; }
+  const prev = document.body.dataset.view;
+  document.body.dataset.view = v;
+  document.querySelectorAll('[data-go]').forEach(b => {
+    const on = b.dataset.go === v;
+    b.classList.toggle('is-active', on);
+    if (on) b.setAttribute('aria-current','page'); else b.removeAttribute('aria-current');
+  });
+  if (v === 'camera'){
+    if (!state.stream) startCamera();
+  } else {
+    // the camera only runs while you are looking at it: saves battery and the light
+    if (state.stream) stopCamera();
+    const tab = v === 'fav' ? 'fav' : 'all';
+    if (tab !== state.tab){ state.tab = tab; syncTabs(); renderGallery(); }   // favorites filter the loaded list, no refetch
+    else syncTabs();
+  }
+  if (push && prev !== v) history.pushState({ view: v }, '', '#' + v);
+}
+function syncTabs(){
+  els.tabs.forEach(t => { const on = t.dataset.tab === state.tab; t.classList.toggle('active', on); t.setAttribute('aria-pressed', String(on)); });
+  const title = document.getElementById('libTitle'); if (title) title.textContent = state.tab === 'fav' ? 'Favorites' : 'Library';
+}
+window.addEventListener('popstate', e => setView((e.state && e.state.view) || location.hash.slice(1) || defaultView(), false));
+const defaultView = () => matchMedia('(min-width: 1024px)').matches ? 'library' : 'camera';
 
 // ---------------------------------------------------------------------------
 // camera
@@ -187,7 +213,7 @@ async function startCamera(){
     state.stream = stream;
     els.video.srcObject = stream;
     await els.video.play().catch(()=>{});
-    els.vpBadge.textContent = 'LIVE';
+    els.vpBadge.textContent = 'Live';
     els.vpBadge.classList.add('live');
     els.btnShutter.disabled = false;
     // capabilities: torch + multi-camera
@@ -203,18 +229,21 @@ async function startCamera(){
     els.btnSwitch.style.display = state.hasMultiCam ? '' : 'none';
     applyFx();
   } catch (e) {
-    els.vpBadge.textContent = 'CAM OFFLINE';
+    els.vpBadge.textContent = 'Camera off';
     els.vpBadge.classList.remove('live');
     els.btnShutter.disabled = true;
     els.fallback.hidden = false;
     els.fallbackMsg.textContent = (e.name==='NotAllowedError')
-      ? 'Camera blocked. Allow access in your browser, then tap below.'
+      ? 'The camera is blocked. Allow it in your browser settings, then tap below.'
       : (location.protocol==='http:' && location.hostname!=='localhost')
-        ? 'Camera needs HTTPS. Open this over https:// (the tunnel does).'
-        : 'No camera found on this device — you can still import photos.';
+        ? 'The camera needs a secure connection. Open Attic over https.'
+        : 'No camera on this device. You can still import photos and videos.';
   }
 }
-function stopCamera(){ if (state.stream){ state.stream.getTracks().forEach(t=>t.stop()); state.stream=null; } }
+function stopCamera(){
+  if (state.stream){ state.stream.getTracks().forEach(t=>t.stop()); state.stream=null; }
+  els.vpBadge.textContent = 'Camera off'; els.vpBadge.classList.remove('live');
+}
 function applyMirror(){ applyFx(); }
 
 // ---------------------------------------------------------------------------
@@ -223,7 +252,7 @@ function applyMirror(){ applyFx(); }
 async function shoot(){
   if (state.busy) return;
   if (state.timer > 0){ await runCountdown(state.timer); }
-  if (!state.stream){ toast('Camera not running', true); return; }
+  if (!state.stream){ toast('The camera is not on', true); return; }
   state.busy = true; els.btnShutter.disabled = true;
 
   // 1 — CAPTURE
@@ -254,7 +283,7 @@ async function shoot(){
     if (!r.ok) throw new Error('upload '+r.status);
     rec = (await r.json()).photo;
   } catch (e) {
-    toast('Upload failed — '+e.message, true);
+    toast('Could not save that shot. '+e.message, true);
     resetPipeline(); state.busy=false; els.btnShutter.disabled=false; return;
   }
 
@@ -263,7 +292,7 @@ async function shoot(){
   // 4 — CLOUD ARCHIVE
   setStage(4); await sleep(260);
 
-  toast(`Saved → Camera Roll  ·  ${rec.archived ? 'archived ✓' : 'archive pending'}`);
+  toast(rec.archived ? 'Saved to your Camera Roll and the vault' : 'Saved to your Camera Roll');
   state.photos.unshift(rec);
   renderGallery(true);
   refreshStats();
@@ -293,10 +322,10 @@ function grabPoster(){
 // ---------------------------------------------------------------------------
 function setMode(m){
   if (state.recording) return;            // can't switch mid-record
-  if (m==='video' && !canRecord){ toast('Recording not supported in this browser',true); return; }
+  if (m==='video' && !canRecord){ toast('This browser cannot record video',true); return; }
   if (m===state.mode){ return; }
   state.mode = m;
-  els.modes.forEach(b=>b.classList.toggle('active', b.dataset.mode===m));
+  els.modes.forEach(b=>{ b.classList.toggle('active', b.dataset.mode===m); b.setAttribute('aria-pressed', String(b.dataset.mode===m)); });
   els.btnShutter.classList.toggle('video', m==='video');
   els.btnShutter.setAttribute('aria-label', m==='video'?'Record video':'Take photo');
   els.filePick.setAttribute('accept', m==='video' ? 'video/*' : 'image/*');
@@ -306,7 +335,7 @@ function setMode(m){
 function fmtDur(s){ s=Math.max(0,Math.round(s)); const m=Math.floor(s/60); return m+':'+String(s%60).padStart(2,'0'); }
 
 function startRecording(){
-  if (!state.stream){ toast('Camera not running', true); return; }
+  if (!state.stream){ toast('The camera is not on', true); return; }
   const mime = pickVideoMime();
   // When effects are on, record a canvas that draws filtered/zoomed frames so
   // the clip matches the preview. Otherwise record the raw stream (lighter).
@@ -324,7 +353,7 @@ function startRecording(){
   }
   let rec;
   try { rec = new MediaRecorder(source, mime ? { mimeType:mime } : undefined); }
-  catch (e){ if (state.fxCanvasStop) state.fxCanvasStop(); toast('Cannot start recorder — '+e.message, true); return; }
+  catch (e){ if (state.fxCanvasStop) state.fxCanvasStop(); toast('Could not start recording. '+e.message, true); return; }
   state.recorder = rec; state.chunks = []; state.recMime = rec.mimeType || mime || 'video/webm';
   state.poster = grabPoster();
   rec.ondataavailable = e => { if (e.data && e.data.size) state.chunks.push(e.data); };
@@ -337,7 +366,7 @@ function startRecording(){
   state.recTimer = setInterval(()=>{
     const ms = Date.now()-state.recStart;
     els.recTime.textContent = fmtDur(ms/1000);
-    if (ms >= MAX_REC_MS){ toast('Reached 5-minute clip limit'); stopRecording(); }
+    if (ms >= MAX_REC_MS){ toast('Clips stop at 5 minutes'); stopRecording(); }
   }, 250);
 }
 
@@ -355,7 +384,7 @@ async function finishVideo(){
   const durSec = (Date.now()-state.recStart)/1000;
   const blob = new Blob(state.chunks, { type: state.recMime });
   state.chunks = [];
-  if (!blob.size){ toast('Empty clip — nothing recorded', true); resetPipeline(); return; }
+  if (!blob.size){ toast('Nothing was recorded', true); resetPipeline(); return; }
   state.busy = true; els.btnShutter.disabled = true;
 
   // 2 — UPLOAD
@@ -372,13 +401,13 @@ async function finishVideo(){
     if (!r.ok) throw new Error('upload '+r.status);
     rec = (await r.json()).photo;
   } catch (e) {
-    toast('Upload failed — '+e.message, true);
+    toast('Could not save that clip. '+e.message, true);
     resetPipeline(); state.busy=false; els.btnShutter.disabled=false; return;
   }
 
   setStage(3); await sleep(220);
   setStage(4); await sleep(260);
-  toast(`Clip saved → Camera Roll  ·  ${rec.archived ? 'archived ✓' : 'archive pending'}`);
+  toast(rec.archived ? 'Clip saved to your Camera Roll and the vault' : 'Clip saved to your Camera Roll');
   state.photos.unshift(rec);
   renderGallery(true); refreshStats();
   setTimeout(resetPipeline, 900);
@@ -428,9 +457,9 @@ function importFile(file){
           body:JSON.stringify({ full, thumb, w:c.width, h:c.height, device:state.deviceLabel+' (import)' })});
         const rec=(await r.json()).photo;
         setStage(4); await sleep(300);
-        toast('Imported → Camera Roll · archived ✓');
+        toast('Imported into your Camera Roll and the vault');
         state.photos.unshift(rec); renderGallery(true); refreshStats();
-      }catch(e){ toast('Import failed',true); }
+      }catch(e){ toast('Could not import that file',true); }
       setTimeout(resetPipeline,900);
     };
     img.src=fr.result;
@@ -458,9 +487,9 @@ async function importVideo(file){
     const r = await fetch('/api/upload',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
     const rec = (await r.json()).photo;
     setStage(4); await sleep(300);
-    toast('Clip imported → Camera Roll · archived ✓');
+    toast('Clip imported into your Camera Roll and the vault');
     state.photos.unshift(rec); renderGallery(true); refreshStats();
-  } catch(e){ toast('Video import failed',true); }
+  } catch(e){ toast('Could not import that video',true); }
   setTimeout(resetPipeline,900);
 }
 
@@ -468,10 +497,14 @@ async function importVideo(file){
 // gallery
 // ---------------------------------------------------------------------------
 async function loadPhotos(){
+  if (!state.photos.length){ els.gallery.innerHTML = Array.from({length:12}, () => '<div class="s-skel s-skel--tile"></div>').join(''); els.galleryEmpty.hidden = true; }
+  els.gallery.setAttribute('aria-busy','true');
   try{
-    const r=await fetch('/api/photos?limit=300'+(state.tab==='fav'?'&fav=1':''));
+    // always load everything; Favorites is a client side filter over this list
+    const r=await fetch('/api/photos?limit=300');
     state.photos=(await r.json()).photos||[];
   }catch{ state.photos=[]; }
+  els.gallery.removeAttribute('aria-busy');
   renderGallery();
 }
 
@@ -484,24 +517,40 @@ function dayLabel(ts){
 }
 function timeLabel(ts){ return new Date(ts).toLocaleTimeString(undefined,{hour:'2-digit',minute:'2-digit'}); }
 
+function renderEmpty(){
+  const fav = state.tab==='fav';
+  els.galleryEmpty.innerHTML = fav
+    ? `<div class="s-empty"><div class="s-empty__icon">${IC('star')}</div><h2 class="s-empty__title">No favorites yet</h2>
+        <p class="s-empty__text">Open any photo and tap the star. Your favorites gather here.</p>
+        <div class="s-empty__actions"><button class="s-btn" data-go="library">${IC('images')}See all photos</button></div></div>`
+    : `<div class="s-empty"><div class="s-empty__icon">${IC('images')}</div><h2 class="s-empty__title">Your attic is empty</h2>
+        <p class="s-empty__text">Every photo and video you take here is saved straight into a plain folder on your computer, then tucked into your private vault. Nothing goes to anyone's cloud.</p>
+        <div class="s-empty__actions"><button class="s-btn s-btn--primary" data-go="camera">${IC('camera')}Open the camera</button><button class="s-btn" data-empty-import>${IC('import')}Import a photo</button></div></div>`;
+}
 function renderGallery(freshTop=false){
   const list = state.tab==='fav' ? state.photos.filter(p=>p.fav) : state.photos;
   els.galleryEmpty.hidden = list.length>0;
+  if (!list.length) renderEmpty();
   els.gallery.innerHTML='';
+  // count per day so each header can say how many shots it holds
+  const perDay = {}; list.forEach(p => { const k = dayLabel(p.ts); perDay[k] = (perDay[k]||0) + 1; });
   let lastDay='';
   list.forEach((p,idx)=>{
     const dl=dayLabel(p.ts);
-    if (dl!==lastDay){ lastDay=dl; const h=document.createElement('div'); h.className='day-head'; h.textContent=dl; els.gallery.appendChild(h); }
+    if (dl!==lastDay){ lastDay=dl; const h=document.createElement('h2'); h.className='day-head'; h.innerHTML=`${esc(dl)} <span class="n">${perDay[dl]} ${perDay[dl]===1?'item':'items'}</span>`; els.gallery.appendChild(h); }
     const isVid = p.kind==='video';
     const cell=document.createElement('div'); cell.className='cell'+(isVid?' video':'')+(freshTop&&idx===0?' fresh':'');
+    cell.tabIndex = 0; cell.setAttribute('role','button'); cell.dataset.id = p.id;
+    cell.setAttribute('aria-label', `${isVid?'Video':'Photo'}, ${dl}, ${timeLabel(p.ts)}${p.fav?', favorite':''}`);
     cell.innerHTML=`<img loading="lazy" src="${p.thumb}" alt="">
-      ${isVid?`<div class="play">▶</div><div class="dur">${fmtDur(p.dur||0)}</div>`:''}
-      <div class="tag">${p.fav?'<span class="fav">★</span>':''}${p.archived?'<span class="arc">☁</span>':''}</div>
+      ${isVid?`<div class="play">${IC('play')}</div><div class="dur">${fmtDur(p.dur||0)}</div>`:''}
+      <div class="tag">${p.fav?`<span class="fav">${IC('star-fill')}</span>`:''}</div>
       <div class="time">${timeLabel(p.ts)}</div>`;
     const img=cell.querySelector('img');
     img.addEventListener('load',()=>img.classList.add('loaded'));
     if (img.complete) img.classList.add('loaded');
-    cell.addEventListener('click',()=>openLightbox(p.id));
+    cell.addEventListener('click',()=>openLightbox(p.id, cell));
+    cell.addEventListener('keydown',e=>{ if(e.key==='Enter'||e.key===' '){ e.preventDefault(); openLightbox(p.id, cell); } });
     els.gallery.appendChild(cell);
   });
 }
@@ -510,10 +559,13 @@ function renderGallery(freshTop=false){
 // lightbox
 // ---------------------------------------------------------------------------
 function visibleList(){ return state.tab==='fav'?state.photos.filter(p=>p.fav):state.photos; }
-function openLightbox(id){
+let lbReturn = null;
+function openLightbox(id, from){
   const list=visibleList(); const i=list.findIndex(p=>p.id===id); if(i<0)return;
   state.lbIndex=i; showLb();
+  lbReturn = from || document.activeElement;
   els.lightbox.hidden=false;
+  setTimeout(()=>{ try{ els.lbClose.focus({preventScroll:true}); }catch{} }, 30);
 }
 function showLb(){
   const list=visibleList(); const p=list[state.lbIndex]; if(!p)return;
@@ -528,14 +580,26 @@ function showLb(){
   }
   els.lbDownload.href=p.download;
   els.lbFav.classList.toggle('on',p.fav);
-  els.lbFav.textContent=p.fav?'★ Favorited':'☆ Favorite';
-  const dims=p.w&&p.h?`${p.w}×${p.h}`:'';
-  const sz=p.bytes?`${(p.bytes/1048576).toFixed(1)} MB`:'';
-  const dur=isVid&&p.dur?`· ⏱ ${fmtDur(p.dur)}`:'';
-  const geo=(p.lat!=null&&p.lon!=null)?`· 📍${p.lat.toFixed(3)},${p.lon.toFixed(3)}`:'';
-  els.lbMeta.textContent=`${new Date(p.ts).toLocaleString()} · ${dims} · ${sz} ${dur} ${p.archived?'· ☁ archived':''} ${geo}`;
+  els.lbFav.setAttribute('aria-pressed', String(!!p.fav));
+  els.lbFav.innerHTML = IC(p.fav?'star-fill':'star') + `<span>${p.fav?'Favorite':'Add to favorites'}</span>`;
+  els.lbImg.alt = `${isVid?'Video':'Photo'} from ${new Date(p.ts).toLocaleString()}`;
+  const bits = [];
+  if (p.w&&p.h) bits.push(`${p.w} × ${p.h}`);
+  if (p.bytes) bits.push(`${(p.bytes/1048576).toFixed(1)} MB`);
+  if (isVid&&p.dur) bits.push(fmtDur(p.dur));
+  if (p.archived) bits.push('in the vault');
+  if (p.lat!=null&&p.lon!=null) bits.push(`${p.lat.toFixed(3)}, ${p.lon.toFixed(3)}`);
+  const when = new Date(p.ts);
+  els.lbMeta.innerHTML = `<b>${esc(when.toLocaleDateString(undefined,{weekday:'long',month:'long',day:'numeric'}))} · ${esc(timeLabel(p.ts))}</b>${esc(bits.join(' · '))}`;
 }
-function closeLb(){ els.lightbox.hidden=true; els.lbImg.removeAttribute('src'); try{ els.lbVid.pause(); }catch{} els.lbVid.removeAttribute('src'); }
+function closeLb(){
+  els.lightbox.hidden=true; els.lbImg.removeAttribute('src'); try{ els.lbVid.pause(); }catch{} els.lbVid.removeAttribute('src');
+  // the gallery may have re-rendered (favorite toggled), so find the cell again by id
+  const cur = visibleList()[state.lbIndex];
+  if (lbReturn && !lbReturn.isConnected && cur) lbReturn = els.gallery.querySelector(`.cell[data-id="${cur.id}"]`);
+  if (lbReturn && lbReturn.focus) try{ lbReturn.focus({preventScroll:true}); }catch{}
+  lbReturn = null;
+}
 function lbStep(d){ const list=visibleList(); state.lbIndex=(state.lbIndex+d+list.length)%list.length; showLb(); }
 async function lbToggleFav(){
   const p=visibleList()[state.lbIndex]; if(!p)return;
@@ -545,9 +609,10 @@ async function lbToggleFav(){
 }
 async function lbDelete(){
   const p=visibleList()[state.lbIndex]; if(!p)return;
-  if(!confirm('Delete this photo from the PC and the vault?'))return;
+  if(!confirm('Delete this from your computer and the vault? This cannot be undone.'))return;
   await fetch(`/api/photo/${p.id}`,{method:'DELETE'});
   state.photos=state.photos.filter(x=>x.id!==p.id);
+  lbReturn = null;
   toast('Deleted'); closeLb(); renderGallery(); refreshStats();
 }
 
@@ -558,8 +623,13 @@ async function refreshStats(){
   try{
     const s=await (await fetch('/api/stats')).json();
     els.pStats.textContent=`${s.total} shots`;
-    const mb=(s.bytes/1048576).toFixed(0);
-    els.gStats.textContent=`${s.today} today · ${s.archived}/${s.total} archived · ${mb} MB · ${s.cloud}`;
+    const mb=(s.bytes/1048576);
+    const size = mb >= 1024 ? (mb/1024).toFixed(1)+' GB' : Math.max(0, Math.round(mb))+' MB';
+    const where = s.cloud === 'local vault' ? 'private vault on this computer' : 'vault plus your off site backup';
+    els.gStats.textContent = s.total ? `${s.total} ${s.total===1?'item':'items'} · ${s.today} today · ${size}` : '';
+    const side = document.getElementById('sideStats');
+    if (side) side.textContent = s.total ? `${s.total} ${s.total===1?'photo':'photos'}, ${size}` : 'Nothing here yet';
+    if (side && side.nextElementSibling && s.total) side.nextElementSibling.lastChild.textContent = s.archived===s.total ? `Everything is saved in your ${where}.` : `${s.archived} of ${s.total} saved in your ${where}.`;
   }catch{}
 }
 function tickClock(){ const d=new Date(); els.pClock.textContent=d.toLocaleTimeString(undefined,{hour12:false}); }
@@ -572,10 +642,10 @@ function toast(msg, err=false){ els.toast.textContent=msg; els.toast.className='
 const sleep=ms=>new Promise(r=>setTimeout(r,ms));
 
 function captureGeo(){
-  if(!navigator.geolocation){ toast('No geolocation on this device',true); state.geoOn=false; els.btnGeo.classList.remove('on'); return; }
+  if(!navigator.geolocation){ toast('This device cannot share its location',true); state.geoOn=false; els.btnGeo.classList.remove('on'); return; }
   navigator.geolocation.getCurrentPosition(
-    pos=>{ state.geo={lat:pos.coords.latitude,lon:pos.coords.longitude}; toast('Location tagging on'); },
-    ()=>{ toast('Location denied',true); state.geoOn=false; els.btnGeo.classList.remove('on'); },
+    pos=>{ state.geo={lat:pos.coords.latitude,lon:pos.coords.longitude}; toast('New shots will carry their location'); },
+    ()=>{ toast('Location was not allowed',true); state.geoOn=false; els.btnGeo.classList.remove('on'); },
     {enableHighAccuracy:true,timeout:8000});
 }
 
@@ -622,7 +692,7 @@ function resetFx(){
   els.pZoom.value=1; els.pBright.value=1; els.pContrast.value=1; els.pSat.value=1; els.pWarmth.value=0; els.pVig.value=0;
   els.vBright.textContent='0'; els.vContrast.textContent='0'; els.vSat.textContent='0'; els.vWarmth.textContent='0'; els.vVig.textContent='0';
   if(!els.fxStrip.hidden) els.fxStrip.querySelectorAll('.fx-chip').forEach(ch=>ch.classList.toggle('active',ch.dataset.key==='none'));
-  applyFx(); toast('Controls reset');
+  applyFx(); toast('Back to normal');
 }
 function wireProControls(){
   els.pBright.addEventListener('input',()=>{ state.fx.brightness=+els.pBright.value; els.vBright.textContent=signed((els.pBright.value-1)*100); applyFx(); });
@@ -649,7 +719,7 @@ function turnWheel(dir=1){
   els.wheelKnurl.style.transform=`rotate(${wheelTurns*(360/WHEEL.length)}deg)`;
   els.wheelMode.textContent=m.label;
   m.apply();
-  toast('Mode · '+m.label);
+  toast('Mode: '+m.label);
 }
 
 function touchDist(e){ const a=e.touches[0],b=e.touches[1]; return Math.hypot(a.clientX-b.clientX,a.clientY-b.clientY); }
@@ -681,7 +751,7 @@ async function toggleLevel(){
     try{
       if(typeof DeviceOrientationEvent!=='undefined' && DeviceOrientationEvent.requestPermission){
         const p=await DeviceOrientationEvent.requestPermission();
-        if(p!=='granted'){ toast('Motion access denied',true); }
+        if(p!=='granted'){ toast('Motion sensors were not allowed',true); }
       }
     }catch{}
     if(!_levelBound){ window.addEventListener('deviceorientation',onTilt); _levelBound=true; }
@@ -696,7 +766,7 @@ function wire(){
   els.modes.forEach(b=>b.addEventListener('click',()=>setMode(b.dataset.mode)));
   if (!canRecord) els.modeSwitch.style.display='none';   // hide video mode on unsupported browsers
   els.btnGrant.addEventListener('click',startCamera);
-  els.btnSwitch.addEventListener('click',()=>{ if(state.recording){ toast('Stop recording to switch camera',true); return; } state.facing = state.facing==='environment'?'user':'environment'; startCamera(); });
+  els.btnSwitch.addEventListener('click',()=>{ if(state.recording){ toast('Stop recording to switch cameras',true); return; } state.facing = state.facing==='environment'?'user':'environment'; startCamera(); });
   els.btnUpload.addEventListener('click',()=>els.filePick.click());
   els.filePick.addEventListener('change',e=>{ if(e.target.files[0]) importFile(e.target.files[0]); e.target.value=''; });
 
@@ -711,15 +781,23 @@ function wire(){
   els.btnGeo.addEventListener('click',()=>{ state.geoOn=!state.geoOn; els.btnGeo.classList.toggle('on',state.geoOn); if(state.geoOn)captureGeo(); else state.geo=null; });
   els.btnFx.addEventListener('click',toggleFx);
   els.btnPro.addEventListener('click',togglePro);
-  els.modeWheel.addEventListener('click',()=>turnWheel(1));
-  els.modeWheel.addEventListener('wheel',e=>{ e.preventDefault(); turnWheel(e.deltaY>0?1:-1); },{passive:false});
+  // the Canon-style mode dial was already hidden (display:none) before this redesign and is no longer in the markup
+  if (els.modeWheel){
+    els.modeWheel.addEventListener('click',()=>turnWheel(1));
+    els.modeWheel.addEventListener('wheel',e=>{ e.preventDefault(); turnWheel(e.deltaY>0?1:-1); },{passive:false});
+  }
   wireProControls();
   wireZoomGestures();
 
-  els.btnReveal.addEventListener('click',async()=>{ await fetch('/api/reveal',{method:'POST'}); toast('Opened Camera Roll on the PC'); });
-  els.btnLogout.addEventListener('click',async()=>{ await fetch('/api/logout',{method:'POST'}); location.reload(); });
+  document.querySelectorAll('[data-action=reveal]').forEach(b=>b.addEventListener('click',async()=>{ await fetch('/api/reveal',{method:'POST'}); toast('Opened the Camera Roll folder on the PC'); }));
+  document.querySelectorAll('[data-action=logout]').forEach(b=>b.addEventListener('click',async()=>{ await fetch('/api/logout',{method:'POST'}); location.reload(); }));
 
-  els.tabs.forEach(t=>t.addEventListener('click',()=>{ els.tabs.forEach(x=>x.classList.remove('active')); t.classList.add('active'); state.tab=t.dataset.tab; renderGallery(); }));
+  els.tabs.forEach(t=>t.addEventListener('click',()=>setView(t.dataset.tab==='fav'?'fav':'library', true)));
+  // any [data-go] (tab bar, sidebar, empty state buttons) switches the view
+  document.addEventListener('click',e=>{
+    const g=e.target.closest('[data-go]'); if(g){ setView(g.dataset.go, true); return; }
+    if(e.target.closest('[data-empty-import]')) els.filePick.click();
+  });
 
   els.lbClose.addEventListener('click',closeLb);
   els.lbPrev.addEventListener('click',()=>lbStep(-1));
@@ -730,9 +808,19 @@ function wire(){
   document.addEventListener('keydown',e=>{
     if(els.lightbox.hidden)return;
     if(e.key==='Escape')closeLb(); if(e.key==='ArrowLeft')lbStep(-1); if(e.key==='ArrowRight')lbStep(1);
+    if(e.key==='Tab'){ // keep focus inside the lightbox
+      const f=[...els.lightbox.querySelectorAll('button,a[href],video[controls]')].filter(n=>n.offsetParent!==null);
+      if(!f.length) return; const a=f[0], z=f[f.length-1];
+      if(e.shiftKey && document.activeElement===a){ e.preventDefault(); z.focus(); }
+      else if(!e.shiftKey && document.activeElement===z){ e.preventDefault(); a.focus(); }
+    }
   });
   // shutter via spacebar on desktop
-  document.addEventListener('keydown',e=>{ if(e.code==='Space' && els.lightbox.hidden && document.activeElement.tagName!=='INPUT'){ e.preventDefault(); primaryAction(); } });
+  document.addEventListener('keydown',e=>{
+    if(e.code!=='Space' || !els.lightbox.hidden || document.body.dataset.view!=='camera') return;
+    const t=document.activeElement; if(t && (t.tagName==='INPUT' || t.tagName==='BUTTON' || t.getAttribute('role')==='button')) return;
+    e.preventDefault(); primaryAction();
+  });
 }
 
 // ---------------------------------------------------------------------------
@@ -740,7 +828,9 @@ function wire(){
   wire();
   boot();
   tickClock(); setInterval(tickClock,1000);
+  const first = VIEWS.includes(location.hash.slice(1)) ? location.hash.slice(1) : defaultView();
+  history.replaceState({ view: first }, '', '#' + first);
+  setView(first, false);
   await loadPhotos();
   refreshStats(); setInterval(refreshStats,15000);
-  startCamera();
 })();

@@ -2,166 +2,191 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,viewport-fit=cover">
-<meta name="theme-color" content="#040a14">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#161311">
 <link rel="manifest" href="/manifest.webmanifest">
+<link rel="icon" href="/assets/sona-ui/flame.svg" type="image/svg+xml">
 <link rel="apple-touch-icon" href="/icon.png">
 <title>Attic</title>
-<!-- Sona: fleet gate removed; unauthed loads redirect to the native /gate.html -->
-<link rel="stylesheet" href="/assets/sona.css">
-<link rel="stylesheet" href="/styles.css?v=8">
+<!-- Sona: unauthenticated loads redirect to the native /gate.html -->
+<link rel="stylesheet" href="/assets/sona-ui/tokens.css">
+<link rel="stylesheet" href="/assets/sona-ui/components.css">
+<link rel="stylesheet" href="/styles.css?v=10">
+<script src="/assets/sona-ui/theme.js"></script>
 </head>
-<body>
+<body data-view="camera">
+<a class="s-skip" href="#gallery">Skip to your photos</a>
 
-<!-- boot -->
-<div id="boot">
-  <div class="boot-ring"><i></i></div>
+<!-- opening splash -->
+<div id="boot" aria-hidden="true">
+  <img class="boot-mark" src="/assets/sona-ui/flame.svg" alt="" width="52" height="52">
+  <div class="boot-name s-wordmark">Attic</div>
   <div class="boot-log" id="bootlog"></div>
 </div>
 
-<!-- header removed — minimal floating controls only. pStats/pClock kept hidden so app.js keeps feeding them. -->
+<!-- hidden stat sinks app.js keeps feeding -->
 <div id="hiddenmeta" hidden><span id="pStats"></span><span id="pClock"></span></div>
-<div id="floatctl">
-  <button class="float-btn" id="btnReveal" title="Open Camera Roll folder on the PC">📂</button>
-  <button class="float-btn" id="btnLogout" title="Sign out">⏻</button>
+
+<div class="shell">
+  <!-- desktop sidebar -->
+  <aside class="s-sidebar side" aria-label="Attic">
+    <div class="s-sidebar__brand"><img src="/assets/sona-ui/flame.svg" alt="" width="26" height="26"><span class="s-wordmark">Attic</span></div>
+    <nav class="side-nav" aria-label="Sections">
+      <button class="s-navlink" data-go="camera"><svg class="s-i" aria-hidden="true"><use href="/assets/sona-ui/icons.svg#camera"/></svg>Camera</button>
+      <button class="s-navlink" data-go="library"><svg class="s-i" aria-hidden="true"><use href="/assets/sona-ui/icons.svg#images"/></svg>Library</button>
+      <button class="s-navlink" data-go="fav"><svg class="s-i" aria-hidden="true"><use href="/assets/sona-ui/icons.svg#star"/></svg>Favorites</button>
+    </nav>
+    <div class="s-sidebar__spacer"></div>
+    <div class="side-vault">
+      <p class="s-eyebrow">Your vault</p>
+      <p class="side-stats" id="sideStats">Counting your photos</p>
+      <p class="side-note"><svg class="s-i s-i--sm" aria-hidden="true"><use href="/assets/sona-ui/icons.svg#lock"/></svg>Everything stays in a plain folder on this computer.</p>
+    </div>
+    <button class="s-navlink" data-action="reveal"><svg class="s-i" aria-hidden="true"><use href="/assets/sona-ui/icons.svg#folder"/></svg>Open the folder on this PC</button>
+    <button class="s-navlink" data-action="logout"><svg class="s-i" aria-hidden="true"><use href="/assets/sona-ui/icons.svg#lock"/></svg>Lock Attic</button>
+    <div class="side-scheme s-seg" role="group" aria-label="Light or dark">
+      <button class="s-seg__btn" data-scheme-set="auto" aria-label="Automatic theme" title="Automatic"><svg class="s-i" aria-hidden="true"><use href="/assets/sona-ui/icons.svg#auto"/></svg></button>
+      <button class="s-seg__btn" data-scheme-set="light" aria-label="Light theme" title="Light"><svg class="s-i" aria-hidden="true"><use href="/assets/sona-ui/icons.svg#sun"/></svg></button>
+      <button class="s-seg__btn" data-scheme-set="dark" aria-label="Dark theme" title="Dark"><svg class="s-i" aria-hidden="true"><use href="/assets/sona-ui/icons.svg#moon"/></svg></button>
+    </div>
+  </aside>
+
+  <main id="app">
+
+    <!-- ====== CAMERA ====== -->
+    <section class="view view-camera stage-card" aria-label="Camera">
+      <div class="viewport" id="viewport">
+        <video id="video" autoplay playsinline muted></video>
+        <canvas id="canvas" hidden></canvas>
+
+        <div class="grid-overlay" id="gridOverlay"></div>
+        <div class="flash" id="flash"></div>
+        <div class="vp-badge" id="vpBadge" role="status">Camera off</div>
+        <div class="rec-badge" id="recBadge" hidden><span class="rec-dot"></span><span id="recTime">0:00</span></div>
+        <div class="countdown" id="countdown" hidden></div>
+        <div class="vignette" id="vignette"></div>
+        <div class="zoom-pill" id="zoomPill" hidden>1.0×</div>
+
+        <div class="level" id="level" hidden>
+          <span class="level-line ref"></span>
+          <span class="level-line live" id="levelLive"></span>
+          <span class="level-deg" id="levelDeg">0°</span>
+        </div>
+
+        <div class="lens-chips" id="lensChips"></div>
+
+        <div class="vp-tools" role="toolbar" aria-label="Camera tools" aria-orientation="vertical">
+          <button class="vt s-iconbtn s-iconbtn--glass" id="btnGrid" aria-label="Grid" title="Grid"><svg class="s-i" aria-hidden="true"><use href="/assets/sona-ui/icons.svg#grid"/></svg></button>
+          <button class="vt s-iconbtn s-iconbtn--glass" id="btnLevel" aria-label="Level" title="Horizon level"><svg class="s-i" aria-hidden="true"><use href="/assets/sona-ui/icons.svg#level"/></svg></button>
+          <button class="vt s-iconbtn s-iconbtn--glass" id="btnMirror" aria-label="Mirror" title="Mirror the preview"><svg class="s-i" aria-hidden="true"><use href="/assets/sona-ui/icons.svg#mirror"/></svg></button>
+          <button class="vt s-iconbtn s-iconbtn--glass" id="btnTimer" aria-label="Self timer" title="Self timer"><svg class="s-i" aria-hidden="true"><use href="/assets/sona-ui/icons.svg#timer"/></svg><span class="vt-lbl" id="timerLbl">0s</span></button>
+          <button class="vt s-iconbtn s-iconbtn--glass" id="btnTorch" aria-label="Torch" title="Torch" hidden><svg class="s-i" aria-hidden="true"><use href="/assets/sona-ui/icons.svg#flash"/></svg></button>
+          <button class="vt s-iconbtn s-iconbtn--glass" id="btnGeo" aria-label="Tag location" title="Tag location" data-on="0"><svg class="s-i" aria-hidden="true"><use href="/assets/sona-ui/icons.svg#pin"/></svg></button>
+          <button class="vt s-iconbtn s-iconbtn--glass" id="btnFx" aria-label="Filters" title="Filters"><svg class="s-i" aria-hidden="true"><use href="/assets/sona-ui/icons.svg#sparkle"/></svg></button>
+          <button class="vt s-iconbtn s-iconbtn--glass" id="btnPro" aria-label="Pro controls" title="Pro controls"><svg class="s-i" aria-hidden="true"><use href="/assets/sona-ui/icons.svg#sliders"/></svg></button>
+        </div>
+
+        <div class="fx-strip" id="fxStrip" hidden></div>
+
+        <div class="vp-fallback" id="vpFallback" hidden>
+          <div class="s-empty__icon"><svg class="s-i" aria-hidden="true"><use href="/assets/sona-ui/icons.svg#camera"/></svg></div>
+          <p id="fallbackMsg">Allow the camera to start shooting.</p>
+          <button class="s-btn s-btn--primary" id="btnGrant">Turn on the camera</button>
+        </div>
+      </div>
+
+      <div class="cam-top">
+        <span class="s-wordmark cam-name">Attic</span>
+        <button class="s-iconbtn s-iconbtn--glass" data-go="library" aria-label="Open the library" title="Library"><svg class="s-i" aria-hidden="true"><use href="/assets/sona-ui/icons.svg#images"/></svg></button>
+      </div>
+
+      <div class="pro-panel" id="proPanel" hidden>
+        <div class="pro-grid">
+          <label class="pro-row"><span>Zoom</span><input type="range" id="pZoom" min="1" max="5" step="0.1" value="1"><span class="pv" id="vZoom">1.0×</span></label>
+          <label class="pro-row"><span>Exposure</span><input type="range" id="pBright" min="0.5" max="1.6" step="0.01" value="1"><span class="pv" id="vBright">0</span></label>
+          <label class="pro-row"><span>Contrast</span><input type="range" id="pContrast" min="0.6" max="1.6" step="0.01" value="1"><span class="pv" id="vContrast">0</span></label>
+          <label class="pro-row"><span>Saturation</span><input type="range" id="pSat" min="0" max="2" step="0.01" value="1"><span class="pv" id="vSat">0</span></label>
+          <label class="pro-row"><span>White balance</span><input type="range" id="pWarmth" min="-1" max="1" step="0.02" value="0"><span class="pv" id="vWarmth">0</span></label>
+          <label class="pro-row"><span>Vignette</span><input type="range" id="pVig" min="0" max="1" step="0.02" value="0"><span class="pv" id="vVig">0</span></label>
+        </div>
+        <button class="s-btn s-btn--ghost s-btn--sm pro-reset" id="pReset">Reset all</button>
+      </div>
+
+      <div class="pipeline" id="pipeline" role="status" aria-live="polite">
+        <div class="step" data-step="capture"><span class="dotn">1</span><label>Capture</label></div>
+        <div class="bar"></div>
+        <div class="step" data-step="upload"><span class="dotn">2</span><label>Upload</label></div>
+        <div class="bar"></div>
+        <div class="step" data-step="save"><span class="dotn">3</span><label>Saved</label></div>
+        <div class="bar"></div>
+        <div class="step" data-step="archive"><span class="dotn">4</span><label>Vault</label></div>
+      </div>
+
+      <div class="mode-switch" id="modeSwitch" role="group" aria-label="Capture mode">
+        <button class="mode active" data-mode="photo" aria-pressed="true">Photo</button>
+        <button class="mode" data-mode="video" aria-pressed="false">Video</button>
+      </div>
+
+      <div class="shutter-row">
+        <button class="round-btn s-iconbtn s-iconbtn--glass" id="btnUpload" aria-label="Import from this device" title="Import from this device"><svg class="s-i" aria-hidden="true"><use href="/assets/sona-ui/icons.svg#import"/></svg></button>
+        <button class="shutter" id="btnShutter" aria-label="Take photo"><span></span></button>
+        <button class="round-btn s-iconbtn s-iconbtn--glass" id="btnSwitch" aria-label="Switch camera" title="Switch camera"><svg class="s-i" aria-hidden="true"><use href="/assets/sona-ui/icons.svg#refresh"/></svg></button>
+        <input type="file" id="filePick" accept="image/*" hidden>
+      </div>
+    </section>
+
+    <!-- ====== LIBRARY ====== -->
+    <section class="view view-library gallery-card" aria-labelledby="libTitle">
+      <header class="lib-head">
+        <div class="lib-title-row">
+          <h1 class="lib-title" id="libTitle">Library</h1>
+          <div class="lib-actions">
+            <button class="s-iconbtn" data-action="reveal" aria-label="Open the folder on this PC" title="Open the folder on this PC"><svg class="s-i" aria-hidden="true"><use href="/assets/sona-ui/icons.svg#folder"/></svg></button>
+            <button class="s-iconbtn" data-scheme-cycle aria-label="Theme"><svg class="s-i" aria-hidden="true"><use href="/assets/sona-ui/icons.svg#auto"/></svg></button>
+            <button class="s-iconbtn" data-action="logout" aria-label="Lock Attic" title="Lock Attic"><svg class="s-i" aria-hidden="true"><use href="/assets/sona-ui/icons.svg#lock"/></svg></button>
+          </div>
+        </div>
+        <div class="lib-sub">
+          <div class="tabs s-seg" role="group" aria-label="Show">
+            <button class="tab s-seg__btn active" data-tab="all" aria-pressed="true">All</button>
+            <button class="tab s-seg__btn" data-tab="fav" aria-pressed="false"><svg class="s-i" aria-hidden="true"><use href="/assets/sona-ui/icons.svg#star"/></svg>Favorites</button>
+          </div>
+          <div class="gstats" id="gStats"></div>
+        </div>
+      </header>
+      <div id="gallery" class="gallery" tabindex="-1" aria-busy="true"></div>
+      <div class="empty" id="galleryEmpty" hidden></div>
+    </section>
+
+  </main>
+
+  <!-- phone tab bar -->
+  <nav class="s-tabbar s-tabbar--mobile tabbar" aria-label="Sections">
+    <button class="s-tabbar__item" data-go="camera"><svg class="s-i" aria-hidden="true"><use href="/assets/sona-ui/icons.svg#camera"/></svg>Camera</button>
+    <button class="s-tabbar__item" data-go="library"><svg class="s-i" aria-hidden="true"><use href="/assets/sona-ui/icons.svg#images"/></svg>Library</button>
+    <button class="s-tabbar__item" data-go="fav"><svg class="s-i" aria-hidden="true"><use href="/assets/sona-ui/icons.svg#star"/></svg>Favorites</button>
+  </nav>
 </div>
 
-<main id="app">
-
-  <!-- ====== CAMERA ====== -->
-  <section class="card stage-card">
-
-    <!-- camera top plate: brushed metal + Canon-style mode wheel -->
-    <div class="cam-top">
-      <div class="cam-plate">
-        <span class="cam-mark">ATTIC</span>
-        <span class="cam-series">EOS · N1</span>
-      </div>
-      <button class="mode-wheel" id="modeWheel" title="Mode dial — tap to turn">
-        <span class="wheel-knurl"></span>
-        <span class="wheel-face"><span class="wheel-mode" id="wheelMode">AUTO</span></span>
-        <span class="wheel-index"></span>
-      </button>
-    </div>
-
-    <div class="viewport" id="viewport">
-      <video id="video" autoplay playsinline muted></video>
-      <canvas id="canvas" hidden></canvas>
-
-      <!-- overlays -->
-      <div class="grid-overlay" id="gridOverlay"></div>
-      <div class="flash" id="flash"></div>
-      <div class="vp-badge" id="vpBadge">CAM OFFLINE</div>
-      <div class="rec-badge" id="recBadge" hidden><span class="rec-dot"></span><span id="recTime">0:00</span></div>
-      <div class="countdown" id="countdown" hidden></div>
-
-      <!-- effect overlays -->
-      <div class="vignette" id="vignette"></div>
-      <div class="zoom-pill" id="zoomPill" hidden>1.0×</div>
-
-      <!-- Pixel-style horizon level (tap ▦ grid area to toggle via btnLevel) -->
-      <div class="level" id="level" hidden>
-        <span class="level-line ref"></span>
-        <span class="level-line live" id="levelLive"></span>
-        <span class="level-deg" id="levelDeg">0°</span>
-      </div>
-
-      <!-- Pixel-style lens chips (populated from device zoom caps) -->
-      <div class="lens-chips" id="lensChips"></div>
-
-      <!-- top toolstrip -->
-      <div class="vp-tools">
-        <button class="vt" id="btnGrid"   title="Rule-of-thirds grid">▦</button>
-        <button class="vt" id="btnLevel"  title="Horizon level">⊿</button>
-        <button class="vt" id="btnMirror" title="Mirror preview">⇄</button>
-        <button class="vt" id="btnTimer"  title="Self-timer"><span id="timerLbl">0s</span></button>
-        <button class="vt" id="btnTorch"  title="Torch" hidden>🔦</button>
-        <button class="vt" id="btnGeo"    title="Tag location" data-on="0">📍</button>
-        <button class="vt" id="btnFx"     title="Filters">✦</button>
-        <button class="vt" id="btnPro"    title="Pro controls">⚙</button>
-      </div>
-
-      <!-- Instagram-style filter strip -->
-      <div class="fx-strip" id="fxStrip" hidden></div>
-
-      <!-- no-camera fallback -->
-      <div class="vp-fallback" id="vpFallback" hidden>
-        <div class="big">📷</div>
-        <p id="fallbackMsg">Grant camera access to start shooting.</p>
-        <button class="btn-primary" id="btnGrant">Enable camera</button>
-      </div>
-    </div>
-
-    <!-- PRO controls -->
-    <div class="pro-panel" id="proPanel" hidden>
-      <div class="pro-grid">
-        <div class="pro-row"><label>Zoom</label><input type="range" id="pZoom" min="1" max="5" step="0.1" value="1"><span class="pv" id="vZoom">1.0×</span></div>
-        <div class="pro-row"><label>Exposure</label><input type="range" id="pBright" min="0.5" max="1.6" step="0.01" value="1"><span class="pv" id="vBright">0</span></div>
-        <div class="pro-row"><label>Contrast</label><input type="range" id="pContrast" min="0.6" max="1.6" step="0.01" value="1"><span class="pv" id="vContrast">0</span></div>
-        <div class="pro-row"><label>Saturation</label><input type="range" id="pSat" min="0" max="2" step="0.01" value="1"><span class="pv" id="vSat">0</span></div>
-        <div class="pro-row"><label>White Bal.</label><input type="range" id="pWarmth" min="-1" max="1" step="0.02" value="0"><span class="pv" id="vWarmth">0</span></div>
-        <div class="pro-row"><label>Vignette</label><input type="range" id="pVig" min="0" max="1" step="0.02" value="0"><span class="pv" id="vVig">0</span></div>
-      </div>
-      <button class="pro-reset" id="pReset">Reset all</button>
-    </div>
-
-    <!-- capture mode -->
-    <div class="mode-switch" id="modeSwitch">
-      <button class="mode active" data-mode="photo">◉ Photo</button>
-      <button class="mode" data-mode="video">▷ Video</button>
-    </div>
-
-    <!-- shutter row -->
-    <div class="shutter-row">
-      <button class="round-btn" id="btnUpload" title="Import a photo or video from this device">⤓</button>
-      <button class="shutter" id="btnShutter" aria-label="Take photo"><span></span></button>
-      <button class="round-btn" id="btnSwitch" title="Switch camera">⟲</button>
-      <input type="file" id="filePick" accept="image/*" hidden>
-    </div>
-
-    <!-- pipeline tracker -->
-    <div class="pipeline" id="pipeline">
-      <div class="step" data-step="capture"><span class="dotn">1</span><label>Capture</label></div>
-      <div class="bar"></div>
-      <div class="step" data-step="upload"><span class="dotn">2</span><label>Upload</label></div>
-      <div class="bar"></div>
-      <div class="step" data-step="save"><span class="dotn">3</span><label>PC&nbsp;Save</label></div>
-      <div class="bar"></div>
-      <div class="step" data-step="archive"><span class="dotn">4</span><label>Cloud&nbsp;Archive</label></div>
-    </div>
-  </section>
-
-  <!-- ====== GALLERY ====== -->
-  <section class="card gallery-card">
-    <div class="gallery-head">
-      <div class="tabs">
-        <button class="tab active" data-tab="all">All</button>
-        <button class="tab" data-tab="fav">★ Favorites</button>
-      </div>
-      <div class="gstats" id="gStats"></div>
-    </div>
-    <div id="gallery" class="gallery"></div>
-    <div class="empty" id="galleryEmpty" hidden>No shots yet — hit the shutter.</div>
-  </section>
-
-</main>
-
 <!-- ====== LIGHTBOX ====== -->
-<div class="lightbox" id="lightbox" hidden>
-  <button class="lb-close" id="lbClose">✕</button>
-  <button class="lb-nav lb-prev" id="lbPrev">‹</button>
-  <button class="lb-nav lb-next" id="lbNext">›</button>
+<div class="lightbox" id="lightbox" role="dialog" aria-modal="true" aria-label="Photo" hidden>
+  <div class="lb-top">
+    <button class="s-iconbtn lb-close" id="lbClose" aria-label="Close"><svg class="s-i" aria-hidden="true"><use href="/assets/sona-ui/icons.svg#close"/></svg></button>
+    <div class="lb-meta" id="lbMeta"></div>
+  </div>
+  <button class="s-iconbtn lb-nav lb-prev" id="lbPrev" aria-label="Previous"><svg class="s-i" aria-hidden="true"><use href="/assets/sona-ui/icons.svg#back"/></svg></button>
+  <button class="s-iconbtn lb-nav lb-next" id="lbNext" aria-label="Next"><svg class="s-i" aria-hidden="true"><use href="/assets/sona-ui/icons.svg#chevron-right"/></svg></button>
   <div class="lb-stage"><img id="lbImg" alt=""><video id="lbVid" controls playsinline hidden></video></div>
-  <div class="lb-meta" id="lbMeta"></div>
   <div class="lb-actions">
-    <button class="lb-act" id="lbFav">★ Favorite</button>
-    <a class="lb-act" id="lbDownload" download>⤓ Download</a>
-    <button class="lb-act danger" id="lbDelete">🗑 Delete</button>
+    <button class="lb-act" id="lbFav"><svg class="s-i" aria-hidden="true"><use href="/assets/sona-ui/icons.svg#star"/></svg><span>Favorite</span></button>
+    <a class="lb-act" id="lbDownload" download><svg class="s-i" aria-hidden="true"><use href="/assets/sona-ui/icons.svg#download"/></svg><span>Download</span></a>
+    <button class="lb-act danger" id="lbDelete"><svg class="s-i" aria-hidden="true"><use href="/assets/sona-ui/icons.svg#trash"/></svg><span>Delete</span></button>
   </div>
 </div>
 
-<div class="toast" id="toast"></div>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
 
-<script src="/app.js?v=9-sso"></script>
+<script src="/assets/sona-ui/ui.js"></script>
+<script src="/app.js?v=10"></script>
 </body>
 </html>
