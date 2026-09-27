@@ -5,16 +5,16 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
 <title>Reel</title>
 <style>
-  :root { --c1: 0,229,255; --c3: 150,90,255; }
+  :root { --c1: 231,169,76; --c3: 243,206,134; }
   * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-  html, body { margin: 0; height: 100%; overflow: hidden; background: #000; font-family: system-ui, sans-serif; }
+  html, body { margin: 0; height: 100%; overflow: hidden; background: #000; font-family: 'Jost', system-ui, sans-serif; }
   #screen { position: fixed; inset: 0; overflow: hidden; background: #000; touch-action: none; }
   #screen canvas { transform-origin: 0 0; }
   #kbinput { position: fixed; left: -9999px; top: 0; opacity: 0; width: 1px; height: 1px; }
 
   #status {
     position: fixed; top: 10px; left: 50%; transform: translateX(-50%);
-    background: rgba(8,12,22,0.85); color: #9fe9ff; border: 1px solid rgba(var(--c1),0.4);
+    background: rgba(22,19,17,0.85); color: #F4EEE6; border: 1px solid rgba(var(--c1),0.4);
     padding: 7px 16px; border-radius: 20px; font-size: 12.5px; letter-spacing: .5px;
     z-index: 30; pointer-events: none; transition: opacity .4s; backdrop-filter: blur(6px);
   }
@@ -24,14 +24,14 @@
     position: fixed; bottom: 0; left: 0; right: 0; z-index: 40;
     display: flex; gap: 7px; padding: 9px 10px calc(9px + env(safe-area-inset-bottom));
     justify-content: center; flex-wrap: wrap;
-    background: linear-gradient(0deg, rgba(5,8,16,0.92), rgba(5,8,16,0.0));
+    background: linear-gradient(0deg, rgba(15,12,10,0.92), rgba(15,12,10,0.0));
     transition: transform .3s ease, opacity .3s ease;
   }
   #bar.tucked { transform: translateY(78%); opacity: .25; }
   .btn {
     appearance: none; cursor: pointer; border-radius: 11px;
     font-size: 13px; font-weight: 600; letter-spacing: .4px; padding: 11px 14px;
-    color: #d6f3ff; background: rgba(14,22,38,0.92);
+    color: #F4EEE6; background: rgba(36,31,27,0.92);
     border: 1px solid rgba(var(--c1),0.28);
     transition: background .15s, transform .1s, border-color .15s, color .15s;
     user-select: none; white-space: nowrap;
@@ -39,7 +39,7 @@
   .btn:active { transform: scale(0.94); }
   .btn.mon.active {
     background: linear-gradient(95deg, rgba(var(--c1),0.95), rgba(var(--c3),0.95));
-    color: #04121a; border-color: transparent;
+    color: #1A130B; border-color: transparent;
   }
   .btn.warn { border-color: rgba(255,90,150,0.4); color: #ffb8d6; }
   .btn.lockon { background: linear-gradient(95deg, rgba(255,184,64,0.95), rgba(255,96,150,0.92)); color: #1a0d00; border-color: transparent; }
