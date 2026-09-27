@@ -2,11 +2,11 @@
 // Sona UI sync: copies design/sona-ui into each app's public/assets/sona-ui/
 // so every app stays standalone-deployable (no shared path at runtime).
 //
-//   node design/sync.mjs           copy into kin, reel, attic
+//   node design/sync.mjs           copy into kin, reel, attic, forge, flicker
 //   node design/sync.mjs --check   exit 1 if any app copy has drifted (for CI)
 //   node design/sync.mjs --serve   serve the showcase on http://127.0.0.1:4173
 //
-// Only the three apps listed below are touched. Other folders in apps/ are left alone.
+// Only the apps listed below are touched. Other folders in apps/ are left alone.
 import fs from 'node:fs';
 import path from 'node:path';
 import http from 'node:http';
@@ -14,7 +14,7 @@ import { fileURLToPath } from 'node:url';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const SRC = path.join(HERE, 'sona-ui');
-const APPS = ['kin', 'reel', 'attic'];
+const APPS = ['kin', 'reel', 'attic', 'forge', 'flicker'];
 const SKIP = new Set(['index.html', 'README.md']); // showcase + docs stay in design/
 const dest = app => path.join(HERE, '..', 'apps', app, 'public', 'assets', 'sona-ui');
 

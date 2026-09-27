@@ -413,6 +413,21 @@
   .s-gate__foot { margin-top: var(--sp-5); }
 }
 
+/* passphrase variant (Forge, Flicker): same lock screen, a text passcode instead of the keypad.
+   <form class="s-gate__form"><label class="s-visually-hidden" for="p">Passcode</label>
+     <div class="s-pass"><input class="s-input" id="p" type="password"><button type="button" class="s-iconbtn s-pass__eye">…</button></div>
+     <button class="s-btn s-btn--primary s-btn--lg s-btn--block">Unlock</button></form> */
+.s-gate__form { width: min(100%, 320px); display: grid; gap: var(--sp-3); margin-top: var(--sp-8); }
+.s-gate__form + .s-gate__msg, .s-gate__form ~ .s-gate__msg { margin-top: var(--sp-3); }
+.s-gate__note { max-width: 320px; margin: var(--sp-5) 0 0; font-size: var(--fs-sm); line-height: var(--lh-relaxed); color: var(--text-2); }
+.s-pass { position: relative; display: flex; align-items: center; }
+.s-pass .s-input { min-height: 52px; padding-right: 56px; border-radius: var(--r-md); letter-spacing: 0.06em;
+  background: color-mix(in srgb, var(--surface-1) 78%, transparent); -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); }
+.s-pass .s-input::placeholder { letter-spacing: 0.02em; }
+.s-pass__eye { position: absolute; right: 4px; }
+.s-gate.is-shake .s-gate__form { animation: s-shake 420ms var(--ease-out); }
+.s-gate.is-shake .s-pass .s-input { border-color: var(--danger); }
+
 /* showcase / embedding: the gate inside a frame instead of the whole screen */
 .s-gate--inline { position: relative; inset: auto; z-index: auto; min-height: 720px; border-radius: var(--r-xl); border: 1px solid var(--border); }
 
