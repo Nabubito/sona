@@ -1852,7 +1852,10 @@ async function pollScanLive(){
   const box = $('scanLive');
   if (!box || !$('settingsModal').classList.contains('show')) return;
   let p; try { p = await api('/api/scan-status'); } catch { p = { phase: 'idle' }; }
-  if (!p || p.phase === 'idle' || p.phase === 'done') {
+  if (p && p.phase === 'error') {
+    box.innerHTML = `<div class="sl-idle"></div>`;
+    box.firstChild.textContent = 'The last scan stopped before it started: ' + (p.error || 'check indexer.log') + ' Fix the folders above, then save and rescan.';
+  } else if (!p || p.phase === 'idle' || p.phase === 'done') {
     box.innerHTML = `<div class="sl-idle">The library is up to date. Change a folder, then save and rescan to refresh it.</div>`;
   } else {
     const pct = p.total ? Math.round(p.scanned / p.total * 100) : 0;

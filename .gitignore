@@ -41,7 +41,11 @@ desktop.ini
 config.json
 scan-progress.json
 
-# Reel generated album art (runtime)
-
-# Reel runtime album art (generated)
+# Generated private media: thumbnails, caches and temp audio made from your files
+apps/attic/thumbs/
+thumbs/
 apps/reel/art/
+apps/reel/tmp-voice/
+apps/reel/transcode-cache/
+apps/kin/uploads/
+apps/kin/data/

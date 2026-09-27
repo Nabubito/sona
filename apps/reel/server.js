@@ -309,7 +309,7 @@ app.use(express.static(PUBLIC_DIR));
 // ---------- stats ----------
 app.get('/api/stats', (req, res) => {
   let scanning = null;
-  try { const p = JSON.parse(fs.readFileSync(PROGRESS_PATH, 'utf8')); if (p.phase !== 'done') scanning = p; } catch { }
+  try { const p = JSON.parse(fs.readFileSync(PROGRESS_PATH, 'utf8')); if (p.phase !== 'done' && p.phase !== 'error') scanning = p; } catch { }
   const t = db.prepare('SELECT COUNT(*) n, COALESCE(SUM(size),0) s FROM tracks').get();
   const scannedAt = db.prepare(`SELECT v FROM meta WHERE k='scannedAt'`).get();
   res.json({

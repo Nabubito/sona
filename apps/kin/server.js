@@ -29,7 +29,7 @@ function loadConfig() {
   for (const p of [CONFIG_PATH, path.join(APP, 'config.example.json')]) {
     try { return JSON.parse(fs.readFileSync(p, 'utf8')); } catch { }
   }
-  return { users: {}, iceServers: [{ urls: 'stun:stun.l.google.com:19302' }], turn: {} };
+  return { users: {}, iceServers: [], turn: {} };
 }
 let CONFIG = loadConfig();
 
@@ -39,8 +39,12 @@ function userById(id) {
   for (const pc of Object.keys(CONFIG.users)) if (CONFIG.users[pc].id === id) return CONFIG.users[pc];
   return null;
 }
+// No third-party STUN by default: on the same wifi or a mesh VPN, WebRTC connects
+// with host candidates alone. Add your own STUN/TURN (for example coturn) in config.json.
+const validUrls = u => (typeof u === 'string' && u.trim() !== '') || (Array.isArray(u) && u.length > 0 && u.every(x => typeof x === 'string' && x.trim() !== ''));
 function iceConfig() {
-  const list = Array.isArray(CONFIG.iceServers) ? CONFIG.iceServers.slice() : [];
+  const list = (Array.isArray(CONFIG.iceServers) ? CONFIG.iceServers : [])
+    .filter(s => s && typeof s === 'object' && validUrls(s.urls));
   const t = CONFIG.turn;
   if (t && t.urls) list.push({ urls: t.urls, username: t.username, credential: t.credential });
   return list;
@@ -318,11 +322,16 @@ app.get(['/', '/index.html'], (_req, res) => {
     .replace(/\/style\.css(\?v=[^"']*)?/g, `/style.css?v=${assetVer('style.css')}`)
     .replace(/\/emoji\.js(\?v=[^"']*)?/g,  `/emoji.js?v=${assetVer('emoji.js')}`)
     .replace(/\/app\.js(\?v=[^"']*)?/g,    `/app.js?v=${assetVer('app.js')}`);
-  // Expose the sw version so app.js can register /sw.js?v=… and pick up SW changes.
-  html = html.replace('</head>', `<script>window.__SWV='${assetVer('sw.js')}'</script></head>`);
   res.setHeader('Cache-Control', 'no-store, must-revalidate');
   res.setHeader('Content-Type', 'text/html; charset=utf-8');
   res.send(html);
+});
+// The sw version reaches app.js through a same-origin script (an inline one would be
+// blocked by our own CSP), so app.js can register /sw.js?v=... and pick up SW changes.
+app.get('/sw-version.js', (_req, res) => {
+  res.setHeader('Cache-Control', 'no-store, must-revalidate');
+  res.setHeader('Content-Type', 'application/javascript; charset=utf-8');
+  res.send(`window.__SWV=${JSON.stringify(assetVer('sw.js'))};\n`);
 });
 // The service worker script must also never be pinned stale by the edge.
 app.get('/sw.js', (_req, res) => {

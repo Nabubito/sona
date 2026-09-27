@@ -22,7 +22,7 @@ Edit `config.json` (copied from `config.example.json`):
 
 | Key | What it does |
 |---|---|
-| `roots` | Array of folders to scan for music. |
+| `roots` | Folders to scan for music, each as `{ "name": "Music", "path": "/home/you/Music" }`. A wrong shape stops the scan with a clear error instead of indexing nothing. |
 | `videoShows` | Optional: `[{ "id", "name", "path" }]` folders of video files. |
 | `adminPin` | Second factor for library/admin actions. **Change it.** |
 | `members` | Extra profiles (each with their own `code` and play history). |

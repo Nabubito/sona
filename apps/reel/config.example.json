@@ -1,8 +1,8 @@
 {
-  "_comment": "Reel config. Copy this file to config.json and edit it. 'roots' are the folders Reel scans for music; 'videoShows' are optional video folders. Set your own PINs — never leave them at the shipped defaults.",
+  "_comment": "Reel config. Copy this file to config.json and edit it. 'roots' are the folders Reel scans for music, each as { name, path }; 'videoShows' are optional video folders. Set your own PINs. Do not leave them at the shipped defaults.",
   "roots": [
-    "C:\\path\\to\\your\\Music",
-    "/home/you/Music"
+    { "name": "Music", "path": "/home/you/Music" },
+    { "name": "Windows Music", "path": "C:\\path\\to\\your\\Music" }
   ],
   "videoShows": [
     { "id": "movies", "name": "Movies", "path": "/path/to/your/Movies" }

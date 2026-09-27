@@ -24,10 +24,24 @@ Open **http://localhost:3095**, enter a passcode, and you're in. It runs out of 
 |---|---|
 | `users` | Map of `passcode → { id, name, avatar }`. Each person gets their own private passcode — that's the whole guest list. |
 | `owner` | The `id` with owner rights (e.g. clearing history). |
-| `iceServers` | STUN servers for WebRTC (public Google STUN by default). |
+| `iceServers` | Your own STUN servers for WebRTC. Empty by default, so calls never contact a third party. |
 | `turn` | Optional TURN relay — only needed if a call won't connect when you're *not* on the same network or mesh. |
 
 Environment: `PORT` (default `3095`), `SONA_PUSH_CONTACT` (contact string for web-push VAPID), `SONA_HOSTS` (extra allowed origins for the WebSocket upgrade, comma-separated — add your Tailscale hostname here).
+
+## Calls without anyone in the middle
+
+Kin ships with no STUN servers at all. Many guides point WebRTC at a public STUN server (often Google's), which means your phone reports its address to that company on every call. Kin does not.
+
+- **Same wifi or a mesh VPN (Tailscale, WireGuard):** calls connect directly with nothing extra. This is the recommended setup.
+- **Across the open internet without a mesh:** run your own STUN/TURN, for example [coturn](https://github.com/coturn/coturn) on the same box, and list it in `config.json`:
+
+```json
+"iceServers": [{ "urls": "stun:YOUR-SERVER:3478" }],
+"turn": { "urls": "turn:YOUR-SERVER:3478", "username": "kin", "credential": "choose-a-long-secret" }
+```
+
+`YOUR-SERVER` is the name or address your phones use to reach this box. Adding a public STUN server works too, but that server then sees who is calling from where.
 
 ## Reaching it from your phone
 

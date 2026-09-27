@@ -1,14 +1,12 @@
 {
-  "_comment": "Kin config (Sona). Set a private passcode for each person. Change names/avatars freely. TURN is optional — only needed if a call fails to connect when you are NOT both on the mesh/same-wifi. The installer wizard writes this file; the values below are placeholders.",
+  "_comment": "Kin config (Sona). Set a private passcode for each person. Change names/avatars freely. TURN is optional, only needed if a call fails to connect when you are NOT both on the mesh/same-wifi. The installer wizard writes this file; the values below are placeholders.",
   "owner": "me",
   "users": {
     "1234": { "id": "me", "name": "You", "avatar": "Y" },
     "5678": { "id": "kin", "name": "Loved one", "avatar": "♥" }
   },
-  "iceServers": [
-    { "urls": "stun:stun.l.google.com:19302" },
-    { "urls": "stun:stun1.l.google.com:19302" }
-  ],
+  "_iceNote": "Empty on purpose: no third-party STUN, so a call never contacts an outside server. Calls on the same wifi or over a mesh VPN (Tailscale, WireGuard) connect without it. If you run your own STUN/TURN (for example coturn), list it here, e.g. { \"urls\": \"stun:YOUR-SERVER:3478\" }.",
+  "iceServers": [],
   "turn": {
     "_note": "Fill url/username/credential only if a call fails to connect over the open internet. Not needed on tailnet or same wifi.",
     "urls": "",

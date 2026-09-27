@@ -12,6 +12,39 @@ const { open, migrate, sortName, ART_DIR, APP } = require('./db');
 
 const CONFIG = JSON.parse(fs.readFileSync(path.join(APP, 'config.json'), 'utf8'));
 const PROGRESS_PATH = path.join(APP, 'scan-progress.json');
+
+// "roots" must be [{ "name": "Music", "path": "/folder/with/music" }, ...].
+// A wrong shape used to index nothing without a word, and because the scan
+// prunes every track it did not see, it would also empty the library. So a bad
+// shape stops the scan before the database is touched, with a message that
+// says exactly what to fix.
+function checkRoots(roots) {
+  const problems = [];
+  if (!Array.isArray(roots) || roots.length === 0) {
+    problems.push('"roots" must be a non-empty array of { "name", "path" } objects.');
+  } else {
+    roots.forEach((r, i) => {
+      if (typeof r === 'string') problems.push(`roots[${i}] is a plain string (${JSON.stringify(r)}). Write it as { "name": "Music", "path": ${JSON.stringify(r)} }.`);
+      else if (!r || typeof r !== 'object' || Array.isArray(r)) problems.push(`roots[${i}] must be an object like { "name": "Music", "path": "/folder/with/music" }.`);
+      else {
+        if (typeof r.path !== 'string' || !r.path.trim()) problems.push(`roots[${i}] has no "path" (the folder to scan).`);
+        if (typeof r.name !== 'string' || !r.name.trim()) problems.push(`roots[${i}] has no "name" (a short label, like "Music").`);
+      }
+    });
+  }
+  return problems;
+}
+const rootProblems = checkRoots(CONFIG.roots);
+if (rootProblems.length) {
+  console.error('Reel indexer: config.json "roots" has the wrong shape, so nothing was scanned and your library was left as it is.');
+  for (const p of rootProblems) console.error('  - ' + p);
+  console.error('  Example: "roots": [{ "name": "Music", "path": "/home/you/Music" }]');
+  try { fs.writeFileSync(PROGRESS_PATH, JSON.stringify({ phase: 'error', error: 'config.json roots: ' + rootProblems.join(' '), finished: Date.now() })); } catch { }
+  process.exit(1);
+}
+for (const r of CONFIG.roots) {
+  if (!fs.existsSync(r.path)) console.warn(`Reel indexer: root "${r.name}" points at ${r.path}, which does not exist right now. Tracks from it will be dropped from the library on this scan.`);
+}
 const AUDIO_EXTS = new Set(['.mp3', '.flac', '.wav', '.ogg', '.m4a', '.aac', '.opus', '.wma']);
 const IMG_EXTS = ['.jpg', '.jpeg', '.png', '.webp', '.gif', '.bmp'];
 // preferred sidecar cover filenames, best first (matched on the filename stem, any image ext)

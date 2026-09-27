@@ -6,7 +6,7 @@ const esc = s => (s == null ? '' : String(s).replace(/[&<>"']/g, m => ({ '&':'&a
 
 const S = {
   token: sessionStorage.getItem('kin_token') || '',   // sessionStorage ⇒ cold start after app exit
-  me: null, roster: [], ice: [{ urls: 'stun:stun.l.google.com:19302' }],
+  me: null, roster: [], ice: [],
   ws: null, online: [], replyTo: null, editing: null,
   oldestId: null, typingTimer: null, peerTyping: false,
 };
@@ -53,7 +53,7 @@ async function submitPin({ code, ok, fail }) {
     const r = await fetch('/api/login', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ passcode: code }) });
     const j = await r.json().catch(() => ({}));
     if (!r.ok) return fail(r.status === 429 ? 'Too many tries. Take a breath and try again a little later.' : r.status === 401 ? 'That is not the key.' : (j.error || 'Could not sign in.'));
-    S.token = j.token; S.me = j.user; S.roster = j.roster; S.ice = j.ice || S.ice;
+    S.token = j.token; S.me = j.user; S.roster = j.roster; S.ice = Array.isArray(j.ice) ? j.ice : S.ice;
     sessionStorage.setItem('kin_token', S.token);
     ok(enterApp);
   } catch { fail('Could not reach home. Check your connection.'); }
@@ -66,7 +66,7 @@ async function boot() {
     const r = await fetch('/api/session', { headers: { 'X-Kin-Token': S.token } });
     if (!r.ok) throw 0;
     const j = await r.json();
-    S.me = j.user; S.roster = j.roster; S.ice = j.ice || S.ice;
+    S.me = j.user; S.roster = j.roster; S.ice = Array.isArray(j.ice) ? j.ice : S.ice;
     enterApp();
   } catch { sessionStorage.removeItem('kin_token'); S.token = ''; }
 }
