@@ -36,21 +36,29 @@ Three today. Each one is a small, pure-JavaScript Node server — no database en
 
 ## A look inside
 
-One design language across the whole kit — warm charcoal and ember gold, the fire
-at the center of a home. Every app opens behind its own passcode: your house, your key.
+One design language across the whole kit: warm charcoal and ember gold, the fire
+at the center of a home. Every app opens behind the same lock screen: your house, your key.
+Each app follows your device into a warm light theme too, or you can pick one yourself.
 
 | Reel | Attic | Kin |
 |:---:|:---:|:---:|
-| ![Reel lock screen](docs/img/reel-gate.png) | ![Attic lock screen](docs/img/attic-gate.png) | ![Kin lock screen](docs/img/kin-gate.png) |
-| your media | your photos | your people |
+| ![Reel lock screen](docs/img/2027/after-reel-gate-390.webp) | ![Attic lock screen](docs/img/2027/after-attic-gate-390.webp) | ![Kin lock screen](docs/img/2027/after-kin-gate-390.webp) |
+| your music and film | your photos | your people |
 
-**Reel — your library, streaming from your own files:**
+**Reel: your library, streaming from your own files.**
 
-![Reel library](docs/img/reel-app.png)
+![Reel playing an album](docs/img/2027/after-reel-album-1440-playing.webp)
 
-**Kin — private messages and calls, device to device:**
+**Attic: a photo vault that lives in a plain folder on your computer.**
 
-![Kin chat](docs/img/kin-app.png)
+![Attic library](docs/img/2027/after-attic-library-1440.webp)
+
+**Kin: private messages and calls, device to device.**
+
+![Kin chat](docs/img/2027/after-kin-main-1440.webp)
+
+The shared design system lives in [`design/sona-ui`](design/sona-ui): tokens, components,
+icons and the lock screen, with a live showcase (`node design/sync.mjs --serve`).
 
 ## Quick start
 
