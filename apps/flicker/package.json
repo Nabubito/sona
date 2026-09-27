@@ -1,0 +1,15 @@
+{
+  "name": "sona-flicker",
+  "version": "1.0.0",
+  "description": "Flicker: a self-hosted video effects studio for your own files. Cut, GIF, reframe, burned in words and text that follows what moves. Part of Sona.",
+  "license": "AGPL-3.0-only",
+  "private": true,
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "test": "node test/run.js"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

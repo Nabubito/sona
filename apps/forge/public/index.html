@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#161311">
+<title>Forge · Sona</title>
+<link rel="icon" href="/icon.png">
+<link rel="stylesheet" href="/assets/sona.css">
+<link rel="stylesheet" href="/public/styles.css">
+<link rel="stylesheet" href="/public/editor.css">
+</head>
+<body data-theme="dark">
+<div id="app">
+  <aside class="rail">
+    <div class="brand" title="Forge by Sona">
+      <svg viewBox="0 0 48 48" aria-hidden="true"><defs>
+        <linearGradient id="brandG" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stop-color="#F3CE86"/><stop offset=".5" stop-color="#E7A94C"/><stop offset="1" stop-color="#E1712B"/>
+        </linearGradient></defs>
+        <path fill="url(#brandG)" d="M24 3c1 7-3 11-7 15-2 2-4 5-4 9a11 11 0 0 0 22 0c0-5-3-8-6-12-1 3-3 4-5 5 2-6-1-12 0-17Z"/>
+        <path fill="#161311" opacity=".22" d="M24 20c1 3-1 6-3 8-1 1-2 3-2 5a5 5 0 0 0 10 0c0-3-2-5-4-7 0 2-1 3-2 4 1-3 0-7 1-10Z"/>
+      </svg>
+    </div>
+    <button class="nav" data-view="home" title="Home">◆<span>Home</span></button>
+    <button class="nav" data-view="discs" title="Discs">⊙<span>Discs</span></button>
+    <button class="nav" data-view="media" title="Media">▷<span>Media</span></button>
+    <button class="nav" data-view="edit" title="Video Editor">✂<span>Editor</span></button>
+    <button class="nav" data-view="archives" title="Archives">▤<span>Archives</span></button>
+    <div class="spacer"></div>
+    <button class="nav" data-view="jobs" title="Jobs">⚙<span>Jobs</span><b id="jobBadge"></b></button>
+    <button class="nav theme" id="themeBtn" title="Theme">☾</button>
+    <button class="nav" id="lockBtn" title="Lock"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg><span>Lock</span></button>
+  </aside>
+
+  <main class="stage">
+    <header class="topbar">
+      <input id="search" placeholder="Search tools or type &quot;mp4 to gif&quot;   (Ctrl+K)">
+      <button class="engines" id="engines" title="Engines: click for details"></button>
+    </header>
+    <nav class="toolbar" id="toolbar"><!-- rendered per-tab by renderToolbar() --></nav>
+    <section id="view" class="view"></section>
+    <footer class="statusbar-g" id="statusG"><span id="stMsg">Ready</span><span id="stRight"><b>Sona</b> · files never leave the box</span></footer>
+  </main>
+
+  <div id="drophint" class="drophint"><div>Drop a file. Forge reads it and shows what it can do.</div></div>
+  <div id="jobsTray" class="jobsTray"><h3>Jobs</h3><div id="jobsList"></div></div>
+  <div id="modal" class="modal hidden"><div class="modalBox" id="modalBox"></div></div>
+</div>
+<script src="/public/ctxmenu.js"></script>
+<script src="/public/app.js"></script>
+<script src="/public/editor.js"></script>
+</body>
+</html>

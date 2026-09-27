@@ -1,0 +1,122 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"/>
+<meta name="theme-color" content="#161311"/>
+<title>Forge · Sona</title>
+<link rel="icon" href="/icon.png"/>
+<link rel="stylesheet" href="/assets/sona.css"/>
+<style>
+  .pass-form{margin:26px auto 0; max-width:290px; display:flex; flex-direction:column; gap:12px}
+  .pass-row{position:relative}
+  .pass-row input{width:100%; box-sizing:border-box; padding:14px 48px 14px 16px;
+    font:400 1.05rem var(--sans); letter-spacing:.08em; color:var(--warm-white);
+    background:linear-gradient(180deg,rgba(46,40,35,.5),rgba(28,24,21,.4));
+    border:1px solid var(--hair); border-radius:14px; outline:none; transition:border-color .15s, box-shadow .15s}
+  .pass-row input:focus{border-color:rgba(231,169,76,.55); box-shadow:0 0 20px rgba(231,169,76,.14)}
+  .pass-row input::placeholder{color:rgba(169,155,137,.55); letter-spacing:.04em}
+  .eye{position:absolute; right:8px; top:50%; transform:translateY(-50%); width:34px; height:34px;
+    border:0; background:transparent; color:var(--stone); cursor:pointer; border-radius:10px; display:grid; place-items:center}
+  .eye:hover{color:var(--ember)}
+  .eye svg{width:20px; height:20px}
+  .unlock{padding:13px; border:1px solid rgba(231,169,76,.5); border-radius:14px; cursor:pointer;
+    font:500 .72rem var(--sans); letter-spacing:.28em; text-transform:uppercase; color:var(--charcoal);
+    background:var(--ember-grad); box-shadow:0 8px 26px -10px rgba(231,169,76,.7); transition:transform .12s, filter .15s}
+  .unlock:hover{filter:brightness(1.06)}
+  .unlock:active{transform:scale(.98)}
+  .unlock:disabled{opacity:.5; cursor:default}
+  .setup-note{margin:18px auto 0; max-width:300px; font-size:.78rem; line-height:1.55; color:var(--stone)}
+  [hidden]{display:none !important}
+</style>
+</head>
+<body class="sona-gate">
+<div class="vignette"></div><div class="grain"></div>
+<main class="gate-panel">
+  <div class="ember-mark">
+    <svg viewBox="0 0 48 48" aria-hidden="true"><defs>
+      <linearGradient id="au" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0" stop-color="#F3CE86"/><stop offset=".5" stop-color="#E7A94C"/><stop offset="1" stop-color="#E1712B"/>
+      </linearGradient></defs>
+      <path fill="url(#au)" d="M24 3c1 7-3 11-7 15-2 2-4 5-4 9a11 11 0 0 0 22 0c0-5-3-8-6-12-1 3-3 4-5 5 2-6-1-12 0-17Z"/>
+      <path fill="#161311" opacity=".22" d="M24 20c1 3-1 6-3 8-1 1-2 3-2 5a5 5 0 0 0 10 0c0-3-2-5-4-7 0 2-1 3-2 4 1-3 0-7 1-10Z"/>
+    </svg>
+  </div>
+  <h1 class="app-name">Forge</h1>
+  <p class="app-tag">Your workshop</p>
+
+  <p class="setup-note" id="setupNote" hidden>First run. Choose the passcode that will unlock Forge from now on. Letters and numbers both work.</p>
+  <p class="setup-note" id="remoteNote" hidden>Forge has no passcode yet. Open it on the machine it runs on to choose one.</p>
+
+  <form class="pass-form" id="f" autocomplete="off">
+    <div class="pass-row">
+      <input id="p1" type="password" placeholder="Passcode" autocomplete="current-password" autofocus/>
+      <button type="button" class="eye" data-for="p1" aria-label="Show passcode" title="Show passcode"></button>
+    </div>
+    <div class="pass-row" id="row2" hidden>
+      <input id="p2" type="password" placeholder="Same passcode again" autocomplete="new-password"/>
+      <button type="button" class="eye" data-for="p2" aria-label="Show passcode" title="Show passcode"></button>
+    </div>
+    <button class="unlock" id="go" type="submit">Unlock</button>
+  </form>
+  <p class="gate-err" id="e"></p>
+</main>
+<div class="gate-foot"><b>Sona</b> · under your roof</div>
+<script>
+  const $ = id => document.getElementById(id);
+  const EYE_OPEN = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/></svg>';
+  const EYE_SHUT = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3l18 18"/><path d="M10.6 5.1A10.8 10.8 0 0 1 12 5c6.4 0 10 7 10 7a17 17 0 0 1-3.2 4.1M6.6 6.6A17.4 17.4 0 0 0 2 12s3.6 7 10 7a10 10 0 0 0 5.4-1.6"/><path d="M9.9 9.9a3 3 0 0 0 4.2 4.2"/></svg>';
+  document.querySelectorAll('.eye').forEach(b => {
+    b.innerHTML = EYE_OPEN;
+    b.onclick = () => {
+      const i = $(b.dataset.for), show = i.type === 'password';
+      i.type = show ? 'text' : 'password';
+      b.innerHTML = show ? EYE_SHUT : EYE_OPEN;
+      b.setAttribute('aria-label', show ? 'Hide passcode' : 'Show passcode');
+      i.focus();
+    };
+  });
+
+  let setup = false, minLen = 4;
+  const err = (m, ok) => { $('e').style.color = ok ? 'var(--sage)' : ''; $('e').textContent = m; };
+
+  fetch('/api/auth/status').then(r => r.json()).then(s => {
+    if (s.authed) { location.href = '/'; return; }
+    minLen = s.minLength || 4;
+    if (s.mode === 'setup') {
+      if (s.canSetup) {
+        setup = true;
+        $('setupNote').hidden = false; $('row2').hidden = false;
+        $('p1').placeholder = 'New passcode'; $('p1').autocomplete = 'new-password';
+        $('go').textContent = 'Set passcode';
+      } else {
+        $('remoteNote').hidden = false; $('f').hidden = true;
+      }
+    }
+  }).catch(() => err('Cannot reach Forge.'));
+
+  $('f').addEventListener('submit', async ev => {
+    ev.preventDefault();
+    const v = $('p1').value;
+    if (!v) return err('Enter your passcode.');
+    if (setup) {
+      if (v.length < minLen) return err('Use at least ' + minLen + ' characters.');
+      if (v !== $('p2').value) return err('The two entries do not match.');
+    }
+    $('go').disabled = true; err('');
+    try {
+      const r = await fetch(setup ? '/api/auth/setup' : '/api/auth', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ passcode: v })
+      });
+      if (r.ok) { err('Welcome home.', true); location.href = '/'; return; }
+      const j = await r.json().catch(() => ({}));
+      if (r.status === 429) err('Locked. Too many tries, wait a few minutes.');
+      else if (setup) err(j.error || 'Could not save the passcode.');
+      else err('That is not the key.');
+    } catch { err('Network error.'); }
+    $('go').disabled = false;
+    $('p1').select();
+  });
+</script>
+</body>
+</html>

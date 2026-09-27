@@ -1,0 +1,24 @@
+/* Flicker's lock screen: the shared Sona gate (sona.css) with a text passcode field instead of a keypad,
+   so letters and numbers both work. */
+.gate-panel{box-sizing:border-box}   /* keep the panel inside a phone screen: its padding must not add to its width */
+.pass-form{display:flex; flex-direction:column; gap:12px; margin:28px auto 0; max-width:300px; text-align:left}
+.pass-label{font-size:.64rem; letter-spacing:.3em; text-transform:uppercase; color:var(--stone)}
+.pass-wrap{position:relative}
+.pass-wrap input{
+  width:100%; box-sizing:border-box; height:52px; padding:0 52px 0 16px;
+  font:500 1.05rem/1 var(--sans); letter-spacing:.08em; color:var(--warm-white);
+  background:rgba(22,19,17,.7); border:1px solid var(--hair); border-radius:14px; outline:none;
+  transition:border-color .15s ease, box-shadow .15s ease}
+.pass-wrap input:focus{border-color:rgba(231,169,76,.6); box-shadow:0 0 0 3px rgba(231,169,76,.16)}
+.pass-eye{position:absolute; right:6px; top:6px; width:40px; height:40px; display:grid; place-items:center;
+  border:0; border-radius:10px; background:transparent; color:var(--stone); cursor:pointer}
+.pass-eye svg{width:22px; height:22px; fill:none; stroke:currentColor; stroke-width:1.6}
+.pass-eye[aria-pressed="true"]{color:var(--ember)}
+.pass-eye:focus-visible{outline:2px solid var(--ember); outline-offset:1px}
+.pass-go{height:52px; border:0; border-radius:14px; cursor:pointer;
+  font:500 .78rem/1 var(--sans); letter-spacing:.28em; text-transform:uppercase; color:#1b1410;
+  background:var(--ember-grad); box-shadow:0 10px 30px rgba(225,113,43,.25)}
+.pass-go:disabled{opacity:.6; cursor:default}
+.pass-go:focus-visible{outline:2px solid var(--firelight); outline-offset:2px}
+.gate-err.ok{color:var(--sage)}
+@media (prefers-reduced-motion: reduce){ .sona-gate .vignette, .ember-mark, .gate-panel{animation:none} }

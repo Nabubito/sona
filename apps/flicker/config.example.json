@@ -1,0 +1,63 @@
+{
+  "_comment": "Copy this file to config.json and change what you need. Every key is optional; missing ones use the defaults shown here.",
+
+  "port": 4480,
+  "host": "127.0.0.1",
+  "_host_note": "127.0.0.1 = this machine only. Use 0.0.0.0 to reach Flicker from your phone over your own private network (a WireGuard or Tailscale style mesh). Do not expose it to the open internet without TLS in front.",
+  "passcode": "",
+  "_passcode_note": "At least 8 characters; letters and numbers both work. Shorter ones are refused. Empty = Flicker makes one up on first run, prints it, and saves it in the data folder. FLICKER_PASS overrides this.",
+  "trustProxy": false,
+
+  "dataDir": "",
+  "workDir": "",
+  "_dirs_note": "Defaults: ./data and ./data/work. Uploads and renders live in the work folder and are cleared on their own.",
+
+  "ffmpeg": "",
+  "ffmpegThreads": 0,
+  "lowPriority": true,
+
+  "limits": {
+    "maxUploadMB": 4096,
+    "maxSourceMinutes": 240,
+    "maxClipSeconds": 600,
+    "maxGifSeconds": 20,
+    "maxFollowSeconds": 60,
+    "maxListenSeconds": 180,
+    "openSources": 20,
+    "concurrentRenders": 2,
+    "queueMax": 20,
+    "sourceHours": 6,
+    "fileMinutes": 60,
+    "workCapGB": 40,
+    "minFreeGB": 2
+  },
+
+  "linkImport": {
+    "enabled": false,
+    "_note": "OFF by default. When you turn this on you are responsible for what you download: only bring in what you have the right to use. Every fetch goes through a built in guard that refuses private and local addresses. No cookies are ever used and nothing signs in anywhere.",
+    "ytdlp": "",
+    "refuseHosts": []
+  },
+
+  "listen": {
+    "python": "",
+    "model": "small",
+    "threads": 4
+  },
+
+  "lyrics": { "enabled": true },
+
+  "songId": {
+    "acoustidKey": "",
+    "ffmpeg": ""
+  },
+
+  "tracker": {
+    "python": "",
+    "checkpoints": "",
+    "model": "base_plus",
+    "gpuGuard": true,
+    "worker": "",
+    "_worker_note": "Optional. A custom tracker script that speaks the same JSON lines protocol as py/track.py (see the top of that file), run with tracker.python. Empty = the bundled SAM 2.1 worker."
+  }
+}
