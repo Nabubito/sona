@@ -23,13 +23,13 @@ sprite on `file://`, so use the tiny server above.)
 | File | What it is |
 |---|---|
 | `tokens.css` | Fonts, color (dark default + warm light), fluid type scale, spacing, radius, elevation, motion, layout sizes. |
-| `components.css` | Everything visual, all classes prefixed `s-`: buttons, inputs, cards, sheets, drawers, tabs, segmented controls, toasts, lists, media tiles, chips, badges, avatars, menus, empty states, skeletons, app bar, sidebar, tab bar, and the lock screen. |
+| `components.css` | Everything visual, all classes prefixed `s-`: buttons, inputs, cards, sheets, drawers, tabs, segmented controls, toasts, lists, media tiles, chips, badges, avatars, menus, empty states, a stepper, skeletons, app bar, sidebar, tab bar, and the lock screen. |
 | `icons.svg` | One SVG sprite. 24px grid, 1.75 stroke, `currentColor`. |
 | `theme.js` | Auto, light or dark. Load it in `<head>` (not deferred) so there is no flash. |
 | `gate.js` | Lock screen behavior shared by every app. |
 | `ui.js` | Small helpers: `Sona.icon()`, `Sona.toast()`, `Sona.open()` and `Sona.close()` for sheets, `Sona.skeleton()`. |
 | `flame.svg` | The mark, also used as the favicon. |
-| `fonts/` | Self-hosted Jost and Cormorant Garamond (variable weight woff2). |
+| `fonts/` | Self-hosted Jost and Cormorant Garamond (variable weight woff2), with their SIL Open Font License in `OFL.txt`. |
 
 ## Privacy rule
 
@@ -133,6 +133,13 @@ skeleton shimmer holds still.
 <button class="s-list__item"><span class="s-list__media"></span><span class="s-list__main"><span class="s-list__title">Song</span><span class="s-list__sub">Artist</span></span></button>
 <div class="s-empty"><div class="s-empty__icon">…</div><h2 class="s-empty__title">Nothing yet</h2><p class="s-empty__text">What to do next.</p></div>
 <div class="s-skel s-skel--tile"></div>   <!-- or Sona.skeleton('rows', 6) -->
+
+<!-- stepper: a numbered flow; done steps stay clickable, todo steps are disabled -->
+<ol class="s-stepper" aria-label="Steps">
+  <li class="s-stepper__step" data-state="done"><button type="button" class="s-stepper__btn"><span class="s-stepper__num">1</span><span class="s-stepper__label">Clip</span></button></li>
+  <li class="s-stepper__step" data-state="current"><button type="button" class="s-stepper__btn" aria-current="step"><span class="s-stepper__num">2</span><span class="s-stepper__label">Mark</span></button></li>
+  <li class="s-stepper__step" data-state="todo"><button type="button" class="s-stepper__btn" disabled><span class="s-stepper__num">3</span><span class="s-stepper__label">Track</span></button></li>
+</ol>
 
 <!-- navigation -->
 <header class="s-appbar">…</header>

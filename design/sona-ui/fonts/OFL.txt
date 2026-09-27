@@ -1,10 +1,12 @@
 The fonts in this folder are licensed under the SIL Open Font License, Version 1.1.
 
-Cormorant Garamond (files co3bmX5slCNuHLi8bLeY9MK7whWMhyjY*.woff2)
+Cormorant Garamond (files cormorant-*.woff2)
 Copyright 2015 The Cormorant Project Authors (github.com/CatharsisFonts/Cormorant)
 
-Jost (files 92zatBhPNqw73o*.woff2)
+Jost (files jost-*.woff2)
 Copyright 2020 The Jost Project Authors (https://github.com/indestructible-type/Jost)
+
+They are used unmodified (variable weight woff2, split by script).
 
 This Font Software is licensed under the SIL Open Font License, Version 1.1.
 This license is copied below, and is also available with a FAQ at:

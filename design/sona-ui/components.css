@@ -334,6 +334,32 @@
   background: var(--accent-soft); color: var(--accent-text); font-size: var(--fs-2xs); font-weight: var(--fw-medium); }
 @keyframes s-rise { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
 
+/* ---------- 14b. stepper ---------- */
+/* A numbered flow you move through (Flicker's text follow). Each step is a button, so steps
+   already reached can be revisited; steps not reached yet are disabled.
+   <ol class="s-stepper" aria-label="Steps">
+     <li class="s-stepper__step" data-state="done|current|todo">
+       <button type="button" class="s-stepper__btn" aria-current="step">
+         <span class="s-stepper__num">1</span><span class="s-stepper__label">Clip</span></button></li> … </ol> */
+.s-stepper { list-style: none; margin: 0; padding: 0; display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); }
+.s-stepper__step { position: relative; min-width: 0; }
+.s-stepper__step + .s-stepper__step::before { content: ""; position: absolute; top: 21px; left: calc(-50% + 22px); right: calc(50% + 22px); height: 2px; border-radius: 2px;
+  background: var(--border-strong); transition: background var(--dur-base) var(--ease-out); }
+.s-stepper__step[data-state="done"] + .s-stepper__step::before { background: var(--accent); }
+.s-stepper__btn { position: relative; z-index: 1; display: flex; flex-direction: column; align-items: center; gap: 6px; width: 100%; min-height: var(--tap); padding: 4px 2px;
+  border: 0; border-radius: var(--r-sm); background: none; color: var(--text-3); font-size: var(--fs-xs); font-weight: var(--fw-medium); line-height: 1.2; cursor: pointer;
+  -webkit-tap-highlight-color: transparent; }
+.s-stepper__btn:disabled { cursor: default; }
+.s-stepper__num { display: grid; place-items: center; width: 34px; height: 34px; border-radius: 50%; border: 1.5px solid var(--border-strong); background: var(--surface-1);
+  font-variant-numeric: lining-nums tabular-nums; font-size: var(--fs-sm);
+  transition: background var(--dur-base) var(--ease-out), color var(--dur-base) var(--ease-out), border-color var(--dur-base) var(--ease-out), box-shadow var(--dur-base) var(--ease-out), transform var(--dur-base) var(--ease-spring); }
+.s-stepper__label { max-width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.s-stepper__step[data-state="done"] .s-stepper__btn { color: var(--text-2); }
+.s-stepper__step[data-state="done"] .s-stepper__num { background: var(--accent-soft); border-color: transparent; color: var(--accent-text); }
+.s-stepper__step[data-state="done"] .s-stepper__btn:hover .s-stepper__num { border-color: var(--border-accent); }
+.s-stepper__step[data-state="current"] .s-stepper__btn { color: var(--text); }
+.s-stepper__step[data-state="current"] .s-stepper__num { background: var(--accent); border-color: transparent; color: var(--accent-ink); box-shadow: 0 0 0 4px var(--accent-soft); transform: scale(1.06); }
+
 /* ---------- 15. skeleton loaders ---------- */
 .s-skel { position: relative; overflow: hidden; background: var(--skeleton); border-radius: var(--r-sm); }
 .s-skel::after { content: ""; position: absolute; inset: 0; transform: translateX(-100%);
