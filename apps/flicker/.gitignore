@@ -1,0 +1,12 @@
+# Flicker runtime: never part of the repo
+node_modules/
+data/
+tmp/
+work/
+config.json
+__pycache__/
+*.pyc
+*.log
+logs/
+.DS_Store
+Thumbs.db

@@ -24,13 +24,15 @@ Point these apps at your own files, on your own machine, and reach them from you
 
 ## The apps
 
-Three today. Each one is a small, pure-JavaScript Node server — no database engine to install, no native build step, no Docker required.
+Five today. Each one is a small, pure-JavaScript Node server — no database engine to install, no native build step, no Docker required.
 
 | App | Replaces | What it is |
 |---|---|---|
 | 🎞️ **Reel** | Netflix / Spotify | Your own media, streamed from your own files. Point it at a folder; it sorts everything and plays to any screen you own. No ads, no rent, no one logging what you watch. |
 | 📷 **Attic** | iCloud Photos / Google Photos | A photo & video vault that never leaves your house. Shoot from any device's browser; every frame lands on your PC and tucks into a private, local vault. |
 | 📞 **Kin** | WhatsApp / FaceTime | Private calls with the people you love, peer-to-peer. Your voice goes straight to them, device to device — no company sitting in the middle. |
+| 🔨 **Forge** | Online converters / PowerISO / WinRAR | A local workshop for your files. Turn a video into a GIF, shrink or trim a clip, cut a movie on a timeline, open or build a zip or 7z, browse and extract disc images (mount and build them on Windows). Nothing is uploaded anywhere. |
+| ✨ **Flicker** | CapCut / online video editors | A self-hosted video FX studio: cut, GIF, reframe, captions, text that follows what moves. Link import is opt-in. |
 
 > Coming later: **Ember** — your gaming PC, streamed to any browser (the "Stadia, but it's your rig" piece). It's Windows/NVIDIA-only and admin-install, so it ships as an optional add-on rather than part of the core kit.
 
@@ -58,18 +60,20 @@ You need **[Node.js 22.5+](https://nodejs.org)** (24 LTS recommended — the app
 
 ```bash
 git clone https://github.com/Nabubito/sona.git
-cd sona/apps/reel      # or attic, or kin
+cd sona/apps/reel      # or attic, kin, forge, flicker
 npm install
 npm start
 ```
 
-Then open the app in your browser (default ports: **Reel 3010 · Attic 3060 · Kin 3095**), set your passcode on first run, and point it at your folders. Each app is independent — run one, run all three, they don't collide.
+Then open the app in your browser (default ports: **Reel 3010 · Attic 3060 · Kin 3095 · Forge 4470 · Flicker 4480**), set your passcode on first run, and point it at your folders. Each app is independent — run one, run them all, they don't collide.
 
 Per-app setup lives in each app's own README:
 
 - [`apps/reel`](apps/reel) — your media library
 - [`apps/attic`](apps/attic) — your photo vault
 - [`apps/kin`](apps/kin) — your private calls
+- [`apps/forge`](apps/forge): your file workshop (media, archives, disc images)
+- [`apps/flicker`](apps/flicker): your video FX studio
 
 ## How it stays private
 

@@ -1,0 +1,12 @@
+{
+  "name": "Flicker",
+  "short_name": "Flicker",
+  "description": "Your video effects studio, at home. Part of Sona.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#161311",
+  "theme_color": "#161311",
+  "icons": [
+    { "src": "/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }
+  ]
+}

@@ -1,0 +1,13 @@
+# Runtime data: uploads, projects, your passcode hash, outputs
+data/
+out/
+node_modules/
+
+# Local config and logs
+config.json
+*.log
+*.bak
+
+# Electron build outputs
+dist/
+release/
