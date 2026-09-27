@@ -13,9 +13,11 @@ const S = {
 const peer = () => S.roster.find(u => u.id !== S.me?.id) || { id: '?', name: 'Contact', avatar: '·' };
 
 function toast(msg, ms = 2400) {
-  const t = $('#toast'); t.textContent = msg; t.classList.remove('hidden');
-  clearTimeout(t._t); t._t = setTimeout(() => t.classList.add('hidden'), ms);
+  const t = $('#toast'); t.textContent = msg; t.classList.add('is-shown');
+  clearTimeout(t._t); t._t = setTimeout(hideToast, ms);
 }
+function hideToast() { $('#toast').classList.remove('is-shown'); }
+const ICON = n => `<svg class="s-i" aria-hidden="true"><use href="/assets/sona-ui/icons.svg#${n}"/></svg>`;
 const nameOf = id => (S.roster.find(u => u.id === id) || {}).name || id;
 
 // ════════════ THEME ════════════
@@ -24,9 +26,13 @@ function applyTheme(t) {
   if (!THEMES.includes(t)) t = 'sona';
   document.documentElement.setAttribute('data-theme', t);
   localStorage.setItem('kin_theme', t);
-  document.querySelector('meta[name=theme-color]')?.setAttribute('content',
-    getComputedStyle(document.documentElement).getPropertyValue('--head1').trim() || '#14233f');
-  document.querySelectorAll('.sw').forEach(s => s.classList.toggle('active', s.dataset.t === t));
+  // the Sona palette follows light/dark (theme.js paints theme-color); fixed palettes paint their own
+  const meta = document.querySelector('meta[name=theme-color]');
+  if (meta) {
+    if (t === 'sona') { meta.removeAttribute('data-fixed'); window.SonaScheme && SonaScheme.set(SonaScheme.get()); }
+    else { meta.setAttribute('data-fixed', ''); meta.setAttribute('content', getComputedStyle(document.documentElement).getPropertyValue('--head1').trim() || '#161311'); }
+  }
+  document.querySelectorAll('.sw').forEach(s => { s.classList.toggle('active', s.dataset.t === t); s.setAttribute('aria-pressed', String(s.dataset.t === t)); });
 }
 // One-time migration to the Sona look: adopt it once for everyone,
 // then respect any theme the user picks afterward.
@@ -36,46 +42,21 @@ if (localStorage.getItem('kin_theme_v') !== '3') {
 }
 applyTheme(localStorage.getItem('kin_theme') || 'sona');
 document.addEventListener('DOMContentLoaded', () => {
-  $('#btnTheme') && ($('#btnTheme').onclick = e => { e.stopPropagation(); $('#themePop').classList.toggle('hidden'); });
-  document.querySelectorAll('.sw').forEach(s => s.onclick = () => { applyTheme(s.dataset.t); $('#themePop').classList.add('hidden'); });
-  document.addEventListener('click', () => $('#themePop')?.classList.add('hidden'));
+  document.querySelectorAll('.sw').forEach(s => s.onclick = () => applyTheme(s.dataset.t));
+  applyTheme(localStorage.getItem('kin_theme') || 'sona');
 });
 
 // ════════════ PASSCODE GATE ════════════
-let pin = '';
-function renderPin() {
-  document.querySelectorAll('#pinDots i').forEach((d, i) => d.classList.toggle('on', i < pin.length));
-}
-$('#keypad').addEventListener('click', e => {
-  const b = e.target.closest('button'); if (!b) return;
-  const k = b.dataset.k;
-  if (k === 'back') pin = pin.slice(0, -1);
-  else if (k === 'clear') pin = '';
-  else if (pin.length < 4) pin += k;
-  renderPin();
-  $('#pinError').textContent = '';
-  if (pin.length === 4) submitPin();
-});
-document.addEventListener('keydown', e => {
-  if (!$('#gate').classList.contains('hidden')) {
-    if (/^[0-9]$/.test(e.key) && pin.length < 4) { pin += e.key; renderPin(); if (pin.length === 4) submitPin(); }
-    else if (e.key === 'Backspace') { pin = pin.slice(0, -1); renderPin(); }
-  }
-});
-async function submitPin() {
-  const code = pin; pin = '';
+$('#gate').addEventListener('sona:pin', e => submitPin(e.detail));
+async function submitPin({ code, ok, fail }) {
   try {
     const r = await fetch('/api/login', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ passcode: code }) });
-    const j = await r.json();
-    if (!r.ok) throw new Error(j.error || 'Login failed');
+    const j = await r.json().catch(() => ({}));
+    if (!r.ok) return fail(r.status === 429 ? 'Too many tries. Take a breath and try again a little later.' : r.status === 401 ? 'That is not the key.' : (j.error || 'Could not sign in.'));
     S.token = j.token; S.me = j.user; S.roster = j.roster; S.ice = j.ice || S.ice;
     sessionStorage.setItem('kin_token', S.token);
-    enterApp();
-  } catch (err) {
-    $('#pinError').textContent = err.message;
-    $('#pinDots').classList.add('shake');
-    setTimeout(() => { $('#pinDots').classList.remove('shake'); renderPin(); }, 420);
-  }
+    ok(enterApp);
+  } catch { fail('Could not reach home. Check your connection.'); }
 }
 
 // ════════════ SESSION BOOTSTRAP ════════════
@@ -94,8 +75,9 @@ function enterApp() {
   $('#gate').classList.add('hidden');
   $('#app').classList.remove('hidden');
   const p = peer();
-  $('#peerName').textContent = p.name;
-  $('#peerAvatar').textContent = p.avatar;
+  document.querySelectorAll('[data-peer-name]').forEach(n => n.textContent = p.name);
+  document.querySelectorAll('[data-peer-avatar]').forEach(n => n.textContent = p.avatar);
+  document.title = p.name + ' · Kin';
   buildEmoji();
   toggleSendMic();
   buildSettings();
@@ -107,17 +89,19 @@ function buildSettings() {
   $('#tpWhoami').innerHTML = 'Signed in as <b>' + esc(S.me.name) + '</b>';
   const box = $('#tpActions'); box.innerHTML = '';
   if (S.me.owner) {
-    const b = el('button', 'tp-btn danger');
-    b.innerHTML = '🗑️ Clear chat history';
+    const list = el('ul', 's-list s-list--inset');
+    const li = el('li'); const b = el('button', 's-list__item s-list__item--danger');
+    b.innerHTML = `<span class="s-list__media">${ICON('trash')}</span><span class="s-list__main"><span class="s-list__title">Clear chat history</span><span class="s-list__sub">Removes every message for both of you</span></span>`;
+    li.appendChild(b); list.appendChild(li);
     b.onclick = async () => {
-      $('#themePop').classList.add('hidden');
+      Sona.close($('#settingsSheet'));
       if (!confirm('Clear the ENTIRE chat history for both of you? This cannot be undone.')) return;
       try {
         const r = await fetch('/api/clear', { method: 'POST', headers: { 'X-Kin-Token': S.token } });
         if (!r.ok) throw 0; toast('Chat cleared');
       } catch { toast('Clear failed'); }
     };
-    box.appendChild(b);
+    box.appendChild(list);
   }
 }
 
@@ -126,7 +110,7 @@ function lock() {
   sessionStorage.removeItem('kin_token');
   location.reload();
 }
-$('#btnLock').onclick = lock;
+document.querySelectorAll('[data-action=lock]').forEach(b => b.onclick = lock);
 
 // ════════════ WEBSOCKET ════════════
 function connectWS() {
@@ -163,11 +147,16 @@ function handleWS(m) {
     case 'call': onCallSignal(m); break;
   }
 }
+function setStatus(text, cls) {
+  document.querySelectorAll('[data-peer-status]').forEach(s => {
+    s.textContent = text;
+    s.classList.toggle('online', cls === 'online');
+    s.classList.toggle('is-typing', cls === 'typing');
+  });
+}
 function updatePresence() {
   const on = S.online.includes(peer().id);
-  const s = $('#peerStatus');
-  s.textContent = on ? 'online' : 'offline';
-  s.classList.toggle('online', on);
+  setStatus(on ? 'Online' : 'Offline', on ? 'online' : '');
 }
 
 // ════════════ HISTORY / RENDER ════════════
@@ -176,7 +165,8 @@ async function loadHistory(before) {
   const r = await fetch('/api/history' + (before ? `?before=${before}` : ''), { headers: { 'X-Kin-Token': S.token } });
   const j = await r.json();
   const msgs = j.messages || [];
-  if (!before) { $('#messages').querySelectorAll('.row,.day-sep').forEach(n => n.remove()); renderedIds.clear(); }
+  if (!before) { $('#messages').querySelectorAll('.row,.day-sep,.msg-skel,.chat-empty').forEach(n => n.remove()); renderedIds.clear(); }
+  if (!before && !msgs.length) showEmptyChat();
   if (msgs.length) S.oldestId = msgs[0].id;
   $('#loadMore').classList.toggle('hidden', msgs.length < 50);
   const box = $('#messages');
@@ -194,6 +184,14 @@ async function loadHistory(before) {
 }
 $('#loadMore').onclick = () => S.oldestId && loadHistory(S.oldestId);
 
+function showEmptyChat() {
+  const p = peer(), box = el('div', 's-empty chat-empty');
+  box.innerHTML = `<div class="s-avatar s-avatar--lg">${esc(p.avatar)}</div>
+    <h2 class="s-empty__title">Say hello to ${esc(p.name)}</h2>
+    <p class="s-empty__text">This is a private line for the two of you. Messages stay on this home server, and calls go straight from device to device.</p>
+    <ol class="s-steps"><li>Type below, or tap the mic for a voice note</li><li>Tap the phone or camera up top to call</li><li>Long press any message to reply or react</li></ol>`;
+  $('#messages').appendChild(box);
+}
 function daySep(ts) {
   const d = new Date(ts), now = new Date();
   const label = d.toDateString() === now.toDateString() ? 'Today'
@@ -293,6 +291,7 @@ function applyGeo(m) {
 function addMessage(msg, live) {
   if (renderedIds.has(msg.id)) { replaceMessage(msg); return; }
   const box = $('#messages');
+  box.querySelectorAll('.chat-empty,.msg-skel').forEach(n => n.remove());
   const rows = box.querySelectorAll('.row');
   const prev = rows.length ? rows[rows.length - 1].dataset.sender : null;
   const lastDay = box._lastDay;
@@ -365,8 +364,7 @@ function showTyping(on) {
     r.innerHTML = `<div class="typing-bubble"><span></span><span></span><span></span></div>`;
     r.classList.add('on'); scrollBottom();
   } else { r.innerHTML = ''; r.classList.remove('on'); }
-  const st = $('#peerStatus');
-  if (st) { st.textContent = on ? 'typing…' : (S.online.includes(peer().id) ? 'online' : 'offline'); st.classList.toggle('is-typing', on); }
+  if (on) setStatus('typing…', 'typing'); else updatePresence();
 }
 
 // ════════════ COMPOSE ════════════
@@ -414,10 +412,16 @@ function openBubbleMenu(row, msg) {
   document.querySelectorAll('.bubble-menu').forEach(n => n.remove());
   const mine = msg.sender === S.me.id;
   const menu = el('div', 'bubble-menu');
-  const btns = [['↩️', () => setReply(msg)], ['❤️', () => wsSend({ t: 'react', id: msg.id, emoji: '❤️', on: true })], ['👍', () => wsSend({ t: 'react', id: msg.id, emoji: '👍', on: true })], ['😂', () => wsSend({ t: 'react', id: msg.id, emoji: '😂', on: true })]];
-  if (mine && msg.kind === 'text') btns.push(['✏️', () => { S.editing = msg.id; composer.value = msg.text; composer.focus(); }]);
-  if (mine) btns.push(['🗑️', () => { if (confirm('Delete this message?')) wsSend({ t: 'delete', id: msg.id }); }]);
-  btns.forEach(([ic, fn]) => { const b = el('button'); b.textContent = ic; b.onclick = e => { e.stopPropagation(); fn(); menu.remove(); }; menu.appendChild(b); });
+  const react = em => () => wsSend({ t: 'react', id: msg.id, emoji: em, on: true });
+  const btns = [['❤️', react('❤️'), 'React with a heart'], ['👍', react('👍'), 'React with a thumbs up'], ['😂', react('😂'), 'React with laughter'], ['|'],
+    [ICON('reply'), () => setReply(msg), 'Reply']];
+  if (mine && msg.kind === 'text') btns.push([ICON('edit'), () => { S.editing = msg.id; composer.value = msg.text; composer.focus(); toggleSendMic(); }, 'Edit']);
+  if (mine) btns.push([ICON('trash'), () => { if (confirm('Delete this message?')) wsSend({ t: 'delete', id: msg.id }); }, 'Delete']);
+  btns.forEach(([ic, fn, label]) => {
+    if (ic === '|') { menu.appendChild(el('span', 'sep')); return; }
+    const b = el('button'); b.innerHTML = ic; b.setAttribute('aria-label', label); b.title = label;
+    b.onclick = e => { e.stopPropagation(); fn(); menu.remove(); }; menu.appendChild(b);
+  });
   row.querySelector('.bubble').appendChild(menu);
   setTimeout(() => document.addEventListener('click', () => menu.remove(), { once: true }), 0);
 }
@@ -434,7 +438,7 @@ $('#btnEmoji').onclick = () => {
 document.querySelectorAll('.expr-tab').forEach(t => t.onclick = () => selectExprTab(t.dataset.tab));
 function selectExprTab(tab) {
   exprTab = tab;
-  document.querySelectorAll('.expr-tab').forEach(t => t.classList.toggle('active', t.dataset.tab === tab));
+  document.querySelectorAll('.expr-tab').forEach(t => { t.classList.toggle('active', t.dataset.tab === tab); t.setAttribute('aria-selected', String(t.dataset.tab === tab)); });
   $('#gifSearch').classList.toggle('hidden', tab !== 'gif');
   const body = $('#exprBody'); body.innerHTML = '';
   if (tab === 'emoji') renderEmojiTab(body);
@@ -483,7 +487,7 @@ function renderGifTab(body, query) {
       j.items.forEach(g => { const img = el('img'); img.src = g.thumb; img.loading = 'lazy'; img.onclick = () => sendGif(g.id); grid.appendChild(img); });
       body.appendChild(grid);
     })
-    .catch(() => { body.innerHTML = '<div class="expr-hint">GIF search needs a free Giphy key.<br>Add it to <b>config.json</b> → then search here.<br><br>Meanwhile, try the <b>✨ Stickers</b> tab — they’re animated too.</div>'; });
+    .catch(() => { body.innerHTML = '<div class="expr-hint">GIF search is not available right now.<br>The <b>Stickers</b> tab is animated too, and works offline.</div>'; });
 }
 $('#gifQuery').addEventListener('input', e => { clearTimeout(gifDebounce); const q = e.target.value.trim(); gifDebounce = setTimeout(() => renderGifTab($('#exprBody'), q), 350); });
 async function sendGif(id) {
@@ -492,12 +496,17 @@ async function sendGif(id) {
     const j = await fetch('/api/gif/send', { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-Kin-Token': S.token }, body: JSON.stringify({ id, kind: 'gifs' }) }).then(r => r.json());
     if (!j.id) throw 0;
     wsSend({ t: 'msg', kind: j.kind || 'image', att_id: j.id, reply_to: S.replyTo });
-    clearReply(); closePanels(); $('#toast').classList.add('hidden');
+    clearReply(); closePanels(); hideToast();
   } catch { toast('GIF failed'); }
 }
 
 // ════════════ ATTACHMENTS + ACTIONS MENU ════════════
-$('#btnAttach').onclick = () => { $('#exprPanel').classList.add('hidden'); $('#attachMenu').classList.toggle('hidden'); };
+$('#btnAttach').onclick = e => { e.stopPropagation(); $('#exprPanel').classList.add('hidden'); $('#attachMenu').classList.toggle('hidden'); };
+document.addEventListener('click', e => {
+  if (!e.target.closest('#attachMenu,#btnAttach')) $('#attachMenu').classList.add('hidden');
+  if (!e.target.closest('#exprPanel,#btnEmoji')) $('#exprPanel').classList.add('hidden');
+});
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closePanels(); });
 $('#attachMenu').addEventListener('click', e => {
   const b = e.target.closest('button'); if (!b) return;
   $('#attachMenu').classList.add('hidden');
@@ -525,7 +534,7 @@ $('#fileInput').addEventListener('change', async e => {
     const j = await uploadFile(file);
     wsSend({ t: 'msg', kind: j.kind, att_id: j.id, text: composer.value.trim() || null, reply_to: S.replyTo });
     composer.value = ''; toggleSendMic(); clearReply();
-    $('#toast').classList.add('hidden');
+    hideToast();
   } catch (err) { toast(err.message); }
 });
 
@@ -567,7 +576,7 @@ function finishRec(send) {
     try {
       const j = await uploadFile(new File([blob], `voice-${Date.now()}.webm`, { type: blob.type }));
       wsSend({ t: 'msg', kind: 'audio', att_id: j.id, reply_to: S.replyTo });
-      clearReply(); $('#toast').classList.add('hidden');
+      clearReply(); hideToast();
     } catch (e) { toast('Voice note failed'); }
   };
   try { Rec.mr.stop(); } catch { stopRecCleanup(); }
@@ -581,12 +590,12 @@ function shareLocation(live) {
   if (!navigator.geolocation) return toast('Location not supported');
   toast('Getting location…', 10000);
   navigator.geolocation.getCurrentPosition(pos => {
-    $('#toast').classList.add('hidden');
+    hideToast();
     const p = { lat: +pos.coords.latitude.toFixed(6), lng: +pos.coords.longitude.toFixed(6), acc: Math.round(pos.coords.accuracy), live, until: live ? Date.now() + 15 * 60000 : 0, upd: Date.now() };
     if (live) S.pendingLive = p;
     wsSend({ t: 'msg', kind: 'location', text: JSON.stringify(p), reply_to: S.replyTo });
     clearReply();
-  }, err => { $('#toast').classList.add('hidden'); toast('Location: ' + err.message); }, { enableHighAccuracy: true, timeout: 9000 });
+  }, err => { hideToast(); toast('Location: ' + err.message); }, { enableHighAccuracy: true, timeout: 9000 });
 }
 function startLiveWatch(msgId, until) {
   if (S.liveWatch) { navigator.geolocation.clearWatch(S.liveWatch.id); }
@@ -606,9 +615,11 @@ function openSchedule() {
   const tz = d.getTimezoneOffset() * 60000;
   $('#schedWhen').value = new Date(d - tz).toISOString().slice(0, 16);
   refreshSchedList();
-  $('#schedModal').classList.remove('hidden');
+  Sona.close($('#settingsSheet'));
+  Sona.open($('#schedModal'));
 }
-$('#schedCancel').onclick = () => $('#schedModal').classList.add('hidden');
+$('#schedCancel').onclick = () => Sona.close($('#schedModal'));
+document.querySelectorAll('[data-open-schedule]').forEach(b => b.onclick = openSchedule);
 $('#schedConfirm').onclick = async () => {
   const text = composer.value.trim();
   if (!text) return toast('Type a message first');
@@ -628,8 +639,8 @@ async function refreshSchedList() {
     const box = $('#schedList'); box.innerHTML = '';
     (j.items || []).forEach(s => {
       const row = el('div', 'sched-item');
-      row.innerHTML = `<span>🕒 ${new Date(s.send_at).toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })} · ${esc((s.text || '').slice(0, 24))}</span>`;
-      const del = el('button'); del.textContent = '✕'; del.onclick = async () => { await fetch('/api/scheduled/' + s.id, { method: 'DELETE', headers: { 'X-Kin-Token': S.token } }); refreshSchedList(); };
+      row.innerHTML = `<span>${new Date(s.send_at).toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })} · ${esc((s.text || '').slice(0, 24))}</span>`;
+      const del = el('button'); del.innerHTML = ICON('close'); del.setAttribute('aria-label', 'Cancel this scheduled message'); del.onclick = async () => { await fetch('/api/scheduled/' + s.id, { method: 'DELETE', headers: { 'X-Kin-Token': S.token } }); refreshSchedList(); };
       row.appendChild(del); box.appendChild(row);
     });
   } catch {}
@@ -647,8 +658,7 @@ function startCall(video) {
   wsSend({ t: 'call', kind: 'request', video });
   Call._ringTimeout = setTimeout(() => { if (Call.state === 'calling') { toast('No answer'); endCall(true); } }, 35000);
 }
-$('#btnCall').onclick = () => startCall(false);
-$('#btnVideo').onclick = () => startCall(true);
+document.querySelectorAll('[data-call]').forEach(b => b.onclick = () => startCall(b.dataset.call === 'video'));
 
 function openCallUI(state) {
   const p = peer();
@@ -660,6 +670,7 @@ function openCallUI(state) {
   $('#btnAccept').classList.toggle('hidden', Call.state !== 'ringing');
   $('#callOverlay').classList.remove('hidden');
   $('#btnMute').classList.remove('muted'); $('#btnCam').classList.remove('off');
+  $('#btnMute').setAttribute('aria-pressed', 'false'); $('#btnCam').setAttribute('aria-pressed', 'false');
 }
 
 async function setupPC() {
@@ -742,12 +753,12 @@ $('#btnHangup').onclick = () => endCall(true);
 $('#btnMute').onclick = () => {
   if (!Call.local) return;
   const t = Call.local.getAudioTracks()[0]; if (!t) return;
-  t.enabled = !t.enabled; $('#btnMute').classList.toggle('muted', !t.enabled);
+  t.enabled = !t.enabled; $('#btnMute').classList.toggle('muted', !t.enabled); $('#btnMute').setAttribute('aria-pressed', String(!t.enabled));
 };
 $('#btnCam').onclick = () => {
   if (!Call.local) return;
   const t = Call.local.getVideoTracks()[0]; if (!t) return toast('Audio call');
-  t.enabled = !t.enabled; $('#btnCam').classList.toggle('off', !t.enabled);
+  t.enabled = !t.enabled; $('#btnCam').classList.toggle('off', !t.enabled); $('#btnCam').setAttribute('aria-pressed', String(!t.enabled));
   $('#localVideo').classList.toggle('on', t.enabled);
 };
 

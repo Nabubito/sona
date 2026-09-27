@@ -2,184 +2,222 @@
 <html lang="en" data-theme="sona">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1" />
-  <meta name="theme-color" content="#a8536a" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content" />
+  <meta name="theme-color" content="#161311" />
   <title>Kin</title>
   <link rel="manifest" href="/manifest.json" />
-  <link rel="icon" href="/icon-192.png" type="image/png" />
+  <link rel="icon" href="/assets/sona-ui/flame.svg" type="image/svg+xml" />
   <link rel="apple-touch-icon" href="/icon-192.png" />
-  <link rel="stylesheet" href="/style.css?v=2" />
-  <link rel="stylesheet" href="/assets/sona.css" />
+  <link rel="stylesheet" href="/assets/sona-ui/tokens.css" />
+  <link rel="stylesheet" href="/assets/sona-ui/components.css" />
+  <link rel="stylesheet" href="/style.css?v=3" />
+  <script src="/assets/sona-ui/theme.js"></script>
 </head>
 <body>
-  <!-- ══ PASSCODE GATE ══ -->
-  <section id="gate" class="gate">
-    <div class="gate-card">
-      <div class="ember-mark" aria-hidden="true">
-        <svg viewBox="0 0 48 48"><defs>
-          <linearGradient id="au" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0" stop-color="#F3CE86"/><stop offset=".5" stop-color="#E7A94C"/><stop offset="1" stop-color="#E1712B"/>
-          </linearGradient></defs>
-          <path fill="url(#au)" d="M24 3c1 7-3 11-7 15-2 2-4 5-4 9a11 11 0 0 0 22 0c0-5-3-8-6-12-1 3-3 4-5 5 2-6-1-12 0-17Z"/>
-          <path fill="#161311" opacity=".22" d="M24 20c1 3-1 6-3 8-1 1-2 3-2 5a5 5 0 0 0 10 0c0-3-2-5-4-7 0 2-1 3-2 4 1-3 0-7 1-10Z"/>
-        </svg>
-      </div>
-      <h1 class="wordmark">Kin</h1>
-      <p class="tagline">Private line</p>
-      <div class="pin-dots" id="pinDots" aria-label="passcode">
-        <i></i><i></i><i></i><i></i>
-      </div>
-      <div class="pin-error" id="pinError"></div>
-      <div class="keypad" id="keypad">
-        <button data-k="1">1</button><button data-k="2">2</button><button data-k="3">3</button>
-        <button data-k="4">4</button><button data-k="5">5</button><button data-k="6">6</button>
-        <button data-k="7">7</button><button data-k="8">8</button><button data-k="9">9</button>
-        <button class="ghost" data-k="clear">✕</button><button data-k="0">0</button><button class="ghost" data-k="back">⌫</button>
+  <!-- ══ LOCK SCREEN (shared Sona gate; Kin answers the code itself) ══ -->
+  <main id="gate" class="s-gate" data-sona-gate data-len="4" aria-labelledby="gateName">
+    <div class="s-gate__glow" aria-hidden="true"></div><div class="s-gate__grain" aria-hidden="true"></div>
+    <div class="s-gate__corner">
+      <button type="button" class="s-iconbtn" data-scheme-cycle aria-label="Theme"><svg class="s-i" aria-hidden="true"><use href="/assets/sona-ui/icons.svg#auto"/></svg></button>
+    </div>
+    <div class="s-gate__panel">
+      <div class="s-gate__mark" aria-hidden="true"><svg viewBox="0 0 48 48"><defs><linearGradient id="sonaFlameGrad" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#F3CE86"/><stop offset=".5" stop-color="#E7A94C"/><stop offset="1" stop-color="#E1712B"/></linearGradient></defs><path fill="url(#sonaFlameGrad)" d="M24 3c1 7-3 11-7 15-2 2-4 5-4 9a11 11 0 0 0 22 0c0-5-3-8-6-12-1 3-3 4-5 5 2-6-1-12 0-17Z"/><path fill="#161311" opacity=".22" d="M24 20c1 3-1 6-3 8-1 1-2 3-2 5a5 5 0 0 0 10 0c0-3-2-5-4-7 0 2-1 3-2 4 1-3 0-7 1-10Z"/></svg></div>
+      <h1 class="s-gate__name" id="gateName">Kin</h1>
+      <p class="s-gate__tag">Your people</p>
+      <div class="s-gate__dots" role="status" aria-live="polite"></div>
+      <p class="s-gate__msg" role="alert"></p>
+      <div class="s-gate__pad" role="group" aria-label="Passcode keypad">
+        <button type="button" class="s-key" data-k="1">1</button><button type="button" class="s-key" data-k="2">2</button><button type="button" class="s-key" data-k="3">3</button>
+        <button type="button" class="s-key" data-k="4">4</button><button type="button" class="s-key" data-k="5">5</button><button type="button" class="s-key" data-k="6">6</button>
+        <button type="button" class="s-key" data-k="7">7</button><button type="button" class="s-key" data-k="8">8</button><button type="button" class="s-key" data-k="9">9</button>
+        <button type="button" class="s-key s-key--fn" data-k="clr">Clear</button><button type="button" class="s-key" data-k="0">0</button>
+        <button type="button" class="s-key s-key--fn" data-k="del" aria-label="Delete"><svg class="s-i" aria-hidden="true"><use href="/assets/sona-ui/icons.svg#backspace"/></svg></button>
       </div>
     </div>
-    <div class="gate-foot">Sona · secured line · <a href="/get.html" style="color:inherit;text-decoration:underline">get the app</a></div>
-  </section>
-
-  <!-- ══ CHAT APP ══ -->
-  <main id="app" class="app hidden">
-    <header class="chat-header">
-      <div class="peer">
-        <div class="peer-avatar" id="peerAvatar">·</div>
-        <div class="peer-meta">
-          <div class="peer-cap">Chatting with</div>
-          <div class="peer-name" id="peerName">…</div>
-          <div class="peer-status" id="peerStatus">offline</div>
-        </div>
-      </div>
-      <div class="header-actions">
-        <button class="icon-btn" id="btnCall" title="Voice call" aria-label="Voice call">
-          <svg viewBox="0 0 24 24"><path d="M6.6 10.8a15.9 15.9 0 0 0 6.6 6.6l2.2-2.2a1 1 0 0 1 1-.25 11.4 11.4 0 0 0 3.6.57 1 1 0 0 1 1 1V20a1 1 0 0 1-1 1A17 17 0 0 1 3 4a1 1 0 0 1 1-1h3.5a1 1 0 0 1 1 1 11.4 11.4 0 0 0 .57 3.6 1 1 0 0 1-.25 1z"/></svg>
-        </button>
-        <button class="icon-btn" id="btnVideo" title="Video call" aria-label="Video call">
-          <svg viewBox="0 0 24 24"><path d="M17 10.5V7a1 1 0 0 0-1-1H4a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-3.5l4 4v-11z"/></svg>
-        </button>
-        <button class="icon-btn" id="btnTheme" title="Theme" aria-label="Theme">
-          <svg viewBox="0 0 24 24"><path d="M12 3a9 9 0 1 0 0 18c1 0 1.6-.8 1.6-1.7 0-.5-.2-.9-.5-1.2-.3-.3-.5-.7-.5-1.1 0-.9.8-1.7 1.7-1.7H16a5 5 0 0 0 5-5c0-3.9-4-7.3-9-7.3z"/><circle cx="7.5" cy="12" r="1.2"/><circle cx="10" cy="8" r="1.2"/><circle cx="15" cy="8" r="1.2"/></svg>
-        </button>
-        <button class="icon-btn" id="btnLock" title="Lock" aria-label="Lock">
-          <svg viewBox="0 0 24 24"><path d="M12 2a5 5 0 0 0-5 5v3H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8a2 2 0 0 0-2-2h-1V7a5 5 0 0 0-5-5zm-3 8V7a3 3 0 0 1 6 0v3z"/></svg>
-        </button>
-      </div>
-      <div class="theme-pop hidden" id="themePop">
-        <div class="tp-label" id="tpWhoami"></div>
-        <div class="tp-swatches">
-          <button class="sw" data-t="amour" title="Amour"></button>
-          <button class="sw" data-t="chambers" title="Chambers"></button>
-          <button class="sw" data-t="obsidian" title="Obsidian"></button>
-          <button class="sw" data-t="turquoise" title="Turquoise"></button>
-          <button class="sw" data-t="violet" title="Violet"></button>
-        </div>
-        <div class="tp-actions" id="tpActions"></div>
-      </div>
-    </header>
-
-    <div class="messages" id="messages">
-      <div class="load-more hidden" id="loadMore">Load earlier</div>
-    </div>
-
-    <div class="typing-row" id="typingRow"></div>
-
-    <!-- reply preview -->
-    <div class="reply-bar hidden" id="replyBar">
-      <div class="reply-info"><span id="replyTo"></span></div>
-      <button class="icon-btn sm" id="replyCancel">✕</button>
-    </div>
-
-    <!-- unified expression panel: emoji / stickers / gif -->
-    <div class="expr-panel hidden" id="exprPanel">
-      <div class="expr-tabs">
-        <button class="expr-tab active" data-tab="emoji">😊 Emoji</button>
-        <button class="expr-tab" data-tab="stickers">✨ Stickers</button>
-        <button class="expr-tab" data-tab="gif">🔍 GIF</button>
-      </div>
-      <div class="gif-search hidden" id="gifSearch">
-        <input type="text" id="gifQuery" placeholder="Search GIFs…" autocomplete="off" />
-      </div>
-      <div class="expr-body" id="exprBody"></div>
-    </div>
-
-    <!-- attach menu -->
-    <div class="attach-menu hidden" id="attachMenu">
-      <button data-act="photo">🖼️ Photo</button>
-      <button data-act="video">🎬 Video</button>
-      <button data-act="file">📎 File</button>
-      <button data-act="location">📍 Location</button>
-      <button data-act="live">🛰️ Live location · 15 min</button>
-      <button data-act="schedule">🕒 Schedule message</button>
-    </div>
-
-    <!-- voice note recorder -->
-    <div class="rec-bar hidden" id="recBar">
-      <button class="rec-cancel" id="recCancel" title="Cancel">🗑️</button>
-      <div class="rec-dot"></div>
-      <div class="rec-time" id="recTime">0:00</div>
-      <div class="rec-wave" id="recWave"></div>
-      <button class="rec-send" id="recSend" title="Send voice note">
-        <svg viewBox="0 0 24 24"><path d="M4 12l16-8-6 8 6 8z"/></svg>
-      </button>
-    </div>
-
-    <footer class="compose" id="composeBar">
-      <button class="icon-btn" id="btnAttach" title="Attach" aria-label="Attach">
-        <svg viewBox="0 0 24 24"><path d="M16.5 6.5 8.7 14.3a2 2 0 0 0 2.8 2.8l7.8-7.8a4 4 0 1 0-5.6-5.6L5.6 11.6a6 6 0 0 0 8.5 8.5l6.4-6.4"/></svg>
-      </button>
-      <button class="icon-btn" id="btnEmoji" title="Emoji · Stickers · GIF" aria-label="Emoji">
-        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><circle cx="9" cy="10" r="1.2"/><circle cx="15" cy="10" r="1.2"/><path d="M8.5 14.5a4.5 4.5 0 0 0 7 0"/></svg>
-      </button>
-      <div class="input-wrap">
-        <textarea id="composer" rows="1" placeholder="Message…" maxlength="8000"></textarea>
-      </div>
-      <button class="icon-btn send hidden" id="btnSend" title="Send" aria-label="Send">
-        <svg viewBox="0 0 24 24"><path d="M4 12l16-8-6 8 6 8z"/></svg>
-      </button>
-      <button class="icon-btn mic" id="btnMic" title="Voice note" aria-label="Voice note">
-        <svg viewBox="0 0 24 24"><path d="M12 15a3 3 0 0 0 3-3V6a3 3 0 0 0-6 0v6a3 3 0 0 0 3 3z"/><path d="M6 11a6 6 0 0 0 12 0M12 18v3"/></svg>
-      </button>
-    </footer>
-    <input type="file" id="fileInput" hidden />
-
-    <!-- schedule dialog -->
-    <div class="modal hidden" id="schedModal">
-      <div class="modal-card">
-        <h3>🕒 Schedule message</h3>
-        <p class="modal-sub" id="schedPreview"></p>
-        <input type="datetime-local" id="schedWhen" />
-        <div class="modal-row">
-          <button class="mbtn ghost" id="schedCancel">Cancel</button>
-          <button class="mbtn" id="schedConfirm">Schedule</button>
-        </div>
-        <div class="sched-list" id="schedList"></div>
-      </div>
-    </div>
+    <p class="s-gate__foot"><b>Sona</b><span aria-hidden="true">·</span><span>under your roof</span><span aria-hidden="true">·</span><a href="/get.html">Get the app</a></p>
   </main>
 
+  <!-- ══ CHAT APP ══ -->
+  <div id="app" class="app hidden">
+    <aside class="side" aria-label="Kin">
+      <div class="side-brand">
+        <svg class="s-i" aria-hidden="true"><use href="/assets/sona-ui/icons.svg#flame"/></svg>
+        <span class="s-wordmark">Kin</span>
+      </div>
+      <section class="side-card" aria-label="Contact">
+        <div class="s-avatar s-avatar--lg" data-peer-avatar>·</div>
+        <h2 class="side-name" data-peer-name>…</h2>
+        <p class="peer-status" data-peer-status>Offline</p>
+        <div class="side-actions">
+          <button class="s-btn s-btn--primary" data-call="voice"><svg class="s-i" aria-hidden="true"><use href="/assets/sona-ui/icons.svg#phone"/></svg>Call</button>
+          <button class="s-btn" data-call="video"><svg class="s-i" aria-hidden="true"><use href="/assets/sona-ui/icons.svg#video"/></svg>Video</button>
+        </div>
+      </section>
+      <p class="side-note"><svg class="s-i s-i--sm" aria-hidden="true"><use href="/assets/sona-ui/icons.svg#lock"/></svg>A private line. Messages stay on this home server, and calls go device to device.</p>
+      <div class="s-sidebar__spacer"></div>
+      <nav class="side-nav" aria-label="Kin menu">
+        <button class="s-navlink" data-open-schedule><svg class="s-i" aria-hidden="true"><use href="/assets/sona-ui/icons.svg#clock"/></svg>Scheduled messages</button>
+        <button class="s-navlink" data-sheet-open="settingsSheet"><svg class="s-i" aria-hidden="true"><use href="/assets/sona-ui/icons.svg#sliders"/></svg>Settings</button>
+        <button class="s-navlink" data-action="lock"><svg class="s-i" aria-hidden="true"><use href="/assets/sona-ui/icons.svg#lock"/></svg>Lock Kin</button>
+      </nav>
+    </aside>
+
+    <main class="chat" aria-label="Conversation">
+      <header class="chat-header">
+        <div class="peer">
+          <div class="s-avatar" data-peer-avatar>·</div>
+          <div class="peer-meta">
+            <h1 class="peer-name" data-peer-name>…</h1>
+            <p class="peer-status" data-peer-status>Offline</p>
+          </div>
+        </div>
+        <div class="header-actions">
+          <button class="s-iconbtn" data-call="voice" aria-label="Voice call" title="Voice call"><svg class="s-i" aria-hidden="true"><use href="/assets/sona-ui/icons.svg#phone"/></svg></button>
+          <button class="s-iconbtn" data-call="video" aria-label="Video call" title="Video call"><svg class="s-i" aria-hidden="true"><use href="/assets/sona-ui/icons.svg#video"/></svg></button>
+          <button class="s-iconbtn menu-btn" data-sheet-open="settingsSheet" aria-label="Menu" title="Menu"><svg class="s-i" aria-hidden="true"><use href="/assets/sona-ui/icons.svg#menu"/></svg></button>
+        </div>
+      </header>
+
+      <div class="messages" id="messages" role="log" aria-live="polite" aria-label="Messages">
+        <button class="load-more hidden" id="loadMore">Load earlier messages</button>
+        <div class="msg-skel" aria-hidden="true">
+          <div class="s-skel" style="width:46%"></div><div class="s-skel me" style="width:58%"></div>
+          <div class="s-skel" style="width:34%"></div><div class="s-skel me" style="width:40%"></div><div class="s-skel" style="width:52%"></div>
+        </div>
+      </div>
+
+      <div class="typing-row" id="typingRow"></div>
+
+      <div class="reply-bar hidden" id="replyBar">
+        <svg class="s-i" aria-hidden="true"><use href="/assets/sona-ui/icons.svg#reply"/></svg>
+        <div class="reply-info"><span id="replyTo"></span></div>
+        <button class="s-iconbtn s-iconbtn--sm" id="replyCancel" aria-label="Cancel reply"><svg class="s-i" aria-hidden="true"><use href="/assets/sona-ui/icons.svg#close"/></svg></button>
+      </div>
+
+      <!-- emoji / stickers / gif -->
+      <div class="expr-panel hidden" id="exprPanel" role="dialog" aria-label="Emoji, stickers and GIFs">
+        <div class="expr-tabs s-seg" role="tablist">
+          <button class="expr-tab s-seg__btn active" data-tab="emoji" role="tab">Emoji</button>
+          <button class="expr-tab s-seg__btn" data-tab="stickers" role="tab">Stickers</button>
+          <button class="expr-tab s-seg__btn" data-tab="gif" role="tab">GIFs</button>
+        </div>
+        <div class="gif-search hidden" id="gifSearch">
+          <div class="s-search"><svg class="s-i" aria-hidden="true"><use href="/assets/sona-ui/icons.svg#search"/></svg><input class="s-input" type="search" id="gifQuery" placeholder="Search GIFs" autocomplete="off" aria-label="Search GIFs" /></div>
+        </div>
+        <div class="expr-body" id="exprBody"></div>
+      </div>
+
+      <!-- attach menu -->
+      <div class="attach-menu hidden" id="attachMenu" role="menu" aria-label="Attach">
+        <button data-act="photo" role="menuitem"><span class="am-ic"><svg class="s-i" aria-hidden="true"><use href="/assets/sona-ui/icons.svg#image"/></svg></span>Photo</button>
+        <button data-act="video" role="menuitem"><span class="am-ic"><svg class="s-i" aria-hidden="true"><use href="/assets/sona-ui/icons.svg#video"/></svg></span>Video</button>
+        <button data-act="file" role="menuitem"><span class="am-ic"><svg class="s-i" aria-hidden="true"><use href="/assets/sona-ui/icons.svg#paperclip"/></svg></span>File</button>
+        <button data-act="location" role="menuitem"><span class="am-ic"><svg class="s-i" aria-hidden="true"><use href="/assets/sona-ui/icons.svg#pin"/></svg></span>Location</button>
+        <button data-act="live" role="menuitem"><span class="am-ic"><svg class="s-i" aria-hidden="true"><use href="/assets/sona-ui/icons.svg#refresh"/></svg></span>Live, 15 min</button>
+        <button data-act="schedule" role="menuitem"><span class="am-ic"><svg class="s-i" aria-hidden="true"><use href="/assets/sona-ui/icons.svg#clock"/></svg></span>Schedule</button>
+      </div>
+
+      <!-- voice note recorder -->
+      <div class="rec-bar hidden" id="recBar">
+        <button class="s-iconbtn" id="recCancel" aria-label="Discard voice note"><svg class="s-i" aria-hidden="true"><use href="/assets/sona-ui/icons.svg#trash"/></svg></button>
+        <div class="rec-dot" aria-hidden="true"></div>
+        <div class="rec-time s-num" id="recTime">0:00</div>
+        <div class="rec-wave" id="recWave" aria-hidden="true"></div>
+        <button class="s-iconbtn s-iconbtn--primary" id="recSend" aria-label="Send voice note"><svg class="s-i" aria-hidden="true"><use href="/assets/sona-ui/icons.svg#send"/></svg></button>
+      </div>
+
+      <footer class="compose" id="composeBar">
+        <button class="s-iconbtn" id="btnAttach" aria-label="Attach" title="Attach"><svg class="s-i" aria-hidden="true"><use href="/assets/sona-ui/icons.svg#plus"/></svg></button>
+        <div class="input-wrap">
+          <textarea id="composer" rows="1" placeholder="Message" maxlength="8000" aria-label="Message"></textarea>
+          <button class="s-iconbtn s-iconbtn--sm" id="btnEmoji" aria-label="Emoji, stickers and GIFs" title="Emoji, stickers and GIFs"><svg class="s-i" aria-hidden="true"><use href="/assets/sona-ui/icons.svg#smile"/></svg></button>
+        </div>
+        <button class="s-iconbtn s-iconbtn--primary send hidden" id="btnSend" aria-label="Send" title="Send"><svg class="s-i" aria-hidden="true"><use href="/assets/sona-ui/icons.svg#send"/></svg></button>
+        <button class="s-iconbtn mic" id="btnMic" aria-label="Record a voice note" title="Voice note"><svg class="s-i" aria-hidden="true"><use href="/assets/sona-ui/icons.svg#mic"/></svg></button>
+      </footer>
+      <input type="file" id="fileInput" hidden />
+    </main>
+  </div>
+
+  <!-- settings sheet (burger menu on phones, Settings in the sidebar on desktop) -->
+  <div class="s-scrim" id="settingsSheet">
+    <section class="s-sheet" role="dialog" aria-modal="true" aria-labelledby="settingsTitle">
+      <header class="s-sheet__head">
+        <h2 class="s-sheet__title" id="settingsTitle">Settings</h2>
+        <button class="s-iconbtn" data-sheet-close aria-label="Close"><svg class="s-i" aria-hidden="true"><use href="/assets/sona-ui/icons.svg#close"/></svg></button>
+      </header>
+      <div class="s-sheet__body">
+        <p class="who" id="tpWhoami"></p>
+        <h3 class="s-eyebrow set-h">Appearance</h3>
+        <div class="s-seg s-scheme" role="group" aria-label="Light or dark">
+          <button class="s-seg__btn" data-scheme-set="auto"><svg class="s-i" aria-hidden="true"><use href="/assets/sona-ui/icons.svg#auto"/></svg>Auto</button>
+          <button class="s-seg__btn" data-scheme-set="light"><svg class="s-i" aria-hidden="true"><use href="/assets/sona-ui/icons.svg#sun"/></svg>Light</button>
+          <button class="s-seg__btn" data-scheme-set="dark"><svg class="s-i" aria-hidden="true"><use href="/assets/sona-ui/icons.svg#moon"/></svg>Dark</button>
+        </div>
+        <h3 class="s-eyebrow set-h">Chat colors</h3>
+        <div class="tp-swatches" role="group" aria-label="Chat colors">
+          <button class="sw" data-t="sona" aria-label="Sona"><span>Sona</span></button>
+          <button class="sw" data-t="amour" aria-label="Amour"><span>Amour</span></button>
+          <button class="sw" data-t="chambers" aria-label="Chambers"><span>Chambers</span></button>
+          <button class="sw" data-t="obsidian" aria-label="Obsidian"><span>Obsidian</span></button>
+          <button class="sw" data-t="turquoise" aria-label="Turquoise"><span>Turquoise</span></button>
+          <button class="sw" data-t="violet" aria-label="Violet"><span>Violet</span></button>
+        </div>
+        <h3 class="s-eyebrow set-h">This line</h3>
+        <ul class="s-list s-list--inset">
+          <li><button class="s-list__item" data-open-schedule><span class="s-list__media"><svg class="s-i" aria-hidden="true"><use href="/assets/sona-ui/icons.svg#clock"/></svg></span><span class="s-list__main"><span class="s-list__title">Scheduled messages</span><span class="s-list__sub">Write now, send later</span></span><svg class="s-i s-list__trail" aria-hidden="true"><use href="/assets/sona-ui/icons.svg#chevron-right"/></svg></button></li>
+          <li><a class="s-list__item" href="/get.html"><span class="s-list__media"><svg class="s-i" aria-hidden="true"><use href="/assets/sona-ui/icons.svg#download"/></svg></span><span class="s-list__main"><span class="s-list__title">Get the app</span><span class="s-list__sub">Home screen, Windows or Android</span></span><svg class="s-i s-list__trail" aria-hidden="true"><use href="/assets/sona-ui/icons.svg#chevron-right"/></svg></a></li>
+          <li><button class="s-list__item" data-action="lock"><span class="s-list__media"><svg class="s-i" aria-hidden="true"><use href="/assets/sona-ui/icons.svg#lock"/></svg></span><span class="s-list__main"><span class="s-list__title">Lock Kin</span><span class="s-list__sub">Back to the passcode screen</span></span></button></li>
+        </ul>
+        <div id="tpActions"></div>
+      </div>
+    </section>
+  </div>
+
+  <!-- schedule sheet -->
+  <div class="s-scrim" id="schedModal">
+    <section class="s-sheet" role="dialog" aria-modal="true" aria-labelledby="schedTitle">
+      <header class="s-sheet__head">
+        <h2 class="s-sheet__title" id="schedTitle">Schedule a message</h2>
+        <button class="s-iconbtn" data-sheet-close aria-label="Close"><svg class="s-i" aria-hidden="true"><use href="/assets/sona-ui/icons.svg#close"/></svg></button>
+      </header>
+      <div class="s-sheet__body">
+        <p class="modal-sub" id="schedPreview"></p>
+        <label class="s-field"><span class="s-label">Send at</span><input class="s-input" type="datetime-local" id="schedWhen" /></label>
+        <div class="modal-row">
+          <button class="s-btn s-btn--ghost" id="schedCancel">Cancel</button>
+          <button class="s-btn s-btn--primary" id="schedConfirm">Schedule</button>
+        </div>
+        <h3 class="s-eyebrow set-h">Waiting to send</h3>
+        <div class="sched-list" id="schedList"></div>
+      </div>
+    </section>
+  </div>
+
   <!-- ══ CALL OVERLAY ══ -->
-  <div id="callOverlay" class="call-overlay hidden">
+  <div id="callOverlay" class="call-overlay hidden" role="dialog" aria-label="Call">
     <div class="call-inner">
       <video id="remoteVideo" class="remote-video" autoplay playsinline></video>
       <video id="localVideo" class="local-video" autoplay playsinline muted></video>
       <div class="call-info">
-        <div class="call-avatar" id="callAvatar">·</div>
+        <div class="s-avatar s-avatar--lg call-avatar" id="callAvatar">·</div>
         <div class="call-name" id="callName">…</div>
-        <div class="call-state" id="callState">Calling…</div>
-        <div class="call-timer" id="callTimer"></div>
+        <div class="call-state" id="callState" role="status">Calling…</div>
+        <div class="call-timer s-num" id="callTimer"></div>
       </div>
       <div class="call-controls">
-        <button class="call-btn mute" id="btnMute" title="Mute"><span>🎙️</span></button>
-        <button class="call-btn accept hidden" id="btnAccept" title="Accept"><span>✅</span></button>
-        <button class="call-btn cam" id="btnCam" title="Camera"><span>📷</span></button>
-        <button class="call-btn hangup" id="btnHangup" title="Hang up"><span>📵</span></button>
+        <button class="call-btn mute" id="btnMute" aria-label="Mute" aria-pressed="false"><svg class="s-i on" aria-hidden="true"><use href="/assets/sona-ui/icons.svg#mic"/></svg><svg class="s-i off" aria-hidden="true"><use href="/assets/sona-ui/icons.svg#mic-off"/></svg></button>
+        <button class="call-btn accept hidden" id="btnAccept" aria-label="Answer"><svg class="s-i" aria-hidden="true"><use href="/assets/sona-ui/icons.svg#phone"/></svg></button>
+        <button class="call-btn cam" id="btnCam" aria-label="Camera" aria-pressed="false"><svg class="s-i on" aria-hidden="true"><use href="/assets/sona-ui/icons.svg#video"/></svg><svg class="s-i off" aria-hidden="true"><use href="/assets/sona-ui/icons.svg#video-off"/></svg></button>
+        <button class="call-btn hangup" id="btnHangup" aria-label="Hang up"><svg class="s-i" aria-hidden="true"><use href="/assets/sona-ui/icons.svg#phone-off"/></svg></button>
       </div>
     </div>
   </div>
 
-  <div id="toast" class="toast hidden"></div>
+  <div id="toast" class="s-toast" role="status" aria-live="polite"></div>
 
+  <script src="/assets/sona-ui/ui.js"></script>
+  <script src="/assets/sona-ui/gate.js"></script>
   <script src="/emoji.js?v=2"></script>
   <script src="/app.js?v=2"></script>
 </body>
