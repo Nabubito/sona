@@ -34,6 +34,14 @@
     render: null, layoutCache: null, raf: 0, segSeq: 0,
   };
   var fv = $('fvideo'), fc = $('fcanvas');
+  // an icon from the shared sprite, built as DOM (never as HTML)
+  function icon(name) {
+    var NS = 'http://www.w3.org/2000/svg';
+    var svg = document.createElementNS(NS, 'svg'); svg.setAttribute('class', 's-i'); svg.setAttribute('aria-hidden', 'true');
+    var use = document.createElementNS(NS, 'use'); use.setAttribute('href', '/assets/sona-ui/icons.svg#' + name);
+    svg.appendChild(use);
+    return svg;
+  }
 
   /* ---------------- plumbing from the page ---------------- */
 
@@ -102,15 +110,20 @@
     show($('fFlow'), F.available);
     if (!F.available) {
       APP.showMainStage(true); show($('fstage'), false);
-      APP.dock({ go: { label: 'Text follow needs setup', disabled: true, fn: null }, alt: { label: 'Engines', fn: function () { $('menuBtn').click(); } } });
+      APP.dock({ go: { label: 'See what it needs', fn: function () { APP.openMenu(true); } }, msg: 'Text follow needs a local tracker first.' });
       return;
     }
+    // the shared stepper: the current step, steps you can go back (or on) to, and steps not reached yet
     Array.prototype.forEach.call($('fSteps').children, function (li) {
-      var n = Number(li.getAttribute('data-step'));
-      li.className = n === F.step ? 'now' : n < maxStepReached() + 1 && canJump(n) && !(n === 1 && !F.sess) ? 'done' : '';
-      li.setAttribute('aria-current', n === F.step ? 'step' : 'false');
+      var n = Number(li.getAttribute('data-step')), btn = li.querySelector('button');
+      var reachable = n !== F.step && canJump(n) && !(n === 1 && !F.sess) && !F.tracking;
+      li.setAttribute('data-state', n === F.step ? 'current' : n < F.step || reachable ? 'done' : 'todo');
+      btn.disabled = n !== F.step && !reachable;
+      if (n === F.step) btn.setAttribute('aria-current', 'step'); else btn.removeAttribute('aria-current');
+      btn.setAttribute('aria-label', 'Step ' + n + ', ' + STEP_TEXT[n][0] + (n === F.step ? ', current' : reachable ? '' : ', not reached yet'));
     });
-    $('fHead').textContent = F.step + '. ' + STEP_TEXT[F.step][0];
+    $('fEyebrow').textContent = 'Step ' + F.step + ' of 5';
+    $('fHead').textContent = STEP_TEXT[F.step][0];
     $('fHint').textContent = STEP_TEXT[F.step][1];
 
     var stageOwned = F.step >= 2 && !!F.sess;
@@ -222,24 +235,32 @@
     var box = $('fThings');
     box.textContent = '';
     F.things.forEach(function (g, i) {
+      // one row per thing: the row itself picks which thing your taps go to; the bin removes it
+      var on = i === F.active;
       var row = document.createElement('div');
-      row.className = 'thing' + (i === F.active ? ' on' : '');
+      row.className = 'thing' + (on ? ' on' : '');
       row.style.setProperty('--tag', colorHex(g.color));
+      var sel = document.createElement('button'); sel.type = 'button'; sel.className = 'thing__main';
+      sel.setAttribute('aria-pressed', on ? 'true' : 'false');
       var dot = document.createElement('span'); dot.className = 'dot'; dot.setAttribute('aria-hidden', 'true');
-      var nm = document.createElement('span'); nm.className = 't-name'; nm.textContent = thingLabel(g);
-      var st = document.createElement('span'); st.className = 't-state';
-      st.textContent = !g.prompts.length ? 'not marked yet' : g.outline && g.outline.length ? 'marked' : 'marked, no glow yet';
-      var sel = document.createElement('button'); sel.type = 'button'; sel.className = 'btn sm ghost';
-      sel.textContent = i === F.active ? 'Tapping this' : 'Tap this one';
-      sel.disabled = i === F.active;
+      var tx = document.createElement('span'); tx.className = 'thing__text';
+      var nm = document.createElement('span'); nm.className = 'thing__name'; nm.textContent = thingLabel(g);
+      var st = document.createElement('span'); st.className = 'thing__state';
+      st.textContent = (!g.prompts.length ? 'Not marked yet' : g.outline && g.outline.length ? 'Marked' : 'Marked, no glow yet');
+      sel.title = on ? 'Your taps on the picture mark this one' : 'Mark this one';
+      tx.appendChild(nm); tx.appendChild(st);
+      sel.appendChild(dot); sel.appendChild(tx);
+      if (on) { var now = document.createElement('span'); now.className = 's-badge s-badge--soft thing__now'; now.textContent = 'Taps go here'; sel.appendChild(now); }
       sel.addEventListener('click', function () {
+        if (i === F.active) return;
         F.active = i; F.tapMode = 'add';
         var last = g.prompts[g.prompts.length - 1];
         if (last) seekFrame(last.frame);
         paint();
       });
-      var rm = document.createElement('button'); rm.type = 'button'; rm.className = 'btn sm ghost'; rm.textContent = 'Remove';
-      rm.setAttribute('aria-label', 'Remove ' + thingLabel(g));
+      var rm = document.createElement('button'); rm.type = 'button'; rm.className = 's-iconbtn';
+      rm.appendChild(icon('trash'));
+      rm.setAttribute('aria-label', 'Remove ' + thingLabel(g)); rm.title = 'Remove ' + thingLabel(g);
       rm.addEventListener('click', function () {
         F.things.splice(i, 1);
         F.active = Math.min(F.active, F.things.length - 1);
@@ -247,7 +268,7 @@
         F.layoutCache = null;
         paint();
       });
-      row.appendChild(dot); row.appendChild(nm); row.appendChild(st); row.appendChild(sel);
+      row.appendChild(sel);
       if (F.things.length > 1) row.appendChild(rm);
       box.appendChild(row);
     });
@@ -387,7 +408,7 @@
         var row = document.createElement('div'); row.className = 'lost-row';
         var tx = document.createElement('span');
         tx.textContent = thingLabel(item.g) + (toEnd ? ' leaves the shot at ' : ' was lost at ') + APP.fmtClock(item.span[0] / fps) + '.';
-        var fix = document.createElement('button'); fix.type = 'button'; fix.className = 'btn sm ghost'; fix.textContent = 'Fix';
+        var fix = document.createElement('button'); fix.type = 'button'; fix.className = 's-btn s-btn--sm s-btn--outline'; fix.textContent = 'Fix';
         fix.addEventListener('click', function () {
           F.active = F.things.indexOf(item.g); F.tapMode = 'add';
           go(2);
@@ -396,7 +417,11 @@
         });
         row.appendChild(tx); row.appendChild(fix); box.appendChild(row);
       });
-      if (!rows.length) { var ok = document.createElement('p'); ok.className = 'fine'; ok.textContent = 'It held on the whole way through.'; box.appendChild(ok); }
+      if (!rows.length) {
+        var ok = document.createElement('p'); ok.className = 'ok-line';
+        var okt = document.createElement('span'); okt.textContent = 'It held on the whole way through.';
+        ok.appendChild(icon('check')); ok.appendChild(okt); box.appendChild(ok);
+      }
     }
     APP.dock({
       go: { label: 'Next: type the text', disabled: !tracked(), fn: function () { go(4); } },
@@ -420,7 +445,7 @@
         var dot = document.createElement('span'); dot.className = 'dot'; dot.setAttribute('aria-hidden', 'true');
         var t = document.createElement('span'); t.textContent = thingLabel(g);
         head.appendChild(dot); head.appendChild(t);
-        var inp = document.createElement('input'); inp.type = 'text'; inp.maxLength = 32; inp.placeholder = 'Text for ' + thingLabel(g).toLowerCase();
+        var inp = document.createElement('input'); inp.type = 'text'; inp.className = 's-input'; inp.maxLength = 32; inp.placeholder = 'Text for ' + thingLabel(g).toLowerCase();
         inp.setAttribute('aria-label', 'Text for ' + thingLabel(g)); inp.value = g.name; inp.autocomplete = 'off';
         inp.addEventListener('input', function () { g.name = inp.value.slice(0, 32); F.layoutCache = null; paintStep4Dock(); });
         var place = document.createElement('div'); place.className = 'seg-row';
@@ -589,6 +614,7 @@
     var f = frameNow(), t = APP.fmtClock(fv.currentTime || 0);
     if (document.activeElement !== $('fScrub')) $('fScrub').value = String(f);
     if (document.activeElement !== $('fScrub2')) $('fScrub2').value = String(f);
+    APP.fillRange($('fScrub')); APP.fillRange($('fScrub2'));
     $('fTime').textContent = t; $('fTime2').textContent = t;
     F.raf = requestAnimationFrame(loop);
   }
@@ -596,11 +622,7 @@
   function stopLoop() { if (F.raf) cancelAnimationFrame(F.raf); F.raf = 0; }
 
   function paintPlay() {
-    var ico = $('fPlayIco');
-    ico.textContent = '';
-    var p = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-    p.setAttribute('d', fv.paused ? 'M8 5v14l11-7z' : 'M7 5h4v14H7zM13 5h4v14h-4z');
-    ico.appendChild(p);
+    APP.setPlayIcon($('fPlayIco'), fv.paused);
     $('fPlay').setAttribute('aria-label', fv.paused ? 'Play' : 'Pause');
   }
   fv.addEventListener('play', paintPlay);

@@ -13,7 +13,7 @@
     ratio: '9:16', mode: 'crop', color: 'black', zoom: 1, panX: 0.5, panY: 0.5,
     words: '', typed: '', style: null, song: null,
     raf: 0, playable: false, jobs: [], homeJobs: [], polling: 0, stripTimer: 0, songTimer: 0,
-    dockOwner: 'app',
+    dockOwner: 'app', lastId: '',
   };
   var PREVIEW_LONG = 960;
   var MIN_LEN = 0.5;
@@ -53,13 +53,8 @@
     return Math.max(1, Math.round(n / 1024)) + ' KB';
   }
 
-  var toastT = 0;
-  function toast(msg) {
-    var el = $('toast');
-    el.textContent = msg;
-    show(el, true);
-    clearTimeout(toastT);
-    toastT = setTimeout(function () { show(el, false); }, 3600);
+  function toast(msg, isError) {
+    if (window.Sona) window.Sona.toast(msg, { ms: 3600, error: !!isError });
   }
 
   function api(method, path, body) {
@@ -78,8 +73,8 @@
     options.forEach(function (o) {
       var b = document.createElement('button');
       b.type = 'button';
-      b.className = 'seg';
-      b.textContent = o.label;
+      b.className = o.swatch ? 'swatch' : 's-chip';
+      b.textContent = o.swatch ? '' : o.label;
       b.setAttribute('aria-pressed', String(o.value) === String(current) ? 'true' : 'false');
       if (o.disabled) b.disabled = true;
       if (o.title) b.title = o.title;
@@ -94,6 +89,13 @@
     });
   }
 
+  // The shared slider paints its filled part from --fill; keep it in step with the value.
+  function fillRange(el) {
+    var lo = Number(el.min) || 0, hi = Number(el.max) || 100, v = Number(el.value) || 0;
+    el.style.setProperty('--fill', (hi > lo ? clamp((v - lo) / (hi - lo), 0, 1) * 100 : 0) + '%');
+  }
+  document.addEventListener('input', function (ev) { if (ev.target.classList && ev.target.classList.contains('s-range')) fillRange(ev.target); });
+
   function store(k, v) {
     try { if (v === undefined) return localStorage.getItem(k); localStorage.setItem(k, v); } catch (e) { return null; }
     return null;
@@ -102,6 +104,10 @@
   /* ---------------- dock (the sticky primary action) ---------------- */
 
   var dockGoFn = null, dockAltFn = null;
+  // The page leaves room for the dock (and lifts toasts above it) by its real height.
+  function measureDock() {
+    requestAnimationFrame(function () { var d = $('dock'); if (!d.hidden) document.body.style.setProperty('--dock-h', d.offsetHeight + 'px'); });
+  }
   // cfg: { go: {label, disabled, fn} | null, alt: {label, fn} | null, save: {href, label} | null, msg, pct (0..100 or null) }
   function dock(cfg) {
     cfg = cfg || {};
@@ -119,8 +125,11 @@
     var hasPct = typeof cfg.pct === 'number';
     show($('dockMeter'), hasPct);
     if (hasPct) $('dockFill').style.setProperty('width', clamp(cfg.pct, 0, 100) + '%');
+    document.body.classList.add('has-dock');
+    measureDock();
   }
-  function hideDock() { show($('dock'), false); }
+  function hideDock() { show($('dock'), false); document.body.classList.remove('has-dock'); }
+  window.addEventListener('resize', measureDock);
   $('dockGo').addEventListener('click', function () { if (dockGoFn) dockGoFn(); });
   $('dockAlt').addEventListener('click', function () { if (dockAltFn) dockAltFn(); });
 
@@ -158,8 +167,8 @@
       var p = document.createElement('span'); p.className = 'pill ' + (r[1] === 'ok' ? 'ok' : r[1] === 'bad' ? 'bad' : 'off');
       p.textContent = r[1] === 'ok' ? 'ready' : r[1] === 'bad' ? 'missing' : r[1] === 'partial' ? 'partial' : 'off';
       top.appendChild(b); top.appendChild(p); li.appendChild(top);
-      if (r[2]) { var d = document.createElement('p'); d.className = 'fine'; d.textContent = r[2]; li.appendChild(d); }
-      if (r[3]) { var h = document.createElement('p'); h.className = 'fine help'; h.textContent = r[3]; li.appendChild(h); }
+      if (r[2]) { var d = document.createElement('p'); d.className = 's-hint'; d.textContent = r[2]; li.appendChild(d); }
+      if (r[3]) { var h = document.createElement('p'); h.className = 'help'; h.textContent = r[3]; li.appendChild(h); }
       ul.appendChild(li);
     });
   }
@@ -172,16 +181,30 @@
     });
   }
 
-  /* ---------------- drawer ---------------- */
+  /* ---------------- menu sheet (phones) and sidebar (desktop) ---------------- */
 
-  function openDrawer() { show($('scrim'), true); show($('drawer'), true); $('drawerClose').focus(); }
-  function closeDrawer() { show($('scrim'), false); show($('drawer'), false); $('menuBtn').focus(); }
-  $('menuBtn').addEventListener('click', openDrawer);
-  $('drawerClose').addEventListener('click', closeDrawer);
-  $('scrim').addEventListener('click', closeDrawer);
-  document.addEventListener('keydown', function (ev) { if (ev.key === 'Escape' && !$('drawer').hidden) closeDrawer(); });
+  // engines: true opens the Engines section, for the "needs setup" paths
+  function openMenu(engines) {
+    if (engines) $('accEngines').open = true;
+    if (window.Sona) window.Sona.open($('menu'));
+  }
+  function lock() { api('POST', '/api/logout').then(function () { location.href = '/gate.html'; }); }
+  $('menuBtn').addEventListener('click', function () { openMenu(false); });
+  $('sideEngines').addEventListener('click', function () { openMenu(true); });
   $('recheck').addEventListener('click', function () { recheck($('recheck')); });
-  $('lockBtn').addEventListener('click', function () { api('POST', '/api/logout').then(function () { location.href = '/gate.html'; }); });
+  $('lockBtn').addEventListener('click', lock);
+  $('sideLock').addEventListener('click', lock);
+  $('navHome').addEventListener('click', function () { if (S.src) { if (history.state === 'studio') history.back(); else goHome(); } });
+  $('navStudio').addEventListener('click', function () { if (!S.src && S.lastId) openStudio(S.lastId); });
+  function paintNav() {
+    var inStudio = !!S.src;
+    document.body.classList.toggle('is-home', !inStudio);
+    document.body.classList.toggle('is-studio', inStudio);
+    if (inStudio) { $('navHome').removeAttribute('aria-current'); $('navStudio').setAttribute('aria-current', 'page'); }
+    else { $('navHome').setAttribute('aria-current', 'page'); $('navStudio').removeAttribute('aria-current'); }
+    show($('navStudio'), !!(S.src || S.lastId));
+    if (S.src) $('navStudioName').textContent = S.src.name;
+  }
 
   /* ---------------- home: sources ---------------- */
 
@@ -190,16 +213,18 @@
       var list = (r.body && r.body.sources) || [];
       var ul = $('srcList');
       ul.textContent = '';
+      show($('srcSkel'), false);
+      if (S.lastId && !list.some(function (s) { return s.id === S.lastId; })) { S.lastId = ''; paintNav(); }
       list.forEach(function (s) {
         var li = document.createElement('li');
-        var row = document.createElement('div'); row.className = 'src-item'; row.tabIndex = 0; row.setAttribute('role', 'button');
-        var th = document.createElement('span'); th.className = 'src-thumb';
+        var row = document.createElement('div'); row.className = 's-list__item src-item'; row.tabIndex = 0; row.setAttribute('role', 'button');
+        var th = document.createElement('span'); th.className = 's-list__media src-thumb';
         if (s.strip) th.style.setProperty('background-image', 'url(/api/source/' + s.id + '/strip)');
-        var tx = document.createElement('span'); tx.className = 'src-text';
-        var nm = document.createElement('span'); nm.className = 'src-name'; nm.textContent = s.name;
-        var sub = document.createElement('span'); sub.className = 'src-sub'; sub.textContent = fmtClock(s.dur) + ' · ' + s.w + '×' + s.h + (s.audio ? '' : ' · no sound') + (s.origin === 'link' ? ' · from a link' : '');
+        var tx = document.createElement('span'); tx.className = 's-list__main';
+        var nm = document.createElement('span'); nm.className = 's-list__title'; nm.textContent = s.name;
+        var sub = document.createElement('span'); sub.className = 's-list__sub'; sub.textContent = fmtClock(s.dur) + ' · ' + s.w + '×' + s.h + (s.audio ? '' : ' · no sound') + (s.origin === 'link' ? ' · from a link' : '');
         tx.appendChild(nm); tx.appendChild(sub);
-        var x = document.createElement('button'); x.type = 'button'; x.className = 'btn sm ghost src-x'; x.textContent = 'Close';
+        var x = document.createElement('button'); x.type = 'button'; x.className = 's-btn s-btn--sm s-btn--ghost src-x'; x.textContent = 'Close';
         x.setAttribute('aria-label', 'Close ' + s.name);
         x.addEventListener('click', function (ev) { ev.stopPropagation(); api('POST', '/api/source/' + s.id + '/drop').then(refreshSources); });
         row.appendChild(th); row.appendChild(tx); row.appendChild(x);
@@ -208,6 +233,7 @@
         li.appendChild(row);
         ul.appendChild(li);
       });
+      show(ul, list.length > 0);
       show($('openSec'), list.length > 0);
       if (S.state) $('openNote').textContent = 'Open videos stay in the work folder for ' + plural(S.state.limits.sourceHours, 'hour') + ' after you last touch them.';
     });
@@ -342,6 +368,7 @@
     show($('studio'), false); show($('home'), true);
     show($('backBtn'), false); show($('brand'), true); show($('barTitle'), false);
     hideDock();
+    paintNav();
     paintHomeJobs();
     refreshSources();
     window.scrollTo(0, 0);
@@ -357,13 +384,14 @@
     api('GET', '/api/source/' + id).then(function (r) {
       if (r.status !== 200 || !r.body.ok) { toast(errOf(r)); return refreshSources(); }
       var s = r.body;
-      S.src = s; S.song = s.song || null;
+      S.src = s; S.song = s.song || null; S.lastId = id;
       S.a = 0; S.b = Math.min(s.dur, S.state ? S.state.limits.clip : s.dur);
       S.zoom = 1; S.panX = 0.5; S.panY = 0.5; S.playable = false;
       S.jobs = S.jobs.filter(function (j) { return j.src === id; });
       show($('home'), false); show($('studio'), true);
       show($('backBtn'), true); show($('brand'), false); show($('barTitle'), true);
       $('barTitle').textContent = s.name;
+      paintNav();
       $('srcMeta').textContent = fmtClock(s.dur) + ' · ' + s.w + '×' + s.h + ' · ' + Math.round(s.fps) + ' fps' + (s.audio ? '' : ' · no sound') + (s.captions ? ' · captions: ' + s.captions : '');
       if (history.state !== 'studio') history.pushState('studio', '');
       video.src = '/api/source/' + id + '/video';
@@ -499,11 +527,11 @@
   function startLoop() { if (!S.raf) S.raf = requestAnimationFrame(tick); }
   function stopLoop() { if (S.raf) cancelAnimationFrame(S.raf); S.raf = 0; }
   function seek(sec) { if (!S.src) return; try { video.currentTime = clamp(sec, 0, S.src.dur || 0); } catch (e) { /* not ready yet */ } }
+  function setPlayIcon(useEl, paused) {
+    useEl.setAttribute('href', useEl.getAttribute('href').replace(/#.*$/, '#' + (paused ? 'play' : 'pause')));
+  }
   function paintPlay() {
-    $('playIco').textContent = '';
-    var p = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-    p.setAttribute('d', video.paused ? 'M8 5v14l11-7z' : 'M7 5h4v14H7zM13 5h4v14h-4z');
-    $('playIco').appendChild(p);
+    setPlayIcon($('playIco'), video.paused);
     $('playBtn').setAttribute('aria-label', video.paused ? 'Play' : 'Pause');
   }
   $('playBtn').addEventListener('click', function () {
@@ -520,6 +548,7 @@
     var lo = zoomMin(), hi = zoomMax();
     $('rfZoom').value = String(Math.round(100 * Math.log(S.zoom / lo) / Math.log(hi / lo)) || 0);
     $('rfZoomVal').textContent = Math.round(S.zoom * 100) + '%';
+    fillRange($('rfZoom'));
     show($('rfFit'), S.mode !== 'crop');
   }
   function setZoom(z, keep) {
@@ -785,7 +814,7 @@
     try { video.pause(); } catch (e) { /* none */ }
     $('dockGo').disabled = true;
     api('POST', '/api/source/' + S.src.id + '/render', body).then(function (r) {
-      if (r.status !== 200 || !r.body.id) { toast(errOf(r)); paintDock(); return; }
+      if (r.status !== 200 || !r.body.id) { toast(errOf(r), true); paintDock(); return; }
       watchJob({ id: r.body.id, title: S.src.name, kind: S.tool, src: S.src.id });
     });
   }
@@ -829,22 +858,22 @@
   }
   function jobRow(j) {
     var li = document.createElement('li');
-    li.className = 'job' + (j.state === 'error' || j.state === 'cancelled' ? ' error' : '');
+    li.className = 'job' + (j.state === 'error' || j.state === 'cancelled' ? ' error' : j.state === 'ready' ? ' ready' : '');
     var top = document.createElement('div'); top.className = 'job-top';
     var nm = document.createElement('span'); nm.className = 'job-name'; nm.textContent = j.name || j.title || 'Render';
     var st = document.createElement('span'); st.className = 'job-state'; st.textContent = j.state === 'ready' ? (j.size ? fmtBytes(j.size) : 'ready') : j.state === 'error' ? 'failed' : j.state;
     top.appendChild(nm); top.appendChild(st); li.appendChild(top);
     if (j.state === 'queued' || j.state === 'running') {
       var m = document.createElement('span'); m.className = 'meter'; var i = document.createElement('i'); i.style.setProperty('width', clamp(j.pct || 0, 0, 100) + '%'); m.appendChild(i); li.appendChild(m);
-      var p = document.createElement('p'); p.className = 'fine'; p.textContent = j.msg || ''; li.appendChild(p);
+      var p = document.createElement('p'); p.className = 's-hint'; p.textContent = j.msg || ''; li.appendChild(p);
     } else if (j.state === 'ready' && j.kind !== 'follow' && !j.opened) {
       var act = document.createElement('div'); act.className = 'job-actions';
-      var a = document.createElement('a'); a.className = 'btn sm primary'; a.href = '/api/job/' + j.id + '/file'; a.setAttribute('download', ''); a.textContent = 'Save';
-      var pv = document.createElement('a'); pv.className = 'btn sm ghost'; pv.href = '/api/job/' + j.id + '/preview'; pv.target = '_blank'; pv.rel = 'noopener'; pv.textContent = 'Preview';
+      var a = document.createElement('a'); a.className = 's-btn s-btn--sm s-btn--primary'; a.href = '/api/job/' + j.id + '/file'; a.setAttribute('download', ''); a.textContent = 'Save';
+      var pv = document.createElement('a'); pv.className = 's-btn s-btn--sm s-btn--outline'; pv.href = '/api/job/' + j.id + '/preview'; pv.target = '_blank'; pv.rel = 'noopener'; pv.textContent = 'Preview';
       act.appendChild(a); act.appendChild(pv); li.appendChild(act);
-      if (j.msg && j.msg !== 'Ready.') { var n = document.createElement('p'); n.className = 'fine'; n.textContent = j.msg; li.appendChild(n); }
+      if (j.msg && j.msg !== 'Ready.') { var n = document.createElement('p'); n.className = 's-hint'; n.textContent = j.msg; li.appendChild(n); }
     } else if (j.state !== 'ready') {
-      var e = document.createElement('p'); e.className = 'fine err'; e.textContent = j.msg || ''; li.appendChild(e);
+      var e = document.createElement('p'); e.className = 's-hint err'; e.textContent = j.msg || ''; li.appendChild(e);
     } else {
       return null;
     }
@@ -865,12 +894,13 @@
   /* ---------------- boot ---------------- */
 
   window.addEventListener('resize', function () { if (S.src) sizeCanvas(); });
+  paintNav();
   loadState().then(function () { buildToolPickers(); refreshSources(); });
 
   // What follow.js needs from the page.
   window.FLICKER_APP = {
     api: api, errOf: errOf, buildSeg: buildSeg, show: show, fmtClock: fmtClock, fmtLen: fmtLen, toast: toast, store: store, clamp: clamp,
-    dock: dock, watchJob: watchJob, recheck: recheck,
+    dock: dock, watchJob: watchJob, recheck: recheck, openMenu: openMenu, setPlayIcon: setPlayIcon, fillRange: fillRange,
     state: function () { return S.state; }, src: function () { return S.src; }, range: function () { return { a: S.a, b: S.b }; },
     video: function () { return video; }, tool: function () { return S.tool; },
     takeDock: function () { S.dockOwner = 'follow'; }, giveDock: function () { S.dockOwner = 'app'; paintDock(); },

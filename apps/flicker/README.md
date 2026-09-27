@@ -29,7 +29,11 @@ Installing ffmpeg: Windows `winget install Gyan.FFmpeg`, macOS `brew install ffm
 | **Words on the video** | On a cut, a GIF or a reframe: type your own lines, or (optional helpers) burn in what is heard, the published lyrics of a song timed to the singing, or the captions that came with an imported link. Pick the look, font and colour. |
 | **Text follow** | Mark something in the shot, type some text, and the text rides on it through the clip (optional helper, needs an NVIDIA graphics card). |
 
-The page is designed for a phone first: one column, big tap targets, and the main action always sits in a bar at the bottom of the screen.
+The page is designed for a phone first: one column, big tap targets, and the main action always sits in a bar at the bottom of the screen. From 1024 px wide it gets a sidebar, and the studio splits into the picture on the left and the tools on the right. It is built on Sona UI, the design system shared by all five Sona apps, so it has the same lock screen as the others and follows your light or dark setting (or pick one under Theme in the menu).
+
+| Phone | Desktop |
+|---|---|
+| ![Text follow, step 2 of 5, on a phone](../../docs/img/2027/after-flicker-follow-2-mark-panel-390.webp) | ![The studio with Text follow, step 4 of 5](../../docs/img/2027/after-flicker-follow-4-text-1440.webp) |
 
 ## Text follow, step by step
 

@@ -4,300 +4,350 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#161311">
-<meta name="color-scheme" content="dark">
 <title>Flicker · Sona</title>
-<link rel="icon" href="/icon.svg" type="image/svg+xml">
+<link rel="icon" href="/assets/sona-ui/flame.svg" type="image/svg+xml">
 <link rel="manifest" href="/manifest.webmanifest">
-<link rel="stylesheet" href="/assets/sona.css">
+<link rel="stylesheet" href="/assets/sona-ui/tokens.css">
+<link rel="stylesheet" href="/assets/sona-ui/components.css">
 <link rel="stylesheet" href="/styles.css">
+<script src="/assets/sona-ui/theme.js"></script>
 </head>
 <body>
-<div class="glow" aria-hidden="true"></div>
+<a class="s-skip" href="#main">Skip to content</a>
+<div class="s-shell s-shell--sidebar">
 
-<header class="bar">
-  <button type="button" class="icon-btn back" id="backBtn" hidden aria-label="Back to your videos">
-    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7" /></svg>
-  </button>
-  <div class="brand" id="brand">
-    <svg class="mark" viewBox="0 0 48 48" aria-hidden="true"><defs>
-      <linearGradient id="fl" x1="0" y1="0" x2="0" y2="1">
-        <stop offset="0" stop-color="#F3CE86"/><stop offset=".5" stop-color="#E7A94C"/><stop offset="1" stop-color="#E1712B"/>
-      </linearGradient></defs>
-      <path fill="url(#fl)" d="M24 3c1 7-3 11-7 15-2 2-4 5-4 9a11 11 0 0 0 22 0c0-5-3-8-6-12-1 3-3 4-5 5 2-6-1-12 0-17Z"/>
-      <path fill="#161311" opacity=".22" d="M24 20c1 3-1 6-3 8-1 1-2 3-2 5a5 5 0 0 0 10 0c0-3-2-5-4-7 0 2-1 3-2 4 1-3 0-7 1-10Z"/>
-    </svg>
-    <div class="brand-text">
-      <span class="wordmark">Flicker</span>
-      <span class="byline">by Sona</span>
-    </div>
-  </div>
-  <div class="bar-title" id="barTitle" hidden></div>
-  <button type="button" class="icon-btn" id="menuBtn" aria-label="Menu" aria-haspopup="dialog" aria-controls="drawer">
-    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16" /></svg>
-  </button>
-</header>
-
-<main id="main">
-
-  <!-- ============ HOME: your videos ============ -->
-  <section id="home" class="view">
-    <p class="lede">Your video effects studio, at home. Cut, loop, reframe, caption, and make text follow what moves. Your files never leave this machine.</p>
-
-    <label class="drop" id="drop" for="fileInput" tabindex="0">
-      <input type="file" id="fileInput" accept="video/*,.mkv,.mov,.mp4,.webm,.m4v,.avi" hidden>
-      <svg class="drop-ico" viewBox="0 0 48 48" aria-hidden="true"><path d="M24 31V11m0 0l-8 8m8-8l8 8M10 33v4a3 3 0 0 0 3 3h22a3 3 0 0 0 3-3v-4" /></svg>
-      <span class="drop-big" id="dropBig">Drop a video here</span>
-      <span class="drop-small" id="dropSmall">or tap to choose one from this device</span>
-      <span class="meter" id="upMeter" hidden><i id="upFill"></i></span>
-    </label>
-    <p class="note err" id="homeErr" hidden></p>
-
-    <details class="card link-card" id="linkCard" hidden>
-      <summary><span>Bring one in from a link</span><span class="chip" id="linkChip">optional</span></summary>
-      <p class="fine">Link import is switched on for this studio. You are responsible for what you download: only bring in what you have the right to use.</p>
-      <form class="row" id="linkForm" autocomplete="off">
-        <input type="url" id="linkInput" inputmode="url" placeholder="Paste a video link" aria-label="Video link" maxlength="2048" spellcheck="false" autocapitalize="none" autocorrect="off">
-        <button type="submit" class="btn" id="linkGo">Check</button>
-      </form>
-      <p class="note" id="linkNote" hidden></p>
-      <div class="link-info" id="linkInfo" hidden>
-        <p class="link-title" id="linkTitle"></p>
-        <p class="fine" id="linkMeta"></p>
-        <div class="field" id="linkSubsRow" hidden>
-          <span class="label">Captions to keep</span>
-          <div class="seg-row" id="linkSubs"></div>
-        </div>
-        <button type="button" class="btn primary wide" id="linkStudio">Open in the studio</button>
-        <details class="more">
-          <summary>Or save the file as it is</summary>
-          <div class="field"><span class="label">Video quality</span><div class="seg-row" id="linkQuality"></div></div>
-          <button type="button" class="btn wide" id="linkVideo">Save video</button>
-          <div class="field"><span class="label">Audio format</span><div class="seg-row" id="linkAudioFmt"></div></div>
-          <button type="button" class="btn wide" id="linkAudio">Save audio</button>
-        </details>
-      </div>
-    </details>
-
-    <section class="list-sec" id="openSec" hidden>
-      <h2 class="h2">Open videos</h2>
-      <ul class="src-list" id="srcList"></ul>
-      <p class="fine" id="openNote"></p>
-    </section>
-
-    <section class="list-sec" id="homeJobsSec" hidden>
-      <h2 class="h2">Saves</h2>
-      <ul class="job-list" id="homeJobs"></ul>
-    </section>
-  </section>
-
-  <!-- ============ STUDIO: one video ============ -->
-  <section id="studio" class="view" hidden>
-    <div class="col-media">
-    <p class="src-meta" id="srcMeta"></p>
-
-    <div class="stage-wrap" id="stageWrap">
-      <div class="stage" id="stage">
-        <canvas id="canvas" aria-label="Preview"></canvas>
-        <span class="badge" id="stageBadge" hidden></span>
-      </div>
-      <div class="stage fstage" id="fstage" hidden>
-        <canvas id="fcanvas" aria-label="Text follow preview. Tap to mark."></canvas>
-        <span class="badge" id="fBadge" hidden></span>
-      </div>
-      <video id="video" playsinline preload="auto" hidden></video>
-      <video id="fvideo" playsinline preload="auto" hidden></video>
-    </div>
-
-    <div class="transport" id="transport">
-      <button type="button" class="icon-btn play" id="playBtn" aria-label="Play">
-        <svg viewBox="0 0 24 24" aria-hidden="true" id="playIco"><path d="M8 5v14l11-7z" /></svg>
-      </button>
-      <span class="time" id="timeNow">0:00.0</span>
-      <span class="spacer"></span>
-      <button type="button" class="btn sm ghost" id="setIn">Start here</button>
-      <button type="button" class="btn sm ghost" id="setOut">End here</button>
-    </div>
-
-    <div class="trim" id="trim">
-      <div class="strip" id="strip"><i class="shade a" id="shadeA"></i><i class="shade b" id="shadeB"></i><i class="head" id="head"></i></div>
-      <input type="range" class="handle" id="trimA" min="0" max="10" step="0.1" value="0" aria-label="Start">
-      <input type="range" class="handle" id="trimB" min="0" max="10" step="0.1" value="10" aria-label="End">
-    </div>
-    <div class="range-row" id="rangeRow">
-      <label class="tfield"><span>Start</span><input type="text" id="inA" inputmode="decimal" autocomplete="off" spellcheck="false"></label>
-      <span class="len" id="lenOut"></span>
-      <label class="tfield"><span>End</span><input type="text" id="inB" inputmode="decimal" autocomplete="off" spellcheck="false"></label>
-    </div>
-
-    </div>
-
-    <div class="col-tools">
-    <nav class="tabs" id="tabs" role="tablist" aria-label="Tools">
-      <button type="button" role="tab" class="tab" data-tool="cut" aria-selected="true">Cut</button>
-      <button type="button" role="tab" class="tab" data-tool="gif" aria-selected="false">GIF</button>
-      <button type="button" role="tab" class="tab" data-tool="reframe" aria-selected="false">Reframe</button>
-      <button type="button" role="tab" class="tab" data-tool="follow" aria-selected="false">Text follow</button>
+  <!-- desktop sidebar (1024px and up) -->
+  <aside class="s-sidebar side" aria-label="Flicker">
+    <div class="s-sidebar__brand"><img src="/assets/sona-ui/flame.svg" alt="" width="26" height="26"><span class="s-wordmark">Flicker</span></div>
+    <nav class="side-nav" aria-label="Sections">
+      <button type="button" class="s-navlink" id="navHome" aria-current="page"><svg class="s-i" aria-hidden="true"><use href="/assets/sona-ui/icons.svg#film"/></svg>Your videos</button>
+      <button type="button" class="s-navlink" id="navStudio" hidden><svg class="s-i" aria-hidden="true"><use href="/assets/sona-ui/icons.svg#wand"/></svg><span class="side-nav__name" id="navStudioName">Studio</span></button>
     </nav>
-
-    <!-- Cut -->
-    <div class="panel" id="pCut" role="tabpanel">
-      <div class="field"><span class="label">Save as</span><div class="seg-row" id="cutOut"></div></div>
-      <div class="field" id="cutFmtRow" hidden><span class="label">Audio format</span><div class="seg-row" id="cutFmt"></div></div>
-      <p class="fine" id="cutNote">An exact cut of the range above, as an MP4 that plays everywhere.</p>
+    <div class="s-sidebar__spacer"></div>
+    <div class="side-note"><svg class="s-i s-i--sm" aria-hidden="true"><use href="/assets/sona-ui/icons.svg#lock"/></svg><span>Your files never leave this machine.</span></div>
+    <button type="button" class="s-navlink" id="sideEngines"><svg class="s-i" aria-hidden="true"><use href="/assets/sona-ui/icons.svg#cpu"/></svg>Engines and help</button>
+    <button type="button" class="s-navlink" id="sideLock"><svg class="s-i" aria-hidden="true"><use href="/assets/sona-ui/icons.svg#lock"/></svg>Lock Flicker</button>
+    <div class="side-scheme s-seg" role="group" aria-label="Light or dark">
+      <button type="button" class="s-seg__btn" data-scheme-set="auto" aria-label="Automatic theme" title="Automatic"><svg class="s-i" aria-hidden="true"><use href="/assets/sona-ui/icons.svg#auto"/></svg></button>
+      <button type="button" class="s-seg__btn" data-scheme-set="light" aria-label="Light theme" title="Light"><svg class="s-i" aria-hidden="true"><use href="/assets/sona-ui/icons.svg#sun"/></svg></button>
+      <button type="button" class="s-seg__btn" data-scheme-set="dark" aria-label="Dark theme" title="Dark"><svg class="s-i" aria-hidden="true"><use href="/assets/sona-ui/icons.svg#moon"/></svg></button>
     </div>
+  </aside>
 
-    <!-- GIF -->
-    <div class="panel" id="pGif" role="tabpanel" hidden>
-      <div class="field"><span class="label">Width</span><div class="seg-row" id="gifW"></div></div>
-      <p class="fine" id="gifNote"></p>
-    </div>
+  <div class="stage-col">
+    <header class="s-appbar bar">
+      <button type="button" class="s-iconbtn" id="backBtn" hidden aria-label="Back to your videos"><svg class="s-i" aria-hidden="true"><use href="/assets/sona-ui/icons.svg#back"/></svg></button>
+      <div class="brand" id="brand"><img src="/assets/sona-ui/flame.svg" alt="" width="24" height="24"><span class="s-wordmark">Flicker</span></div>
+      <h1 class="s-appbar__title bar-title" id="barTitle" hidden></h1>
+      <div class="s-appbar__actions">
+        <button type="button" class="s-iconbtn phone-only" data-scheme-cycle aria-label="Theme"><svg class="s-i" aria-hidden="true"><use href="/assets/sona-ui/icons.svg#auto"/></svg></button>
+        <button type="button" class="s-iconbtn phone-only" id="menuBtn" aria-label="Menu" aria-haspopup="dialog" aria-controls="menu"><svg class="s-i" aria-hidden="true"><use href="/assets/sona-ui/icons.svg#menu"/></svg></button>
+      </div>
+    </header>
 
-    <!-- Reframe -->
-    <div class="panel" id="pReframe" role="tabpanel" hidden>
-      <div class="field"><span class="label">Shape</span><div class="seg-row" id="rfRatio"></div></div>
-      <div class="field"><span class="label">Fill</span><div class="seg-row" id="rfMode"></div></div>
-      <div class="field" id="rfColorRow" hidden><span class="label">Colour</span><div class="seg-row swatches" id="rfColor"></div></div>
-      <div class="field">
-        <span class="label">Zoom <b id="rfZoomVal">100%</b></span>
-        <input type="range" id="rfZoom" min="0" max="100" step="1" value="0" aria-label="Zoom">
-        <div class="seg-row">
-          <button type="button" class="btn sm ghost" id="rfFit">Fit</button>
-          <button type="button" class="btn sm ghost" id="rfFill">Fill</button>
-          <button type="button" class="btn sm ghost" id="rfCenter">Centre</button>
+    <main id="main" tabindex="-1">
+
+      <!-- ============ HOME: your videos ============ -->
+      <section id="home" class="view home">
+        <div class="hero">
+          <h1 class="page-title"><span class="s-wordmark">Flicker</span></h1>
+          <p class="lede">Your video effects studio, at home. Cut, loop, reframe, caption, and make text follow what moves. Your files never leave this machine.</p>
         </div>
-      </div>
-      <p class="fine">Drag the preview to place the picture. Pinch or scroll to zoom.</p>
-    </div>
 
-    <!-- Words (rides on Cut video, GIF and Reframe) -->
-    <div class="panel words" id="pWords">
-      <div class="field">
-        <span class="label">Words on the video</span>
-        <div class="seg-row" id="wordsMode"></div>
-      </div>
-      <p class="fine" id="wordsNote"></p>
-      <div class="field" id="typedRow" hidden>
-        <textarea id="typedText" rows="3" maxlength="4000" placeholder="One caption per line. Lines share the clip evenly, one after another." aria-label="Your words"></textarea>
-      </div>
-      <div class="song" id="songRow" hidden>
-        <p class="fine" id="songLine"></p>
-        <div class="row">
-          <input type="text" id="songArtist" placeholder="Artist" aria-label="Artist" maxlength="120" autocomplete="off">
-          <input type="text" id="songTrack" placeholder="Song title" aria-label="Song title" maxlength="120" autocomplete="off">
-        </div>
-        <button type="button" class="btn sm" id="songFind">Find lyrics</button>
-      </div>
-      <div id="styleRows" hidden>
-        <div class="field"><span class="label">Look</span><div class="seg-row" id="wLook"></div></div>
-        <div class="field"><span class="label">Font</span><div class="seg-row" id="wFont"></div></div>
-        <div class="field"><span class="label">Colour</span><div class="seg-row swatches" id="wColor"></div></div>
-      </div>
-    </div>
+        <label class="drop" id="drop" for="fileInput" tabindex="0">
+          <input type="file" id="fileInput" accept="video/*,.mkv,.mov,.mp4,.webm,.m4v,.avi" hidden>
+          <span class="drop-ico" aria-hidden="true"><svg class="s-i"><use href="/assets/sona-ui/icons.svg#upload"/></svg></span>
+          <span class="drop-big" id="dropBig">Drop a video here</span>
+          <span class="drop-small" id="dropSmall">or tap to choose one from this device</span>
+          <span class="meter" id="upMeter" hidden><i id="upFill"></i></span>
+        </label>
+        <p class="note err" id="homeErr" role="alert" hidden></p>
 
-    <!-- Text follow -->
-    <div class="panel" id="pFollow" role="tabpanel" hidden>
-      <div class="setup" id="fSetup" hidden>
-        <h3 class="h3">Text follow is not set up yet</h3>
-        <p class="fine">Text follow tracks the thing you mark through the clip, then burns your text onto it. It needs a local tracker (SAM 2.1) and an NVIDIA graphics card.</p>
-        <p class="fine help" id="fSetupHelp"></p>
-        <button type="button" class="btn sm" id="fRecheck">Check again</button>
-      </div>
-      <div id="fFlow" hidden>
-        <ol class="steps" id="fSteps">
-          <li data-step="1"><b>1</b><span>Clip</span></li>
-          <li data-step="2"><b>2</b><span>Mark</span></li>
-          <li data-step="3"><b>3</b><span>Track</span></li>
-          <li data-step="4"><b>4</b><span>Text</span></li>
-          <li data-step="5"><b>5</b><span>Render</span></li>
-        </ol>
-        <p class="step-head" id="fHead"></p>
-        <p class="fine" id="fHint"></p>
-        <span class="meter" id="fMeter" hidden><i id="fFill"></i></span>
-
-        <div id="fMark" hidden>
-          <div class="fscrub">
-            <button type="button" class="icon-btn sm" id="fPrev" aria-label="Previous frame"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 6l-6 6 6 6" /></svg></button>
-            <input type="range" id="fScrub" min="0" max="1" step="1" value="0" aria-label="Frame">
-            <button type="button" class="icon-btn sm" id="fNext" aria-label="Next frame"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6" /></svg></button>
-            <span class="time" id="fTime">0:00.0</span>
+        <section class="list-sec" id="openSec" aria-labelledby="openTitle">
+          <h2 class="s-section__title sec-title" id="openTitle">Open videos</h2>
+          <div class="src-skel" id="srcSkel" aria-hidden="true">
+            <div class="s-skel-row"><div class="s-skel skel-thumb"></div><div class="s-skel-row__lines"><div class="s-skel s-skel--text skel-w60"></div><div class="s-skel s-skel--text skel-w35"></div></div></div>
+            <div class="s-skel-row"><div class="s-skel skel-thumb"></div><div class="s-skel-row__lines"><div class="s-skel s-skel--text skel-w45"></div><div class="s-skel s-skel--text skel-w25"></div></div></div>
           </div>
-          <div class="field"><span class="label">A tap will</span><div class="seg-row" id="fTapMode"></div></div>
-          <div class="things" id="fThings"></div>
-          <button type="button" class="btn sm ghost" id="fAddThing">Mark another thing</button>
-        </div>
+          <ul class="s-list s-list--inset src-list" id="srcList" hidden></ul>
+          <p class="s-hint" id="openNote"></p>
+        </section>
 
-        <div id="fTrack" hidden>
-          <div class="fscrub">
-            <button type="button" class="icon-btn sm play" id="fPlay" aria-label="Play"><svg viewBox="0 0 24 24" aria-hidden="true" id="fPlayIco"><path d="M8 5v14l11-7z" /></svg></button>
-            <input type="range" id="fScrub2" min="0" max="1" step="1" value="0" aria-label="Frame">
-            <span class="time" id="fTime2">0:00.0</span>
+        <section class="list-sec" id="homeJobsSec" aria-labelledby="savesTitle" hidden>
+          <h2 class="s-section__title sec-title" id="savesTitle">Saves</h2>
+          <ul class="job-list" id="homeJobs"></ul>
+        </section>
+
+        <details class="link-card" id="linkCard" hidden>
+          <summary><span class="link-card__ic" aria-hidden="true"><svg class="s-i"><use href="/assets/sona-ui/icons.svg#link"/></svg></span><span class="link-card__t">Bring one in from a link</span><span class="s-badge s-badge--soft" id="linkChip">optional</span><svg class="s-i link-card__chev" aria-hidden="true"><use href="/assets/sona-ui/icons.svg#chevron-down"/></svg></summary>
+          <div class="link-card__body">
+            <p class="s-hint">Link import is switched on for this studio. You are responsible for what you download: only bring in what you have the right to use.</p>
+            <form class="row" id="linkForm" autocomplete="off">
+              <input class="s-input" type="url" id="linkInput" inputmode="url" placeholder="Paste a video link" aria-label="Video link" maxlength="2048" spellcheck="false" autocapitalize="none" autocorrect="off">
+              <button type="submit" class="s-btn" id="linkGo">Check</button>
+            </form>
+            <p class="note" id="linkNote" hidden></p>
+            <div class="link-info" id="linkInfo" hidden>
+              <p class="link-title" id="linkTitle"></p>
+              <p class="s-hint" id="linkMeta"></p>
+              <div class="s-field" id="linkSubsRow" hidden>
+                <span class="s-label">Captions to keep</span>
+                <div class="seg-row" id="linkSubs"></div>
+              </div>
+              <button type="button" class="s-btn s-btn--primary s-btn--block" id="linkStudio">Open in the studio</button>
+              <details class="more">
+                <summary>Or save the file as it is</summary>
+                <div class="s-field"><span class="s-label">Video quality</span><div class="seg-row" id="linkQuality"></div></div>
+                <button type="button" class="s-btn s-btn--block" id="linkVideo">Save video</button>
+                <div class="s-field"><span class="s-label">Audio format</span><div class="seg-row" id="linkAudioFmt"></div></div>
+                <button type="button" class="s-btn s-btn--block" id="linkAudio">Save audio</button>
+              </details>
+            </div>
           </div>
-          <div class="lost" id="fLost"></div>
+        </details>
+
+        <section class="list-sec" aria-labelledby="whatTitle">
+          <h2 class="s-section__title sec-title" id="whatTitle">What you can make</h2>
+          <ul class="what">
+            <li><span class="what__ic" aria-hidden="true"><svg class="s-i"><use href="/assets/sona-ui/icons.svg#scissors"/></svg></span><span><b>Cut</b><small>An exact clip, or just its sound</small></span></li>
+            <li><span class="what__ic" aria-hidden="true"><svg class="s-i"><use href="/assets/sona-ui/icons.svg#gif"/></svg></span><span><b>GIF</b><small>A clean loop, up to 20 seconds</small></span></li>
+            <li><span class="what__ic" aria-hidden="true"><svg class="s-i"><use href="/assets/sona-ui/icons.svg#crop"/></svg></span><span><b>Reframe</b><small>9:16, 4:5, square or wide</small></span></li>
+            <li><span class="what__ic" aria-hidden="true"><svg class="s-i"><use href="/assets/sona-ui/icons.svg#text"/></svg></span><span><b>Words</b><small>Typed, heard or sung lines</small></span></li>
+            <li><span class="what__ic" aria-hidden="true"><svg class="s-i"><use href="/assets/sona-ui/icons.svg#target"/></svg></span><span><b>Text follow</b><small>Text that rides on what moves</small></span></li>
+          </ul>
+        </section>
+      </section>
+
+      <!-- ============ STUDIO: one video ============ -->
+      <section id="studio" class="view studio" hidden>
+        <div class="col-media">
+          <p class="src-meta" id="srcMeta"></p>
+
+          <div class="stage-wrap" id="stageWrap">
+            <div class="stage" id="stage">
+              <canvas id="canvas" aria-label="Preview"></canvas>
+              <span class="s-badge stage-badge" id="stageBadge" hidden></span>
+            </div>
+            <div class="stage fstage" id="fstage" hidden>
+              <canvas id="fcanvas" aria-label="Text follow preview. Tap to mark."></canvas>
+              <span class="s-badge stage-badge" id="fBadge" hidden></span>
+            </div>
+            <video id="video" playsinline preload="auto" hidden></video>
+            <video id="fvideo" playsinline preload="auto" hidden></video>
+          </div>
+
+          <div class="transport" id="transport">
+            <button type="button" class="s-iconbtn s-iconbtn--filled" id="playBtn" aria-label="Play"><svg class="s-i" aria-hidden="true"><use id="playIco" href="/assets/sona-ui/icons.svg#play"/></svg></button>
+            <span class="time" id="timeNow">0:00.0</span>
+            <span class="spacer"></span>
+            <button type="button" class="s-btn s-btn--sm s-btn--outline" id="setIn">Start here</button>
+            <button type="button" class="s-btn s-btn--sm s-btn--outline" id="setOut">End here</button>
+          </div>
+
+          <div class="trim" id="trim">
+            <div class="strip" id="strip"><i class="shade a" id="shadeA"></i><i class="shade b" id="shadeB"></i><i class="head" id="head"></i></div>
+            <input type="range" class="handle" id="trimA" min="0" max="10" step="0.1" value="0" aria-label="Start">
+            <input type="range" class="handle" id="trimB" min="0" max="10" step="0.1" value="10" aria-label="End">
+          </div>
+          <div class="range-row" id="rangeRow">
+            <label class="tfield"><span class="s-label">Start</span><input class="s-input" type="text" id="inA" inputmode="decimal" autocomplete="off" spellcheck="false"></label>
+            <span class="len" id="lenOut"></span>
+            <label class="tfield"><span class="s-label">End</span><input class="s-input" type="text" id="inB" inputmode="decimal" autocomplete="off" spellcheck="false"></label>
+          </div>
         </div>
 
-        <div id="fText" hidden>
-          <div class="things" id="fLabels"></div>
-          <div class="field"><span class="label">Look</span><div class="seg-row" id="fLook"></div></div>
-          <div class="field"><span class="label">Font</span><div class="seg-row" id="fFont"></div></div>
-          <div class="field"><span class="label">Size</span><div class="seg-row" id="fSize"></div></div>
-          <div class="field"><span class="label">Pointer</span><div class="seg-row" id="fPtr"></div></div>
+        <div class="col-tools">
+          <div class="s-seg tools" id="tabs" role="tablist" aria-label="Tools">
+            <button type="button" role="tab" class="s-seg__btn tab" data-tool="cut" aria-selected="true" aria-controls="pCut"><svg class="s-i" aria-hidden="true"><use href="/assets/sona-ui/icons.svg#scissors"/></svg>Cut</button>
+            <button type="button" role="tab" class="s-seg__btn tab" data-tool="gif" aria-selected="false" aria-controls="pGif"><svg class="s-i" aria-hidden="true"><use href="/assets/sona-ui/icons.svg#gif"/></svg>GIF</button>
+            <button type="button" role="tab" class="s-seg__btn tab" data-tool="reframe" aria-selected="false" aria-controls="pReframe"><svg class="s-i" aria-hidden="true"><use href="/assets/sona-ui/icons.svg#crop"/></svg>Reframe</button>
+            <button type="button" role="tab" class="s-seg__btn tab" data-tool="follow" aria-selected="false" aria-controls="pFollow"><svg class="s-i" aria-hidden="true"><use href="/assets/sona-ui/icons.svg#target"/></svg>Text follow</button>
+          </div>
+
+          <!-- Cut -->
+          <div class="panel" id="pCut" role="tabpanel" aria-label="Cut">
+            <div class="s-field"><span class="s-label">Save as</span><div class="seg-row" id="cutOut"></div></div>
+            <div class="s-field" id="cutFmtRow" hidden><span class="s-label">Audio format</span><div class="seg-row" id="cutFmt"></div></div>
+            <p class="s-hint" id="cutNote">An exact cut of the range above, as an MP4 that plays everywhere.</p>
+          </div>
+
+          <!-- GIF -->
+          <div class="panel" id="pGif" role="tabpanel" aria-label="GIF" hidden>
+            <div class="s-field"><span class="s-label">Width</span><div class="seg-row" id="gifW"></div></div>
+            <p class="s-hint" id="gifNote"></p>
+          </div>
+
+          <!-- Reframe -->
+          <div class="panel" id="pReframe" role="tabpanel" aria-label="Reframe" hidden>
+            <div class="s-field"><span class="s-label">Shape</span><div class="seg-row" id="rfRatio"></div></div>
+            <div class="s-field"><span class="s-label">Fill</span><div class="seg-row" id="rfMode"></div></div>
+            <div class="s-field" id="rfColorRow" hidden><span class="s-label">Colour</span><div class="seg-row swatches" id="rfColor"></div></div>
+            <div class="s-field">
+              <span class="s-label zoom-label"><span>Zoom</span><b class="s-num" id="rfZoomVal">100%</b></span>
+              <input type="range" class="s-range" id="rfZoom" min="0" max="100" step="1" value="0" aria-label="Zoom">
+              <div class="seg-row">
+                <button type="button" class="s-btn s-btn--sm s-btn--outline" id="rfFit">Fit</button>
+                <button type="button" class="s-btn s-btn--sm s-btn--outline" id="rfFill">Fill</button>
+                <button type="button" class="s-btn s-btn--sm s-btn--outline" id="rfCenter">Centre</button>
+              </div>
+            </div>
+            <p class="s-hint">Drag the preview to place the picture. Pinch or scroll to zoom.</p>
+          </div>
+
+          <!-- Words (rides on Cut video, GIF and Reframe) -->
+          <div class="panel words" id="pWords">
+            <div class="s-field">
+              <span class="s-label">Words on the video</span>
+              <div class="seg-row" id="wordsMode"></div>
+            </div>
+            <p class="s-hint" id="wordsNote"></p>
+            <div class="s-field" id="typedRow" hidden>
+              <textarea class="s-textarea" id="typedText" rows="3" maxlength="4000" placeholder="One caption per line. Lines share the clip evenly, one after another." aria-label="Your words"></textarea>
+            </div>
+            <div class="song" id="songRow" hidden>
+              <p class="s-hint" id="songLine"></p>
+              <div class="row">
+                <input class="s-input" type="text" id="songArtist" placeholder="Artist" aria-label="Artist" maxlength="120" autocomplete="off">
+                <input class="s-input" type="text" id="songTrack" placeholder="Song title" aria-label="Song title" maxlength="120" autocomplete="off">
+              </div>
+              <button type="button" class="s-btn s-btn--sm" id="songFind">Find lyrics</button>
+            </div>
+            <div class="style-rows" id="styleRows" hidden>
+              <div class="s-field"><span class="s-label">Look</span><div class="seg-row" id="wLook"></div></div>
+              <div class="s-field"><span class="s-label">Font</span><div class="seg-row" id="wFont"></div></div>
+              <div class="s-field"><span class="s-label">Colour</span><div class="seg-row swatches" id="wColor"></div></div>
+            </div>
+          </div>
+
+          <!-- Text follow -->
+          <div class="panel follow" id="pFollow" role="tabpanel" aria-label="Text follow" hidden>
+            <div class="setup" id="fSetup" hidden>
+              <span class="setup__ic" aria-hidden="true"><svg class="s-i"><use href="/assets/sona-ui/icons.svg#target"/></svg></span>
+              <h2 class="setup__title">Text follow is not set up yet</h2>
+              <p class="s-hint">Text follow tracks the thing you mark through the clip, then burns your text onto it. It needs a local tracker (SAM 2.1) and an NVIDIA graphics card.</p>
+              <ol class="s-steps setup__steps">
+                <li>Clip: pick up to a minute</li>
+                <li>Mark: tap the thing to follow</li>
+                <li>Track, type the text, render</li>
+              </ol>
+              <p class="help" id="fSetupHelp"></p>
+              <button type="button" class="s-btn s-btn--outline" id="fRecheck"><svg class="s-i" aria-hidden="true"><use href="/assets/sona-ui/icons.svg#refresh"/></svg>Check again</button>
+            </div>
+            <div class="flow" id="fFlow" hidden>
+              <ol class="s-stepper" id="fSteps" aria-label="Text follow steps">
+                <li class="s-stepper__step" data-step="1"><button type="button" class="s-stepper__btn"><span class="s-stepper__num">1</span><span class="s-stepper__label">Clip</span></button></li>
+                <li class="s-stepper__step" data-step="2"><button type="button" class="s-stepper__btn"><span class="s-stepper__num">2</span><span class="s-stepper__label">Mark</span></button></li>
+                <li class="s-stepper__step" data-step="3"><button type="button" class="s-stepper__btn"><span class="s-stepper__num">3</span><span class="s-stepper__label">Track</span></button></li>
+                <li class="s-stepper__step" data-step="4"><button type="button" class="s-stepper__btn"><span class="s-stepper__num">4</span><span class="s-stepper__label">Text</span></button></li>
+                <li class="s-stepper__step" data-step="5"><button type="button" class="s-stepper__btn"><span class="s-stepper__num">5</span><span class="s-stepper__label">Render</span></button></li>
+              </ol>
+              <div class="step-intro">
+                <p class="s-eyebrow" id="fEyebrow">Step 1 of 5</p>
+                <h2 class="step-head" id="fHead"></h2>
+                <p class="s-hint step-hint" id="fHint"></p>
+              </div>
+              <span class="meter" id="fMeter" hidden><i id="fFill"></i></span>
+
+              <div class="fpart" id="fMark" hidden>
+                <div class="fscrub">
+                  <button type="button" class="s-iconbtn s-iconbtn--filled" id="fPrev" aria-label="Previous frame"><svg class="s-i" aria-hidden="true"><use href="/assets/sona-ui/icons.svg#back"/></svg></button>
+                  <input type="range" class="s-range" id="fScrub" min="0" max="1" step="1" value="0" aria-label="Frame">
+                  <button type="button" class="s-iconbtn s-iconbtn--filled" id="fNext" aria-label="Next frame"><svg class="s-i" aria-hidden="true"><use href="/assets/sona-ui/icons.svg#chevron-right"/></svg></button>
+                  <span class="time" id="fTime">0:00.0</span>
+                </div>
+                <div class="s-field"><span class="s-label">Each tap</span><div class="seg-row" id="fTapMode"></div></div>
+                <div class="s-field">
+                  <span class="s-label">Things to follow</span>
+                  <div class="things" id="fThings"></div>
+                </div>
+                <button type="button" class="s-btn s-btn--outline add-thing" id="fAddThing"><svg class="s-i" aria-hidden="true"><use href="/assets/sona-ui/icons.svg#plus"/></svg>Mark another thing</button>
+              </div>
+
+              <div class="fpart" id="fTrack" hidden>
+                <div class="fscrub">
+                  <button type="button" class="s-iconbtn s-iconbtn--filled" id="fPlay" aria-label="Play"><svg class="s-i" aria-hidden="true"><use id="fPlayIco" href="/assets/sona-ui/icons.svg#play"/></svg></button>
+                  <input type="range" class="s-range" id="fScrub2" min="0" max="1" step="1" value="0" aria-label="Frame">
+                  <span class="time" id="fTime2">0:00.0</span>
+                </div>
+                <div class="lost" id="fLost"></div>
+              </div>
+
+              <div class="fpart" id="fText" hidden>
+                <div class="things" id="fLabels"></div>
+                <div class="s-field"><span class="s-label">Look</span><div class="seg-row" id="fLook"></div></div>
+                <div class="s-field"><span class="s-label">Font</span><div class="seg-row" id="fFont"></div></div>
+                <div class="s-field"><span class="s-label">Size</span><div class="seg-row" id="fSize"></div></div>
+                <div class="s-field"><span class="s-label">Pointer</span><div class="seg-row" id="fPtr"></div></div>
+              </div>
+
+              <div class="fpart" id="fRender" hidden>
+                <div class="s-field"><span class="s-label">Save as</span><div class="seg-row" id="fKind"></div></div>
+              </div>
+              <p class="note err" id="fErr" role="alert" hidden></p>
+            </div>
+          </div>
+
+          <section class="list-sec" id="jobsSec" aria-labelledby="rendersTitle" hidden>
+            <h2 class="s-section__title sec-title" id="rendersTitle">Renders</h2>
+            <ul class="job-list" id="jobList"></ul>
+          </section>
+          <p class="s-hint keep" id="keepNote"></p>
+
+          <!-- the primary action: a sticky bar at the bottom on phones, the foot of this column on desktop -->
+          <div class="dock" id="dock" hidden>
+            <p class="dock-msg" id="dockMsg" role="status" hidden></p>
+            <span class="meter" id="dockMeter" hidden><i id="dockFill"></i></span>
+            <div class="dock-row">
+              <button type="button" class="s-btn s-btn--lg s-btn--outline" id="dockAlt" hidden></button>
+              <button type="button" class="s-btn s-btn--lg s-btn--primary" id="dockGo">Render</button>
+              <a class="s-btn s-btn--lg s-btn--primary" id="dockSave" href="#" download hidden>Save</a>
+            </div>
+          </div>
         </div>
-
-        <div id="fRender" hidden>
-          <div class="field"><span class="label">Save as</span><div class="seg-row" id="fKind"></div></div>
-        </div>
-        <p class="note err" id="fErr" hidden></p>
-      </div>
-    </div>
-
-    <section class="list-sec" id="jobsSec" hidden>
-      <h2 class="h2">Renders</h2>
-      <ul class="job-list" id="jobList"></ul>
-    </section>
-    <p class="fine keep" id="keepNote"></p>
-    </div>
-  </section>
-</main>
-
-<!-- sticky primary action -->
-<div class="dock" id="dock" hidden>
-  <p class="dock-msg" id="dockMsg" hidden></p>
-  <span class="meter" id="dockMeter" hidden><i id="dockFill"></i></span>
-  <div class="dock-row">
-    <button type="button" class="btn ghost" id="dockAlt" hidden></button>
-    <button type="button" class="btn primary" id="dockGo">Render</button>
-    <a class="btn primary" id="dockSave" href="#" download hidden>Save</a>
+      </section>
+    </main>
   </div>
 </div>
 
-<!-- menu: bottom sheet -->
-<div class="scrim" id="scrim" hidden></div>
-<aside class="drawer" id="drawer" role="dialog" aria-modal="true" aria-labelledby="drawerTitle" hidden>
-  <div class="grab" aria-hidden="true"></div>
-  <h2 class="h2" id="drawerTitle">Flicker</h2>
-  <details class="acc" open>
-    <summary>Engines</summary>
-    <ul class="engines" id="engines"></ul>
-    <button type="button" class="btn sm" id="recheck">Check again</button>
-  </details>
-  <details class="acc">
-    <summary>How it works</summary>
-    <ol class="how">
-      <li>Drop a video from this device. It is copied into Flicker's work folder on this machine.</li>
-      <li>Set the start and end on the rail, pick a tool, and render.</li>
-      <li>Save the result. Open videos and renders are cleared from the work folder on their own after a while.</li>
-    </ol>
-  </details>
-  <details class="acc">
-    <summary>Privacy</summary>
-    <p class="fine">Everything runs on this machine with ffmpeg. There is no account, no analytics and no cloud. Two optional lookups reach the internet, and only when you use them: the lyrics lookup sends an artist and song title, and link import (off unless switched on in config.json) fetches the link you paste.</p>
-  </details>
-  <button type="button" class="btn ghost wide" id="lockBtn">Lock</button>
-  <button type="button" class="btn wide" id="drawerClose">Close</button>
-</aside>
+<!-- menu: bottom sheet on phones, a dialog on wide screens -->
+<div class="s-scrim" id="menu" hidden>
+  <section class="s-sheet menu-sheet" role="dialog" aria-modal="true" aria-labelledby="menuTitle">
+    <header class="s-sheet__head">
+      <h2 class="s-sheet__title" id="menuTitle">Flicker</h2>
+      <button type="button" class="s-iconbtn" data-sheet-close aria-label="Close"><svg class="s-i" aria-hidden="true"><use href="/assets/sona-ui/icons.svg#close"/></svg></button>
+    </header>
+    <div class="s-sheet__body">
+      <details class="acc" id="accEngines" open>
+        <summary><svg class="s-i" aria-hidden="true"><use href="/assets/sona-ui/icons.svg#cpu"/></svg><span>Engines</span><svg class="s-i acc__chev" aria-hidden="true"><use href="/assets/sona-ui/icons.svg#chevron-down"/></svg></summary>
+        <ul class="engines" id="engines"></ul>
+        <button type="button" class="s-btn s-btn--outline s-btn--sm" id="recheck"><svg class="s-i" aria-hidden="true"><use href="/assets/sona-ui/icons.svg#refresh"/></svg>Check again</button>
+      </details>
+      <details class="acc">
+        <summary><svg class="s-i" aria-hidden="true"><use href="/assets/sona-ui/icons.svg#info"/></svg><span>How it works</span><svg class="s-i acc__chev" aria-hidden="true"><use href="/assets/sona-ui/icons.svg#chevron-down"/></svg></summary>
+        <ol class="s-steps">
+          <li>Drop a video from this device. It is copied into Flicker's work folder on this machine.</li>
+          <li>Set the start and end on the rail, pick a tool, and render.</li>
+          <li>Save the result. Open videos and renders are cleared from the work folder on their own after a while.</li>
+        </ol>
+      </details>
+      <details class="acc">
+        <summary><svg class="s-i" aria-hidden="true"><use href="/assets/sona-ui/icons.svg#lock"/></svg><span>Privacy</span><svg class="s-i acc__chev" aria-hidden="true"><use href="/assets/sona-ui/icons.svg#chevron-down"/></svg></summary>
+        <p class="s-hint">Everything runs on this machine with ffmpeg. There is no account, no analytics and no cloud. Two optional lookups reach the internet, and only when you use them: the lyrics lookup sends an artist and song title, and link import (off unless switched on in config.json) fetches the link you paste.</p>
+      </details>
+      <div class="menu-row">
+        <span class="s-label">Theme</span>
+        <div class="s-seg s-scheme" role="group" aria-label="Theme">
+          <button type="button" class="s-seg__btn" data-scheme-set="auto">Auto</button>
+          <button type="button" class="s-seg__btn" data-scheme-set="light">Light</button>
+          <button type="button" class="s-seg__btn" data-scheme-set="dark">Dark</button>
+        </div>
+      </div>
+      <button type="button" class="s-btn s-btn--outline s-btn--block" id="lockBtn"><svg class="s-i" aria-hidden="true"><use href="/assets/sona-ui/icons.svg#lock"/></svg>Lock Flicker</button>
+    </div>
+  </section>
+</div>
 
-<div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
-
+<script src="/assets/sona-ui/ui.js"></script>
 <script src="/tagmotion.js"></script>
 <script src="/app.js"></script>
 <script src="/follow.js"></script>
